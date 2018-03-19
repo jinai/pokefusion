@@ -1,11 +1,15 @@
 import asyncio
 import json
+import os
+import sys
 
 import discord
 from discord.colour import Color
 from discord.ext import commands
 
 import utils
+
+os.chdir(sys.path[0])
 
 bot = commands.Bot(command_prefix="!")
 with open("data/pokedex.json", "r", encoding="utf-8") as f:
