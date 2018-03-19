@@ -1,1 +1,1 @@
-web: python pokefusion/bot.py
+bot: python pokefusion/bot.py
