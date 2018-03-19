@@ -21,7 +21,7 @@ LAST_QUERIES = {}
 
 @bot.command()
 async def debug(ctx, expr):
-    if ctx.author.id == bot.owner_id:
+    if bot.is_owner(ctx.author):
         await ctx.send(eval(expr))
     else:
         await ctx.send("**Nice try**")
