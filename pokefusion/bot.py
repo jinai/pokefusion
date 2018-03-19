@@ -50,7 +50,7 @@ async def swap(ctx):
 
 @bot.command(aliases=["Pokemon", "p", "P"])
 async def pokemon(ctx, pkmn="random"):
-    dex_num, pkmn = utils.resolve(pkmn)
+    dex_num, pkmn = utils.resolve(pkmn, POKEDEX)
     url = f"http://images.alexonsager.net/pokemon/{dex_num}.png"
     color = Color(utils.get_dominant_color(url))
     embed = discord.Embed(title=pkmn.title(), color=color)
