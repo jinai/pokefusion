@@ -1,3 +1,4 @@
+import os
 import random
 from io import BytesIO
 
@@ -7,9 +8,11 @@ import unidecode
 
 
 def get_token():
+    token = os.getenv("POKEFUSION_TOKEN")
+    if token:
+        return token
     with open("data/.token", "r", encoding="utf-8") as f:
-        token = f.readline().strip()
-    return token
+        return f.read().strip()
 
 
 def normalize(s):
