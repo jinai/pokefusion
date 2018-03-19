@@ -1,0 +1,15 @@
+# 0.5 (2018-03-18)
+    - Each channel now has its own history for !swap
+
+# 0.4 (2018-03-13)
+	- Embeds color now matches the most dominant color in the resulting image
+
+# 0.3 (2018-03-12)
+	- Added !swap
+	- Added !pokemon [id/name]
+
+# 0.2 (2018-03-10)
+	- Added !clear [amount] (defaults to 5)
+	
+# 0.1 (2018-03-08)
+	- Initial version : !fusion [head] [body]
