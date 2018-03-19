@@ -20,9 +20,9 @@ LAST_QUERIES = {}
 
 
 @bot.command()
-async def debug(ctx, *expr):
-    if ctx.author.id == 92469090249089024:
-        await ctx.send(eval(" ".join(expr)))
+async def debug(ctx, expr):
+    if ctx.author.id == bot.owner_id:
+        await ctx.send(eval(expr))
     else:
         await ctx.send("**Nice try**")
 
@@ -65,6 +65,7 @@ async def pokemon(ctx, pkmn="random"):
 @bot.command()
 async def clear(ctx, amount: int = 5):
     counter = 0
+    await ctx.message.delete()
     async for m in ctx.channel.history().filter(lambda m: m.author == bot.user):
         if counter < amount:
             await m.delete()
