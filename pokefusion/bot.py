@@ -100,7 +100,7 @@ async def debug(ctx, expr):
 
 @bot.command()
 async def clear(ctx, amount: int = 5):
-    ctx.message.delete()
+    await ctx.message.delete()
     messages = []
     async for m in ctx.channel.history().filter(lambda m: m.author == bot.user):
         if len(messages) == amount:
