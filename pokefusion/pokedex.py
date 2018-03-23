@@ -11,7 +11,7 @@ class Language(Enum):
     FR = "fr"
     EN = "en"
     DE = "de"
-    DEFAULT = EN
+    DEFAULT = FR
 
 
 class Pokedex:
