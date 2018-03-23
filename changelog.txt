@@ -1,3 +1,8 @@
+# 0.6 (2018-03-23)
+    - Added !lang [fr/en/de] to set the pokedex language (default is French).
+      You need the Manage Server permission to change it.
+    - Fixed embeds color not always accurate
+
 # 0.5 (2018-03-18)
     - Each channel now has its own history for !swap
 
