@@ -24,11 +24,6 @@ def normalize(string, func=lambda s: s.lower().replace(" ", "")):
     return unidecode.unidecode(func(string))
 
 
-def rgb_to_int(rgb):
-    r, g, b = rgb
-    return (r << 16) + (g << 8) + b
-
-
 def get_dominant_color(url):
     r = requests.get(url)
     if r.status_code == 200:
