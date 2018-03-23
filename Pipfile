@@ -8,6 +8,7 @@ requests = "*"
 colorthief = "*"
 unidecode = "*"
 "discord.py" = {git = "git://github.com/Rapptz/discord.py", editable = true, ref = "rewrite"}
+pymongo = "*"
 
 [dev-packages]
 

@@ -1,5 +1,4 @@
 import os
-import random
 from io import BytesIO
 
 import colorthief
@@ -15,20 +14,14 @@ def get_token():
         return f.read().strip()
 
 
+def get_changelog():
+    path = "../changelog.txt"
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
 def normalize(s):
     return unidecode.unidecode(s.lower())
-
-
-def resolve(query, pokedex):
-    if query.isdigit():
-        return query, pokedex[query]
-
-    if query in ("random", "rand", "r", "?", "x"):
-        r = str(random.randint(0, 151))
-        return r, pokedex[r]
-    else:
-        n = normalize(query)
-        return pokedex[n], n
 
 
 def rgb_to_int(rgb):
@@ -41,12 +34,6 @@ def get_dominant_color(url):
     if r.status_code == 200:
         cf = colorthief.ColorThief(BytesIO(r.content))
         return rgb_to_int(cf.get_color(quality=1))
-
-
-def get_changelog():
-    path = "../changelog.txt"
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
 
 
 class TwoWayDict(dict):

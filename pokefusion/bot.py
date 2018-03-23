@@ -1,5 +1,4 @@
 import asyncio
-import json
 import os
 import sys
 
@@ -7,35 +6,59 @@ import discord
 from discord.colour import Color
 from discord.ext import commands
 
+import database
+import pokedex
 import utils
 
 os.chdir(sys.path[0])
 
+db = database.Database()
+dex = pokedex.Pokedex()
 bot = commands.Bot(command_prefix="!")
-with open("data/pokedex.json", "r", encoding="utf-8") as f:
-    raw = json.load(f)
-normalized = {key: utils.normalize(value) for key, value in raw.items()}
-POKEDEX = utils.TwoWayDict(normalized)
-LAST_QUERIES = {}
+last_queries = {}
 
 
 @bot.command()
-async def debug(ctx, expr):
-    if bot.is_owner(ctx.author):
-        await ctx.send(eval(expr))
+@commands.cooldown(1, 5, commands.BucketType.guild)
+async def lang(ctx, lang=None):
+    if lang is None:
+        guild = db.find_guild(ctx.guild)
+        if guild:
+            lang = pokedex.Language(guild['lang'])
+        else:
+            lang = pokedex.Language.DEFAULT
+            db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
+        await ctx.send(f"Current language : `{lang.value}`")
     else:
-        await ctx.send("**Nice try**")
+        try:
+            lang = pokedex.Language(lang.lower())
+            db.update_guild(ctx.guild, name=ctx.guild.name, lang=lang.value)
+            await ctx.send(f"Set language : `{lang.value}`")
+        except ValueError:
+            param = "/".join([lang.value for lang in pokedex.Language])
+            await ctx.send(f"Use `!lang [{param}]`")
 
 
 @bot.command(aliases=["Fusion", "f", "F"])
 async def fusion(ctx, head="random", body="random"):
-    global last_head, last_body
+    guild = db.find_guild(ctx.guild)
+    if guild:
+        lang = pokedex.Language(guild['lang'])
+    else:
+        lang = pokedex.Language.DEFAULT
+        db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
     try:
-        head_id, head = utils.resolve(head, POKEDEX)
-        body_id, body = utils.resolve(body, POKEDEX)
+        head_id, head = dex.resolve(head, lang)
+        body_id, body = dex.resolve(body, lang)
     except KeyError:
+        # TODO : Fuzzy search : try to guess what the user meant to type ?
+        # Example :
+        #   [User] !f bulbasuar mew
+        #   [Bot] Did you mean `!f bulbasaur mew` ? If so, type `yes`
+        #   [User] yes
+        #   [Bot] [Image]
         return
-    LAST_QUERIES[ctx.message.channel] = head, body
+    last_queries[ctx.message.channel] = head, body
     url = f"http://images.alexonsager.net/pokemon/fused/{body_id}/{body_id}.{head_id}.png"
     color = Color(utils.get_dominant_color(url))
     embed = discord.Embed(title="PokéFusion", url="https://fr.pokemon.alexonsager.net/", color=color)
@@ -47,19 +70,33 @@ async def fusion(ctx, head="random", body="random"):
 
 @bot.command(aliases=["Swap", "s", "S"])
 async def swap(ctx):
-    if ctx.channel in LAST_QUERIES:
-        head, body = LAST_QUERIES[ctx.channel]
+    if ctx.channel in last_queries:
+        head, body = last_queries[ctx.channel]
         await ctx.invoke(fusion, head=body, body=head)
 
 
 @bot.command(aliases=["Pokemon", "p", "P"])
 async def pokemon(ctx, pkmn="random"):
-    dex_num, pkmn = utils.resolve(pkmn, POKEDEX)
+    guild = db.find_guild(ctx.guild)
+    if guild:
+        lang = pokedex.Language(guild['lang'])
+    else:
+        lang = pokedex.Language.DEFAULT
+        db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
+    dex_num, pkmn = dex.resolve(pkmn, lang)
     url = f"http://images.alexonsager.net/pokemon/{dex_num}.png"
     color = Color(utils.get_dominant_color(url))
     embed = discord.Embed(title=pkmn.title(), color=color)
     embed.set_image(url=url)
     await ctx.send(embed=embed)
+
+
+@bot.command()
+async def debug(ctx, expr):
+    if bot.is_owner(ctx.author):
+        await ctx.send(eval(expr))
+    else:
+        await ctx.send("**Nice try**")
 
 
 @bot.command()
