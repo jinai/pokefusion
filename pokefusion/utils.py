@@ -1,9 +1,9 @@
 import os
 from io import BytesIO
 
-import colorthief
 import requests
 import unidecode
+from PIL import Image
 
 
 def get_token():
@@ -32,8 +32,14 @@ def rgb_to_int(rgb):
 def get_dominant_color(url):
     r = requests.get(url)
     if r.status_code == 200:
-        cf = colorthief.ColorThief(BytesIO(r.content))
-        return rgb_to_int(cf.get_color(quality=1))
+        im = Image.open(BytesIO(r.content))
+        colors = im.convert("RGBA").getcolors()
+        dominant = colors[0]
+        for count, color in colors:
+            if color != (0, 0, 0, 0) and count > dominant[0]:
+                dominant = (count, color)
+        r, g, b, _ = dominant[1]
+        return (r << 16) | (g << 8) | b
 
 
 class TwoWayDict(dict):

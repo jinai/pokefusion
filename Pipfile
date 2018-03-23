@@ -5,8 +5,7 @@ name = "pypi"
 
 [packages]
 requests = "*"
-colorthief = "*"
-unidecode = "*"
+Unidecode = "*"
 "discord.py" = {git = "git://github.com/Rapptz/discord.py", editable = true, ref = "rewrite"}
 pymongo = "*"
 
