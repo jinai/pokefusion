@@ -1,3 +1,4 @@
+import datetime
 import os
 import sys
 
@@ -27,12 +28,12 @@ async def lang(ctx, lang=None):
         else:
             lang = pokedex.Language.DEFAULT
             db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
-        await ctx.send(f"Current language : `{lang.value}`")
+        await ctx.send(f"Current Pokedex language : `{lang.value}`")
     elif ctx.author.permissions_in(ctx.channel).manage_guild or bot.is_owner(ctx.author):
         try:
             lang = pokedex.Language(lang.lower())
             db.update_guild(ctx.guild, name=ctx.guild.name, lang=lang.value)
-            await ctx.send(f"Set language : `{lang.value}`")
+            await ctx.send(f"Set Pokedex language : `{lang.value}`")
         except ValueError:
             param = "/".join([lang.value for lang in pokedex.Language])
             await ctx.send(f"Use `!lang [{param}]`")
@@ -113,6 +114,25 @@ async def clear(ctx, amount: int = 5):
 async def changelog(ctx):
     changelog = f"```md\n{utils.get_changelog()}\n```"
     await ctx.send(changelog)
+
+
+@bot.event
+async def on_guild_join(guild):
+    now = datetime.datetime.now()
+    channel = guild.text_channels[0]
+    guild_db = db.find_guild(guild)
+    if guild_db:
+        # Might not be our first time in this guild
+        lang = pokedex.Language(guild_db['lang'])
+        db.update_guild(guild, lang=lang.value, name=guild.name, rejoined_at=now)
+        await channel.send(f"Welcome back !\nCurrent Pokedex language : `{lang.value}`")
+    else:
+        lang = pokedex.Language.DEFAULT
+        db.update_guild(guild, lang=lang.value, name=guild.name, joined_at=now)
+        param = "/".join([lang.value for lang in pokedex.Language])
+        message = "Thank you for adding PokeFusion to your server !\n"
+        message += f"Current Pokedex language : `{lang.value}`    (use `!lang [{param}]` to change it)."
+        await channel.send(message)
 
 
 @bot.event
