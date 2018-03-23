@@ -28,7 +28,7 @@ async def lang(ctx, lang=None):
             lang = pokedex.Language.DEFAULT
             db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
         await ctx.send(f"Current language : `{lang.value}`")
-    else:
+    elif ctx.author.permissions_in(ctx.channel).manage_guild or bot.is_owner(ctx.author):
         try:
             lang = pokedex.Language(lang.lower())
             db.update_guild(ctx.guild, name=ctx.guild.name, lang=lang.value)
