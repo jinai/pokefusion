@@ -1,4 +1,3 @@
-import asyncio
 import os
 import sys
 
@@ -101,13 +100,13 @@ async def debug(ctx, expr):
 
 @bot.command()
 async def clear(ctx, amount: int = 5):
-    counter = 0
-    await ctx.message.delete()
+    ctx.message.delete()
+    messages = []
     async for m in ctx.channel.history().filter(lambda m: m.author == bot.user):
-        if counter < amount:
-            await m.delete()
-            await asyncio.sleep(0.15)
-            counter += 1
+        if len(messages) == amount:
+            break
+        messages.append(m)
+    await ctx.channel.delete_messages(messages)
 
 
 @bot.command()
