@@ -20,8 +20,8 @@ def get_changelog():
         return f.read()
 
 
-def normalize(s):
-    return unidecode.unidecode(s.lower())
+def normalize(string, func=lambda s: s.lower().replace(" ", "")):
+    return unidecode.unidecode(func(string))
 
 
 def rgb_to_int(rgb):
