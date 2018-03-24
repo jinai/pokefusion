@@ -91,7 +91,7 @@ async def pokemon(ctx, pkmn="random"):
     await ctx.send(embed=embed)
 
 
-@bot.command()
+@bot.command(hidden=True)
 async def debug(ctx, expr):
     if bot.is_owner(ctx.author):
         await ctx.send(eval(expr))
