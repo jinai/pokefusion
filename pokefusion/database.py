@@ -14,7 +14,7 @@ class Database:
 
     def update_guild(self, guild, **kwargs):
         self.cache['guilds'][guild.id].update(kwargs)
-        self.db.guilds.update({"_id": guild.id}, kwargs, upsert=True)
+        self.db.guilds.update({"_id": guild.id}, {"$set": kwargs}, upsert=True)
 
     def find_guild(self, guild):
         if guild.id in self.cache['guilds']:
