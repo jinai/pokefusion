@@ -8,6 +8,7 @@ requests = "*"
 Unidecode = "*"
 "discord.py" = {git = "git://github.com/Rapptz/discord.py", editable = true, ref = "rewrite"}
 pymongo = "*"
+pillow = "*"
 
 [dev-packages]
 
