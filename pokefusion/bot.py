@@ -16,6 +16,7 @@ db = database.Database()
 dex = pokedex.Pokedex()
 bot = commands.Bot(command_prefix="!")
 last_queries = {}
+oauth_url = "https://discordapp.com/oauth2/authorize?client_id={}&permissions=124992&scope=bot"
 
 
 @bot.command()
@@ -108,6 +109,11 @@ async def clear(ctx, amount: int = 5):
             break
         messages.append(m)
     await ctx.channel.delete_messages(messages)
+
+
+@bot.command()
+async def inviteme(ctx):
+    await ctx.channel.send(oauth_url.format(bot.user.id))
 
 
 @bot.command()
