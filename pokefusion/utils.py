@@ -31,9 +31,12 @@ def get_dominant_color(url):
         colors = im.convert("RGBA").getcolors()
         dominant = colors[0]
         for count, color in colors:
-            if color != (0, 0, 0, 0) and count > dominant[0]:
+            cmax, cmin = max(color[:3]), min(color[:3])
+            lightness = (cmax + cmin) / 2
+            if lightness > 51 and count > dominant[0]:
+                # Discard transparent & dark pixels (lightness < 20%)
                 dominant = (count, color)
-        r, g, b, _ = dominant[1]
+        r, g, b, a = dominant[1]
         return (r << 16) | (g << 8) | b
 
 
