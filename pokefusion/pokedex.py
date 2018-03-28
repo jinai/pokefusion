@@ -4,6 +4,8 @@ import random
 from enum import Enum
 from os.path import basename, join, splitext
 
+from fuzzywuzzy import fuzz, process
+
 import utils
 
 
@@ -17,7 +19,7 @@ class Language(Enum):
 class Pokedex:
     DATA_DIR = "data"
     FILE_PATTERN = "pokedex_*.json"
-    RANDOM_QUERY = {"random", "rand", "rnd", "r", "?", "x", "."}
+    RANDOM_QUERIES = {"random", "rand", "rnd", "r", "?", "x", "."}
 
     def __init__(self):
         self.data = {}
@@ -33,14 +35,21 @@ class Pokedex:
 
         # Example : !fusion 122
         if query.isdigit():
-            return query, self.data[lang][query]
+            if query in self.data[lang]:
+                return query, self.data[lang][query]
 
         # Example : !fusion ? bulbasaur
-        if query in Pokedex.RANDOM_QUERY:
+        elif query in Pokedex.RANDOM_QUERIES:
             rand = str(random.randint(0, 151))
             return rand, self.data[lang][rand]
 
         # Example : !fusion mr.mime
         else:
             query = utils.normalize(query)
-            return self.data[lang][query], query
+            if query in self.data[lang]:
+                return self.data[lang][query], query
+
+    def guess(self, query, lang):
+        """Returns (guess, confidence_score)"""
+        choices = [k for k in self.data[lang] if not k.isdigit()]
+        return process.extractOne(query, choices, score_cutoff=50, scorer=fuzz.ratio)

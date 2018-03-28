@@ -5,10 +5,11 @@ name = "pypi"
 
 [packages]
 requests = "*"
-Unidecode = "*"
+unidecode = "*"
 "discord.py" = {git = "git://github.com/Rapptz/discord.py", editable = true, ref = "rewrite"}
 pymongo = "*"
 pillow = "*"
+fuzzywuzzy = "*"
 
 [dev-packages]
 

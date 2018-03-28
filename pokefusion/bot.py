@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import os
 import sys
@@ -41,32 +42,41 @@ async def lang(ctx, lang=None):
 
 
 @bot.command(aliases=["f"])
-async def fusion(ctx, head="random", body="random"):
+async def fusion(ctx, head="?", body="?"):
     guild = db.find_guild(ctx.guild)
     if guild:
         lang = pokedex.Language(guild['lang'])
     else:
         lang = pokedex.Language.DEFAULT
         db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
-    try:
-        head_id, head = dex.resolve(head, lang)
-        body_id, body = dex.resolve(body, lang)
-    except KeyError:
-        # TODO : Fuzzy search : try to guess what the user meant to type ?
-        # Example :
-        #   [User] !f bulbasuar mew
-        #   [Bot] Did you mean `!f bulbasaur mew` ? If so, type `yes`
-        #   [User] yes
-        #   [Bot] [Image]
-        return
-    last_queries[ctx.message.channel] = head, body
-    url = f"http://images.alexonsager.net/pokemon/fused/{body_id}/{body_id}.{head_id}.png"
-    color = Color(utils.get_dominant_color(url))
-    embed = discord.Embed(title="PokéFusion", url="https://fr.pokemon.alexonsager.net/", color=color)
-    embed.add_field(name="Head", value=head.title(), inline=True)
-    embed.add_field(name="Body", value=body.title(), inline=True)
-    embed.set_image(url=url)
-    await ctx.send(embed=embed)
+
+    head_result = dex.resolve(head, lang)
+    body_result = dex.resolve(body, lang)
+    if None in (head_result, body_result):
+        head_guess = dex.guess(head, lang)[0] if head_result is None else head
+        body_guess = dex.guess(body, lang)[0] if body_result is None else body
+        body_tmp = body_guess if body_guess not in pokedex.Pokedex.RANDOM_QUERIES else ""
+        desc = f"Did you mean   **{bot.command_prefix}f {head_guess} {body_tmp}**   ?\n\n".replace(" ** ", "** ")
+        desc += "To proceed, type **yes**."
+        embed = discord.Embed(description=desc, color=Color.dark_red())
+        embed.set_thumbnail(url="https://i.imgur.com/Rcys72H.png")
+        await ctx.send(embed=embed)
+        check = lambda m: m.author == ctx.author and m.content == "yes" and m.channel == ctx.channel
+        try:
+            await bot.wait_for("message", check=check, timeout=60)
+        except asyncio.TimeoutError:
+            pass
+        else:
+            await ctx.invoke(fusion, head=head_guess, body=body_guess)
+    else:
+        last_queries[ctx.message.channel] = head, body
+        url = f"http://images.alexonsager.net/pokemon/fused/{body_result[0]}/{body_result[0]}.{head_result[0]}.png"
+        color = Color(utils.get_dominant_color(url))
+        embed = discord.Embed(title="PokéFusion", url="https://fr.pokemon.alexonsager.net/", color=color)
+        embed.add_field(name="Head", value=head_result[1].title(), inline=True)
+        embed.add_field(name="Body", value=body_result[1].title(), inline=True)
+        embed.set_image(url=url)
+        await ctx.send(embed=embed)
 
 
 @bot.command(aliases=["s"])
