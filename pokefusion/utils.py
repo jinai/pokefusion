@@ -40,6 +40,10 @@ def get_dominant_color(url):
         return (r << 16) | (g << 8) | b
 
 
+def yes(s):
+    return s.lower() in ("yes", "y")
+
+
 class TwoWayDict(dict):
     def __init__(self, seq=None, **kwargs):
         if seq is None:

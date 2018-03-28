@@ -61,7 +61,7 @@ async def fusion(ctx, head="?", body="?"):
         embed = discord.Embed(description=desc, color=Color.dark_red())
         embed.set_thumbnail(url="https://i.imgur.com/Rcys72H.png")
         await ctx.send(embed=embed)
-        check = lambda m: m.author == ctx.author and m.content == "yes" and m.channel == ctx.channel
+        check = lambda m: m.author == ctx.author and utils.yes(m.content) and m.channel == ctx.channel
         try:
             await bot.wait_for("message", check=check, timeout=60)
         except asyncio.TimeoutError:
