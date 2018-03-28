@@ -3,3 +3,4 @@ __pycache__/
 .token
 *.bat
 .env
+todo.txt
