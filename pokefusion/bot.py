@@ -14,7 +14,7 @@ os.chdir(sys.path[0])
 
 db = database.Database()
 dex = pokedex.Pokedex()
-bot = commands.Bot(command_prefix="!")
+bot = commands.Bot(command_prefix="!", case_insensitive=True)
 last_queries = {}
 oauth_url = "https://discordapp.com/oauth2/authorize?client_id={}&permissions=124992&scope=bot"
 
@@ -40,7 +40,7 @@ async def lang(ctx, lang=None):
             await ctx.send(f"Use `!lang [{param}]`")
 
 
-@bot.command(aliases=["Fusion", "f", "F"])
+@bot.command(aliases=["f"])
 async def fusion(ctx, head="random", body="random"):
     guild = db.find_guild(ctx.guild)
     if guild:
@@ -69,14 +69,14 @@ async def fusion(ctx, head="random", body="random"):
     await ctx.send(embed=embed)
 
 
-@bot.command(aliases=["Swap", "s", "S"])
+@bot.command(aliases=["s"])
 async def swap(ctx):
     if ctx.channel in last_queries:
         head, body = last_queries[ctx.channel]
         await ctx.invoke(fusion, head=body, body=head)
 
 
-@bot.command(aliases=["Pokemon", "p", "P"])
+@bot.command(aliases=["p"])
 async def pokemon(ctx, pkmn="random"):
     guild = db.find_guild(ctx.guild)
     if guild:
