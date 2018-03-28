@@ -52,4 +52,4 @@ class Pokedex:
     def guess(self, query, lang):
         """Returns (guess, confidence_score)"""
         choices = [k for k in self.data[lang] if not k.isdigit()]
-        return process.extractOne(query, choices, score_cutoff=50, scorer=fuzz.ratio)
+        return process.extractOne(query, choices, score_cutoff=0, scorer=fuzz.ratio)

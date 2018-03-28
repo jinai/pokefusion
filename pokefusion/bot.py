@@ -15,7 +15,7 @@ os.chdir(sys.path[0])
 
 db = database.Database()
 dex = pokedex.Pokedex()
-bot = commands.Bot(command_prefix="!", case_insensitive=True)
+bot = commands.Bot(command_prefix=os.environ["COMMAND_PREFIX"], case_insensitive=True)
 last_queries = {}
 oauth_url = "https://discordapp.com/oauth2/authorize?client_id={}&permissions=124992&scope=bot"
 
@@ -58,7 +58,7 @@ async def fusion(ctx, head="?", body="?"):
         body_tmp = body_guess if body_guess not in pokedex.Pokedex.RANDOM_QUERIES else ""
         desc = f"Did you mean   **{bot.command_prefix}f {head_guess} {body_tmp}**   ?\n\n".replace(" ** ", "** ")
         desc += "To proceed, type **yes**."
-        embed = discord.Embed(description=desc, color=Color.dark_red())
+        embed = discord.Embed(description=desc, color=Color.light_grey())
         embed.set_thumbnail(url="https://i.imgur.com/Rcys72H.png")
         await ctx.send(embed=embed)
         check = lambda m: m.author == ctx.author and utils.yes(m.content) and m.channel == ctx.channel
@@ -69,7 +69,7 @@ async def fusion(ctx, head="?", body="?"):
         else:
             await ctx.invoke(fusion, head=head_guess, body=body_guess)
     else:
-        last_queries[ctx.message.channel] = head, body
+        last_queries[ctx.message.channel] = head_result[1], body_result[1]
         url = f"http://images.alexonsager.net/pokemon/fused/{body_result[0]}/{body_result[0]}.{head_result[0]}.png"
         color = Color(utils.get_dominant_color(url))
         embed = discord.Embed(title="PokéFusion", url="https://fr.pokemon.alexonsager.net/", color=color)
