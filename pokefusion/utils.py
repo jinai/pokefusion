@@ -15,7 +15,7 @@ def get_token():
 
 
 def get_changelog():
-    path = "../changelog.txt"
+    path = "../changelog.md"
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
