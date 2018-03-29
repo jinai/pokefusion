@@ -28,7 +28,8 @@ def get_dominant_color(url):
     r = requests.get(url)
     if r.status_code == 200:
         im = Image.open(BytesIO(r.content))
-        colors = im.convert("RGBA").getcolors()
+        w, h = im.size
+        colors = im.convert("RGBA").getcolors(w * h)
         dominant = colors[0]
         for count, color in colors:
             cmax, cmin = max(color[:3]), min(color[:3])
