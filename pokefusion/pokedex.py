@@ -21,6 +21,9 @@ class Pokedex:
     FILE_PATTERN = "pokedex_*.json"
     RANDOM_QUERIES = {"random", "rand", "rnd", "r", "?", "x", "."}
 
+    MIN_ID = 0
+    MAX_ID = 151
+
     def __init__(self):
         self.data = {}
         for path in glob.glob(join(Pokedex.DATA_DIR, Pokedex.FILE_PATTERN)):
@@ -32,7 +35,6 @@ class Pokedex:
 
     def resolve(self, query, lang):
         """Returns (id, name)"""
-
         # Example : !fusion 122
         if query.isdigit():
             if query in self.data[lang]:
@@ -40,7 +42,7 @@ class Pokedex:
 
         # Example : !fusion ? bulbasaur
         elif query in Pokedex.RANDOM_QUERIES:
-            rand = str(random.randint(0, 151))
+            rand = str(random.randint(Pokedex.MIN_ID, Pokedex.MAX_ID))
             return rand, self.data[lang][rand]
 
         # Example : !fusion mr.mime

@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import os
+import random
 import sys
 
 import discord
@@ -38,7 +39,7 @@ async def lang(ctx, lang=None):
             await ctx.send(f"Set Pokedex language : `{lang.value}`")
         except ValueError:
             param = "/".join([lang.value for lang in pokedex.Language])
-            await ctx.send(f"Use `!lang [{param}]`")
+            await ctx.send(f"Use `{os.getenv['COMMAND_PREFIX']}lang [{param}]`")
 
 
 @bot.command(aliases=["f"])
@@ -84,6 +85,39 @@ async def swap(ctx):
     if ctx.channel in last_queries:
         head, body = last_queries[ctx.channel]
         await ctx.invoke(fusion, head=body, body=head)
+
+
+@bot.command(aliases=["t"])
+async def totem(ctx, user: discord.User = None):
+    guild = db.find_guild(ctx.guild)
+    if guild:
+        lang = pokedex.Language(guild['lang'])
+    else:
+        lang = pokedex.Language.DEFAULT
+        db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
+
+    if user:
+        random.seed(user.id)
+        totem_of = user.display_name
+        avatar_url = user.avatar_url
+    else:
+        random.seed(ctx.author.id)
+        totem_of = ctx.author.display_name
+        avatar_url = ctx.author.avatar_url
+
+    head = random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID).__str__()
+    body = random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID).__str__()
+    head_id, head = dex.resolve(head, lang)
+    body_id, body = dex.resolve(body, lang)
+    last_queries[ctx.message.channel] = head, body
+    url = f"http://images.alexonsager.net/pokemon/fused/{body_id}/{body_id}.{head_id}.png"
+    color = Color(utils.get_dominant_color(url))
+    embed = discord.Embed(title=f"Totem of {totem_of}", color=color)
+    embed.set_thumbnail(url=avatar_url)
+    embed.add_field(name="Head", value=head.title(), inline=True)
+    embed.add_field(name="Body", value=body.title(), inline=True)
+    embed.set_image(url=url)
+    await ctx.send(embed=embed)
 
 
 @bot.command(aliases=["p"])
@@ -147,7 +181,7 @@ async def on_guild_join(guild):
         db.update_guild(guild, lang=lang.value, name=guild.name, joined_at=now)
         param = "/".join([lang.value for lang in pokedex.Language])
         message = "Thank you for adding PokeFusion to your server !\n"
-        message += f"Current Pokedex language : `{lang.value}`    (use `!lang [{param}]` to change it)."
+        message += f"Current Pokedex language : `{lang.value}`    (use `{os.getenv['COMMAND_PREFIX']}lang [{param}]` to change it)."
         await channel.send(message)
 
 
