@@ -203,7 +203,7 @@ async def totem(ctx, user: discord.User = None):
     body_id, body = dex.resolve(body, lang)
     last_queries[ctx.message.channel] = head, body
     url = f"http://images.alexonsager.net/pokemon/fused/{body_id}/{body_id}.{head_id}.png"
-    color = Color(utils.get_dominant_color(url))
+    color = Color.from_rgb(*utils.get_dominant_color(utils.url_to_file(url)))
     embed = discord.Embed(title=f"Totem of {totem_of}", color=color)
     embed.set_thumbnail(url=avatar_url)
     embed.add_field(name="Head", value=head.title(), inline=True)
@@ -222,7 +222,7 @@ async def pokemon(ctx, pkmn="random"):
         db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
     dex_num, pkmn = dex.resolve(pkmn, lang)
     url = f"http://images.alexonsager.net/pokemon/{dex_num}.png"
-    color = Color(utils.get_dominant_color(url))
+    color = Color.from_rgb(*utils.get_dominant_color(utils.url_to_file(url)))
     embed = discord.Embed(title=pkmn.title(), color=color)
     embed.set_image(url=url)
     await ctx.send(embed=embed)
