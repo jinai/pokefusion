@@ -1,5 +1,7 @@
+import base64
+import datetime
+import io
 import os
-from io import BytesIO
 
 import requests
 import unidecode
@@ -20,29 +22,54 @@ def get_changelog():
         return f.read()
 
 
-def normalize(string, func=lambda s: s.lower().replace(" ", "")):
-    return unidecode.unidecode(func(string))
+def normalize(string, wrap=lambda s: s.lower().replace(" ", "")):
+    return unidecode.unidecode(wrap(string))
 
 
-def get_dominant_color(url):
+def get_dominant_color(f):
+    if isinstance(f, str):
+        f = open(f, 'rb')
+    im = Image.open(f)
+    w, h = im.size
+    colors = im.convert("RGBA").getcolors(w * h)
+    dominant = colors[0]
+    for count, color in colors:
+        cmax, cmin = max(color[:3]), min(color[:3])
+        lightness = (cmax + cmin) / 2
+        if lightness > 51 and count > dominant[0]:
+            # Discard transparent & dark pixels (lightness < 20%)
+            dominant = (count, color)
+    r, g, b, _ = dominant[1]
+    return r, g, b
+
+
+def yes_or_no(s):
+    return s.lower() in ("yes", "no")
+
+
+def url_to_file(url):
     r = requests.get(url)
     if r.status_code == 200:
-        im = Image.open(BytesIO(r.content))
-        w, h = im.size
-        colors = im.convert("RGBA").getcolors(w * h)
-        dominant = colors[0]
-        for count, color in colors:
-            cmax, cmin = max(color[:3]), min(color[:3])
-            lightness = (cmax + cmin) / 2
-            if lightness > 51 and count > dominant[0]:
-                # Discard transparent & dark pixels (lightness < 20%)
-                dominant = (count, color)
-        r, g, b, a = dominant[1]
-        return (r << 16) | (g << 8) | b
+        return io.BytesIO(r.content)
+    r.raise_for_status()
 
 
-def yes(s):
-    return s.lower() in ("yes", "y")
+def base64_to_file(data):
+    return io.BytesIO(base64.b64decode(data))
+
+
+def get_timestamp(*, format="%Y-%m-%d %H:%M:%S", wrap=lambda ts: f"[{ts}]"):
+    return wrap(datetime.datetime.now().strftime(format))
+
+
+def strict_whitespace(s):
+    return " ".join(s.split())
+
+
+def ensure_int(s):
+    if s.isdigit():
+        return str(int(s))
+    return s
 
 
 class TwoWayDict(dict):

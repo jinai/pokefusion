@@ -10,6 +10,7 @@ unidecode = "*"
 pymongo = "*"
 pillow = "*"
 fuzzywuzzy = "*"
+selenium = "*"
 
 [dev-packages]
 

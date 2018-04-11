@@ -21,8 +21,8 @@ class Pokedex:
     FILE_PATTERN = "pokedex_*.json"
     RANDOM_QUERIES = {"random", "rand", "rnd", "r", "?", "x", "."}
 
-    MIN_ID = 0
-    MAX_ID = 151
+    MIN_ID = 1
+    MAX_ID = 494
 
     def __init__(self):
         self.data = {}
