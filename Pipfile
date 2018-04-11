@@ -11,6 +11,7 @@ pymongo = "*"
 pillow = "*"
 fuzzywuzzy = "*"
 selenium = "*"
+chromedriver-installer = "*"
 
 [dev-packages]
 

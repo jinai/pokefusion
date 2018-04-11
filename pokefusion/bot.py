@@ -24,10 +24,12 @@ dex = pokedex.Pokedex()
 bot = commands.Bot(command_prefix=os.environ["COMMAND_PREFIX"], case_insensitive=True)
 
 LOGGER.setLevel(logging.WARNING)
+chrome_bin = os.environ['GOOGLE_CHROME_SHIM']
 chrome_options = Options()
+chrome_options.binary_location = chrome_bin
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--log-level=3")
-chrome = webdriver.Chrome(chrome_options=chrome_options, executable_path="bin/chromedriver")
+chrome = webdriver.Chrome(chrome_options=chrome_options, executable_path="chromedriver")
 
 last_queries = {}
 oauth_url = "https://discordapp.com/oauth2/authorize?client_id={client_id}&permissions=124992&scope=bot"
