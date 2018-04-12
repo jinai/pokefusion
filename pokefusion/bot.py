@@ -125,7 +125,7 @@ async def fusion(ctx, head="?", body="?", color="0"):
             embed.add_field(name="Head", value=f"{h.title()} ({h_id.zfill(3)})", inline=True)
             embed.add_field(name="Body", value=f"{b.title()} ({b_id.zfill(3)})", inline=True)
             if c_id != "0":
-                embed.add_field(name="Palette", value=f"{c.title()} ({c_id.zfill(3)})")
+                embed.add_field(name="Colors", value=f"{c.title()} ({c_id.zfill(3)})")
             embed.set_image(url=f"attachment://{filename}")
             embed.set_footer(text=f"Requested by {ctx.author}")
             await ctx.send(embed=embed, file=f)
@@ -172,20 +172,20 @@ async def totem(ctx, user: discord.User = None):
         chrome.switch_to.alert.dismiss()
     else:
         if color_id == "0":
-            filename = f"fusion_{head_id.zfill(3)}{h}_{body_id.zfill(3)}{b}.png"
+            filename = f"fusion_{head_id.zfill(3)}{head}_{body_id.zfill(3)}{body}.png"
         else:
-            filename = f"fusion_{head_id.zfill(3)}{h}_{body_id.zfill(3)}{b}_{color_id.zfill(3)}{c}.png"
+            filename = f"fusion_{head_id.zfill(3)}{head}_{body_id.zfill(3)}{body}_{color_id.zfill(3)}{color}.png"
         fp = utils.base64_to_file(data)
         f = discord.File(fp=fp, filename=filename)
-        color = Color.from_rgb(*utils.get_dominant_color(fp))
+        c = Color.from_rgb(*utils.get_dominant_color(fp))
         fp.seek(0)
         share_url = f"http://pokefusion.japeal.com/{body_id}/{head_id}/{color_id}"
-        embed = discord.Embed(title=f"Totem of {totem_of}", url=share_url, color=color)
+        embed = discord.Embed(title=f"Totem of {totem_of}", url=share_url, color=c)
         embed.set_thumbnail(url=avatar_url)
         embed.add_field(name="Head", value=f"{head.title()} ({head_id.zfill(3)})", inline=True)
         embed.add_field(name="Body", value=f"{body.title()} ({body_id.zfill(3)})", inline=True)
         if color_id != "0":
-            embed.add_field(name="Palette", value=f"{color.title()} ({color_id.zfill(3)})")
+            embed.add_field(name="Colors", value=f"{color.title()} ({color_id.zfill(3)})")
         embed.set_image(url=f"attachment://{filename}")
         embed.set_footer(text=f"Requested by {ctx.author}")
         await ctx.send(embed=embed, file=f)
