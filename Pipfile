@@ -4,11 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = "*"
-unidecode = "*"
 "discord.py" = {git = "git://github.com/Rapptz/discord.py", editable = true, ref = "rewrite"}
-pymongo = "*"
+unidecode = "*"
+requests = "*"
 pillow = "*"
+pymongo = "*"
 fuzzywuzzy = "*"
 selenium = "*"
 chromedriver-installer = "*"

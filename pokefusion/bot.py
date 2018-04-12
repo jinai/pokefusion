@@ -131,47 +131,6 @@ async def fusion(ctx, head="?", body="?", color="0"):
             await ctx.send(embed=embed, file=f)
 
 
-@bot.command(aliases=["old"])
-async def oldfusion(ctx, head="?", body="?"):
-    guild = db.find_guild(ctx.guild)
-    if guild:
-        lang = pokedex.Language(guild['lang'])
-    else:
-        lang = pokedex.Language.DEFAULT
-        db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
-
-    head_result = dex.resolve(head, lang)
-    body_result = dex.resolve(body, lang)
-    if None in (head_result, body_result):
-        head_guess = dex.guess(head, lang)[0] if head_result is None else head
-        body_guess = dex.guess(body, lang)[0] if body_result is None else body
-        body_tmp = body_guess if body_guess not in pokedex.Pokedex.RANDOM_QUERIES else ""
-        desc = f"Did you mean   **{bot.command_prefix}f {head_guess} {body_tmp}**   ?\n".replace(" ** ", "** ")
-        desc += "Type **yes** to proceed, or **no** to cancel."
-        embed = discord.Embed(description=desc, color=Color.light_grey())
-        embed.set_thumbnail(url="https://i.imgur.com/Rcys72H.png")
-        embed.set_footer(text=f"Requested by {ctx.author}")
-        await ctx.send(embed=embed)
-        check = lambda m: m.author == ctx.author and m.channel == ctx.channel and utils.yes_or_no(m.content)
-        try:
-            reply = await bot.wait_for("message", check=check, timeout=60)
-        except asyncio.TimeoutError:
-            pass
-        else:
-            if reply.lower() == "yes":
-                await ctx.invoke(fusion, head=head_guess, body=body_guess)
-    else:
-        last_queries[ctx.message.channel] = head_result[1], body_result[1]
-        url = f"http://images.alexonsager.net/pokemon/fused/{body_result[0]}/{body_result[0]}.{head_result[0]}.png"
-        color = Color.from_rgb(*utils.get_dominant_color(utils.url_to_file(url)))
-        embed = discord.Embed(title="PokéFusion", url="https://fr.pokemon.alexonsager.net/", color=color)
-        embed.add_field(name="Head", value=head_result[1].title(), inline=True)
-        embed.add_field(name="Body", value=body_result[1].title(), inline=True)
-        embed.set_image(url=url)
-        embed.set_footer(text=f"Requested by {ctx.author}")
-        await ctx.send(embed=embed)
-
-
 @bot.command(aliases=["s"])
 async def swap(ctx):
     if ctx.channel in last_queries:
@@ -199,17 +158,37 @@ async def totem(ctx, user: discord.User = None):
 
     head = str(random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID))
     body = str(random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID))
+    color = str(random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID))
     head_id, head = dex.resolve(head, lang)
     body_id, body = dex.resolve(body, lang)
-    last_queries[ctx.message.channel] = head, body
-    url = f"http://images.alexonsager.net/pokemon/fused/{body_id}/{body_id}.{head_id}.png"
-    color = Color.from_rgb(*utils.get_dominant_color(utils.url_to_file(url)))
-    embed = discord.Embed(title=f"Totem of {totem_of}", color=color)
-    embed.set_thumbnail(url=avatar_url)
-    embed.add_field(name="Head", value=head.title(), inline=True)
-    embed.add_field(name="Body", value=body.title(), inline=True)
-    embed.set_image(url=url)
-    await ctx.send(embed=embed)
+    color_id, color = dex.resolve(color, lang)
+    last_queries[ctx.message.channel] = head, body, color
+
+    script = f"http://pokefusion.japeal.com/PKMColourV5.php?ver=3.2&p1={head_id}&p2={body_id}&c={color_id}"
+    try:
+        chrome.get(script)
+        data = chrome.find_element_by_id("image1").get_attribute("src").split(",", 1)[1]
+    except UnexpectedAlertPresentException:
+        chrome.switch_to.alert.dismiss()
+    else:
+        if color_id == "0":
+            filename = f"fusion_{head_id.zfill(3)}{h}_{body_id.zfill(3)}{b}.png"
+        else:
+            filename = f"fusion_{head_id.zfill(3)}{h}_{body_id.zfill(3)}{b}_{color_id.zfill(3)}{c}.png"
+        fp = utils.base64_to_file(data)
+        f = discord.File(fp=fp, filename=filename)
+        color = Color.from_rgb(*utils.get_dominant_color(fp))
+        fp.seek(0)
+        share_url = f"http://pokefusion.japeal.com/{body_id}/{head_id}/{color_id}"
+        embed = discord.Embed(title=f"Totem of {totem_of}", url=share_url, color=color)
+        embed.set_thumbnail(url=avatar_url)
+        embed.add_field(name="Head", value=f"{head.title()} ({head_id.zfill(3)})", inline=True)
+        embed.add_field(name="Body", value=f"{body.title()} ({body_id.zfill(3)})", inline=True)
+        if color_id != "0":
+            embed.add_field(name="Palette", value=f"{color.title()} ({color_id.zfill(3)})")
+        embed.set_image(url=f"attachment://{filename}")
+        embed.set_footer(text=f"Requested by {ctx.author}")
+        await ctx.send(embed=embed, file=f)
 
 
 @bot.command(aliases=["p"])
