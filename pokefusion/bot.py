@@ -55,7 +55,7 @@ async def lang(ctx, lang=None):
             lang = pokedex.Language.DEFAULT
             db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
         await ctx.send(f"Current Pokedex language : `{lang.value}`")
-    elif ctx.author.permissions_in(ctx.channel).manage_guild or bot.is_owner(ctx.author):
+    elif ctx.author.permissions_in(ctx.channel).manage_guild or await bot.is_owner(ctx.author):
         try:
             lang = pokedex.Language(lang.lower())
             db.update_guild(ctx.guild, name=ctx.guild.name, lang=lang.value)
@@ -209,7 +209,7 @@ async def pokemon(ctx, pkmn="random"):
 
 @bot.command(hidden=True)
 async def debug(ctx, expr):
-    if bot.is_owner(ctx.author):
+    if await bot.is_owner(ctx.author):
         await ctx.send(eval(expr))
     else:
         await ctx.send("**Nice try**")
@@ -217,7 +217,7 @@ async def debug(ctx, expr):
 
 @bot.command()
 async def clear(ctx, amount: int = 5):
-    if ctx.author.permissions_in(ctx.channel).manage_messages or bot.is_owner(ctx.author):
+    if ctx.author.permissions_in(ctx.channel).manage_messages or await bot.is_owner(ctx.author):
         await ctx.message.delete()
         messages = []
         async for m in ctx.channel.history().filter(lambda m: m.author == bot.user):
