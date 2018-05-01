@@ -140,25 +140,18 @@ async def swap(ctx):
 
 @bot.command(aliases=["t"])
 async def totem(ctx, user: discord.User = None):
-    guild = db.find_guild(ctx.guild)
-    if guild:
-        lang = pokedex.Language(guild['lang'])
+    user = user or ctx.author
+    user_db = db.find_user(user)
+    if user_db:
+        rc = user_db['reroll_count']
     else:
-        lang = pokedex.Language.DEFAULT
-        db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
+        rc = 0
 
-    if user:
-        random.seed(user.id)
-        totem_of = user.display_name
-        avatar_url = user.avatar_url
-    else:
-        random.seed(ctx.author.id)
-        totem_of = ctx.author.display_name
-        avatar_url = ctx.author.avatar_url
-
+    random.seed(user.id + rc)
     head = str(random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID))
     body = str(random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID))
     color = str(random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID))
+    lang = pokedex.Language.DEFAULT
     head_id, head = dex.resolve(head, lang)
     body_id, body = dex.resolve(body, lang)
     color_id, color = dex.resolve(color, lang)
@@ -180,8 +173,8 @@ async def totem(ctx, user: discord.User = None):
         c = Color.from_rgb(*utils.get_dominant_color(fp))
         fp.seek(0)
         share_url = f"http://pokefusion.japeal.com/{body_id}/{head_id}/{color_id}"
-        embed = discord.Embed(title=f"{totem_of}'s totem", url=share_url, color=c)
-        embed.set_thumbnail(url=avatar_url)
+        embed = discord.Embed(title=f"{user.display_name}'s totem", url=share_url, color=c)
+        embed.set_thumbnail(url=user.avatar_url)
         embed.add_field(name="Head", value=f"{head.title()} #{head_id}", inline=True)
         embed.add_field(name="Body", value=f"{body.title()} #{body_id}", inline=True)
         if color_id != "0":
@@ -189,6 +182,25 @@ async def totem(ctx, user: discord.User = None):
         embed.set_image(url=f"attachment://{filename}")
         embed.set_footer(text=f"Requested by {ctx.author}")
         await ctx.send(embed=embed, file=f)
+
+
+@bot.command(hidden=True, aliases=["reroll"])
+async def reroll_totem(ctx, user: discord.User = None, value: int = None):
+    if await bot.is_owner(ctx.author):
+        user = user or ctx.author
+        user_db = db.find_user(user)
+        if value is not None:
+            count = value
+        elif user_db:
+            count = user_db['reroll_count'] + 1
+        else:
+            count = 1
+        db.update_user(user, reroll_count=count)
+        await ctx.invoke(totem, user=user)
+    else:
+        m = await ctx.send("**Nice try**")
+        await asyncio.sleep(2)
+        await ctx.channel.delete_messages((ctx.message, m))
 
 
 @bot.command(aliases=["p"])
@@ -210,9 +222,16 @@ async def pokemon(ctx, pkmn="random"):
 @bot.command(hidden=True)
 async def debug(ctx, expr):
     if await bot.is_owner(ctx.author):
-        await ctx.send(eval(expr))
+        try:
+            if expr.startswith("await "):
+                await ctx.send(await eval(expr))
+            await ctx.send(eval(expr))
+        except Exception as e:
+            await ctx.send(str(e))
     else:
-        await ctx.send("**Nice try**")
+        m = await ctx.send("**Nice try**")
+        await asyncio.sleep(2)
+        await ctx.channel.delete_messages((ctx.message, m))
 
 
 @bot.command()
@@ -245,9 +264,8 @@ async def on_guild_join(guild):
     guild_db = db.find_guild(guild)
     if guild_db:
         # Might not be our first time in this guild
-        lang = pokedex.Language(guild_db['lang'])
-        db.update_guild(guild, lang=lang.value, name=guild.name, rejoined_at=now)
-        await channel.send(f"Welcome back !\nCurrent Pokedex language : `{lang.value}`")
+        db.update_guild(guild, name=guild.name, rejoined_at=now)
+        await channel.send(f"Welcome back !\nCurrent Pokedex language : `{guild_db['lang']}`")
     else:
         lang = pokedex.Language.DEFAULT
         db.update_guild(guild, lang=lang.value, name=guild.name, joined_at=now)
