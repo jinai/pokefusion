@@ -140,6 +140,13 @@ async def swap(ctx):
 
 @bot.command(aliases=["t"])
 async def totem(ctx, user: discord.User = None):
+    guild = db.find_guild(ctx.guild)
+    if guild:
+        lang = pokedex.Language(guild['lang'])
+    else:
+        lang = pokedex.Language.DEFAULT
+        db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
+
     user = user or ctx.author
     user_db = db.find_user(user)
     if user_db:
@@ -151,7 +158,6 @@ async def totem(ctx, user: discord.User = None):
     head = str(random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID))
     body = str(random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID))
     color = str(random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID))
-    lang = pokedex.Language.DEFAULT
     head_id, head = dex.resolve(head, lang)
     body_id, body = dex.resolve(body, lang)
     color_id, color = dex.resolve(color, lang)
@@ -195,7 +201,7 @@ async def reroll_totem(ctx, user: discord.User = None, value: int = None):
             count = user_db['reroll_count'] + 1
         else:
             count = 1
-        db.update_user(user, reroll_count=count)
+        db.update_user(user, reroll_count=count, name=str(user))
         await ctx.invoke(totem, user=user)
     else:
         m = await ctx.send("**Nice try**")
