@@ -74,13 +74,13 @@ async def fusion(ctx, head="?", body="?", color="0"):
         lang = pokedex.Language.DEFAULT
         db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
 
-    head_result = dex.resolve(utils.ensure_int(head), lang)
-    body_result = dex.resolve(utils.ensure_int(body), lang)
-    color_result = dex.resolve(utils.ensure_int(color), lang)
+    head_result = dex.resolve(head, lang)
+    body_result = dex.resolve(body, lang)
+    color_result = dex.resolve(color, lang) if color != "0" else (color, "")
     if None in (head_result, body_result, color_result):
         head_guess = dex.guess(head, lang)[0] if head_result is None else head
         body_guess = dex.guess(body, lang)[0] if body_result is None else body
-        color_guess = dex.guess(color, lang)[0] if (color_result is None and color != "0") else color
+        color_guess = dex.guess(color, lang)[0] if color_result is None else color
         body_tmp = body_guess
         color_tmp = color_guess if color_guess != "0" else ""
         if body_tmp in pokedex.Pokedex.RANDOM_QUERIES and not color_tmp:

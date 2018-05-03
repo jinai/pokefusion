@@ -66,12 +66,6 @@ def strict_whitespace(s):
     return " ".join(s.split())
 
 
-def ensure_int(s):
-    if s.isdigit():
-        return str(int(s))
-    return s
-
-
 class TwoWayDict(dict):
     def __init__(self, seq=None, **kwargs):
         if seq is None:
