@@ -103,7 +103,7 @@ async def fusion(ctx, head="?", body="?", color="0"):
         h_id, h = head_result
         b_id, b = body_result
         c_id, c = color_result
-        last_queries[ctx.message.channel] = h, b, c
+        last_queries[ctx.message.channel] = h_id, b_id, c_id
 
         script = f"http://pokefusion.japeal.com/PKMColourV5.php?ver=3.2&p1={h_id}&p2={b_id}&c={c_id}"
         try:
@@ -126,7 +126,7 @@ async def fusion(ctx, head="?", body="?", color="0"):
             embed.add_field(name="Body", value=f"{b.title()} #{b_id}", inline=True)
             if c_id != "0":
                 embed.add_field(name="Colors", value=f"{c.title()} #{c_id}")
-            embed.set_image(url=f"attachment://{filename}")
+            embed.set_image(url=f"attachment://{filename.replace('(', '').replace(')', '')}")
             embed.set_footer(text=f"Requested by {ctx.author}")
             await ctx.send(embed=embed, file=f)
 
