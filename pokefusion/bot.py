@@ -185,7 +185,7 @@ async def totem(ctx, user: discord.User = None):
         embed.add_field(name="Body", value=f"{body.title()} #{body_id}", inline=True)
         if color_id != "0":
             embed.add_field(name="Colors", value=f"{color.title()} #{color_id}")
-        embed.set_image(url=f"attachment://{filename}")
+        embed.set_image(url=f"attachment://{filename.replace('(', '').replace(')', '')}")
         embed.set_footer(text=f"Requested by {ctx.author}")
         await ctx.send(embed=embed, file=f)
 
