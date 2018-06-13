@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 import logging
 import os
 import random
@@ -42,6 +41,17 @@ oauth_url = "https://discordapp.com/oauth2/authorize?client_id={client_id}&permi
 async def log(ctx):
     ts = utils.get_timestamp()
     print(f"{ts} {ctx.message.content:<20} in '{ctx.guild}/{ctx.channel}'")
+
+
+@bot.command()
+async def ping(ctx):
+    random.seed(ctx.author.id)
+    r = lambda: random.randint(0, 255)
+    rgb = (r(), r(), r())
+    desc = f"Pong ! {round(bot.latency * 1000)} ms"
+    embed = discord.Embed(description=desc, color=Color.from_rgb(*rgb))
+    embed.set_footer(text=f"Requested by {ctx.author}")
+    await ctx.send(embed=embed)
 
 
 @bot.command()
@@ -149,12 +159,11 @@ async def totem(ctx, user: discord.User = None):
 
     user = user or ctx.author
     user_db = db.find_user(user)
-    if user_db:
-        rc = user_db['reroll_count']
-    else:
-        rc = 0
+    settings = db.get_settings()
+    rc = user_db['reroll_count'] if user_db else 0
+    global_rc = settings['global_rc'] if settings else 100
 
-    random.seed(user.id + rc)
+    random.seed(user.id + rc + global_rc)
     head = str(random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID))
     body = str(random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID))
     color = str(random.randint(pokedex.Pokedex.MIN_ID, pokedex.Pokedex.MAX_ID))
@@ -203,6 +212,34 @@ async def reroll_totem(ctx, user: discord.User = None, value: int = None):
             count = 1
         db.update_user(user, reroll_count=count, name=str(user))
         await ctx.invoke(totem, user=user)
+    else:
+        m = await ctx.send("**Nice try**")
+        await asyncio.sleep(2)
+        await ctx.channel.delete_messages((ctx.message, m))
+
+
+@bot.command(hidden=True, aliases=["renew", "recycle"])
+async def reroll_all(ctx, value: int = None):
+    if await bot.is_owner(ctx.author):
+        desc = f"Reroll **all** totems  ?\n\nType **yes** to proceed, or **no** to cancel."
+        embed = discord.Embed(description=desc, color=Color.red())
+        embed.set_footer(text=f"Requested by {ctx.author}")
+        await ctx.send(embed=embed)
+        check = lambda m: m.author == ctx.author and m.channel == ctx.channel and utils.yes_or_no(m.content)
+        try:
+            reply = await bot.wait_for("message", check=check, timeout=5)
+        except asyncio.TimeoutError:
+            pass
+        else:
+            if reply.content.lower() == "yes":
+                settings = db.get_settings()
+                if value is not None:
+                    count = value
+                elif settings:
+                    count = settings['global_rc'] + 1
+                else:
+                    count = 101
+                db.update_settings(global_rc=count, last_update=utils.now())
     else:
         m = await ctx.send("**Nice try**")
         await asyncio.sleep(2)
@@ -265,7 +302,7 @@ async def changelog(ctx):
 
 @bot.event
 async def on_guild_join(guild):
-    now = datetime.datetime.now()
+    now = utils.now()
     channel = guild.text_channels[0]
     guild_db = db.find_guild(guild)
     if guild_db:

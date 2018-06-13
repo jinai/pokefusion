@@ -9,9 +9,16 @@ class Database:
         self.client = pymongo.MongoClient(os.environ['DB_URL'])
         self.db = self.client.get_database()
         self.cache = {
+            "settings": defaultdict(dict),
             "guilds": defaultdict(dict),
             "users": defaultdict(dict)
         }
+
+    def update_settings(self, **kwargs):
+        self._update_document(collection="settings", doc_id=1, **kwargs)
+
+    def get_settings(self):
+        return self._find_document(collection="settings", doc_id=1)
 
     def update_guild(self, guild, **kwargs):
         self._update_document(collection="guilds", doc_id=guild.id, **kwargs)
@@ -32,7 +39,11 @@ class Database:
     def _find_document(self, *, collection, doc_id):
         if doc_id in self.cache[collection]:
             return self.cache[collection][doc_id]
-        return self.db.get_collection(collection).find_one({"_id": doc_id})
+
+        doc = self.db.get_collection(collection).find_one({"_id": doc_id})
+        doc = doc if doc is not None else {}
+        self.cache[collection][doc_id].update(doc)
+        return doc
 
     def __del__(self):
         self.client.close()

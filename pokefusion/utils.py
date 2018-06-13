@@ -58,8 +58,12 @@ def base64_to_file(data):
     return io.BytesIO(base64.b64decode(data))
 
 
+def now():
+    return datetime.datetime.now()
+
+
 def get_timestamp(*, format="%Y-%m-%d %H:%M:%S", wrap=lambda ts: f"[{ts}]"):
-    return wrap(datetime.datetime.now().strftime(format))
+    return wrap(now().strftime(format))
 
 
 def strict_whitespace(s):
