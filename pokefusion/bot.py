@@ -218,7 +218,7 @@ async def reroll_totem(ctx, user: discord.User = None, value: int = None):
         await ctx.channel.delete_messages((ctx.message, m))
 
 
-@bot.command(hidden=True, aliases=["renew", "recycle"])
+@bot.command(hidden=True, aliases=["rerall"])
 async def reroll_all(ctx, value: int = None):
     if await bot.is_owner(ctx.author):
         desc = f"Reroll **all** totems  ?\n\nType **yes** to proceed, or **no** to cancel."
