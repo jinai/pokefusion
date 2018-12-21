@@ -12,9 +12,8 @@ pymongo = "*"
 fuzzywuzzy = "*"
 selenium = "*"
 chromedriver-installer = "*"
-yarl = "<1.2"
 
 [dev-packages]
 
 [requires]
-python_full_version = "3.6.5"
+python_full_version = "3.6.6"
