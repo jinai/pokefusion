@@ -228,12 +228,17 @@ async def pokemon(ctx, pkmn="random"):
     else:
         lang = pokedex.Language.DEFAULT
         db.update_guild(ctx.guild, lang=lang.value, name=ctx.guild.name)
-    dex_num, pkmn = dex.resolve(pkmn, lang)
-    url = f"http://images.alexonsager.net/pokemon/{dex_num}.png"
-    color = Color.from_rgb(*utils.get_dominant_color(utils.url_to_file(url)))
-    embed = discord.Embed(title=pkmn.title(), color=color)
-    embed.set_image(url=url)
-    await ctx.send(embed=embed)
+    result = dex.resolve(pkmn, lang)
+    if result:
+        dex_num, pkmn = result
+        file = api.PokeFusion.get_sprite_as_file(pkmn_id=dex_num)
+        filename = f"sprite_{dex_num}_{pkmn}.png"
+        f = discord.File(fp=file, filename=filename)
+        color = Color.from_rgb(*utils.get_dominant_color(file))
+        embed = discord.Embed(title=f"{pkmn.title()} #{dex_num}", color=color)
+        embed.set_image(url=f"attachment://{filename.replace('(', '').replace(')', '')}")
+        embed.set_footer(text=f"Requested by {ctx.author}")
+        await ctx.send(embed=embed, file=f)
 
 
 @bot.command(hidden=True)

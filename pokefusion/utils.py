@@ -44,6 +44,16 @@ def get_dominant_color(f):
     return r, g, b
 
 
+def zoom_image(f, factor=2):
+    if isinstance(f, str):
+        f = open(f, 'rb')
+    im = Image.open(f)
+    im = im.resize(tuple(factor * x for x in im.size), Image.NEAREST)
+    b = io.BytesIO()
+    im.save(b, "PNG")
+    return b
+
+
 def yes_or_no(s):
     return s.lower() in ("yes", "no")
 
