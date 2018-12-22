@@ -5,3 +5,4 @@ pokefusion/data/sprites/
 *.bat
 .env
 todo.txt
+*.log

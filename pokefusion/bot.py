@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import os
 import random
 import sys
@@ -7,11 +6,8 @@ import sys
 import discord
 from discord.colour import Color
 from discord.ext import commands
-from selenium import webdriver
-from selenium.common.exceptions import UnexpectedAlertPresentException
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.remote.remote_connection import LOGGER
 
+import api
 import database
 import pokedex
 import utils
@@ -21,14 +17,6 @@ os.chdir(sys.path[0])
 db = database.Database()
 dex = pokedex.Pokedex()
 bot = commands.Bot(command_prefix=os.environ["COMMAND_PREFIX"], case_insensitive=True)
-
-LOGGER.setLevel(logging.WARNING)
-chrome_bin = os.environ['GOOGLE_CHROME_SHIM']
-chrome_options = Options()
-chrome_options.binary_location = chrome_bin
-chrome_options.add_argument("--headless")
-chrome_options.add_argument("--log-level=3")
-chrome = webdriver.Chrome(chrome_options=chrome_options, executable_path="chromedriver")
 
 last_queries = {}
 oauth_url = "https://discordapp.com/oauth2/authorize?client_id={client_id}&permissions=124992&scope=bot"
@@ -115,21 +103,14 @@ async def fusion(ctx, head="?", body="?", color="0"):
         c_id, c = color_result
         last_queries[ctx.message.channel] = h_id, b_id, c_id
 
-        script = f"http://pokefusion.japeal.com/PKMColourV5.php?ver=3.2&p1={h_id}&p2={b_id}&c={c_id}"
-        try:
-            chrome.get(script)
-            data = chrome.find_element_by_id("image1").get_attribute("src").split(",", 1)[1]
-        except UnexpectedAlertPresentException:
-            chrome.switch_to.alert.dismiss()
-        else:
+        file = api.PokeFusion.get_fusion_as_file(head_id=h_id, body_id=b_id, color_id=c_id)
+        if file:
             if c_id == "0":
                 filename = f"fusion_{h_id}{h}_{b_id}{b}.png"
             else:
                 filename = f"fusion_{h_id}{h}_{b_id}{b}_{c_id}{c}.png"
-            fp = utils.base64_to_file(data)
-            f = discord.File(fp=fp, filename=filename)
-            color = Color.from_rgb(*utils.get_dominant_color(fp))
-            fp.seek(0)
+            f = discord.File(fp=file, filename=filename)
+            color = Color.from_rgb(*utils.get_dominant_color(file))
             share_url = f"http://pokefusion.japeal.com/{b_id}/{h_id}/{c_id}"
             embed = discord.Embed(title="PokéFusion", url=share_url, color=color)
             embed.add_field(name="Head", value=f"{h.title()} #{h_id}", inline=True)
@@ -172,21 +153,14 @@ async def totem(ctx, user: discord.User = None):
     color_id, color = dex.resolve(color, lang)
     last_queries[ctx.message.channel] = head, body, color
 
-    script = f"http://pokefusion.japeal.com/PKMColourV5.php?ver=3.2&p1={head_id}&p2={body_id}&c={color_id}"
-    try:
-        chrome.get(script)
-        data = chrome.find_element_by_id("image1").get_attribute("src").split(",", 1)[1]
-    except UnexpectedAlertPresentException:
-        chrome.switch_to.alert.dismiss()
-    else:
+    file = api.PokeFusion.get_fusion_as_file(head_id=head_id, body_id=body_id, color_id=color_id)
+    if file:
         if color_id == "0":
             filename = f"fusion_{head_id}{head}_{body_id}{body}.png"
         else:
             filename = f"fusion_{head_id}{head}_{body_id}{body}_{color_id}{color}.png"
-        fp = utils.base64_to_file(data)
-        f = discord.File(fp=fp, filename=filename)
-        c = Color.from_rgb(*utils.get_dominant_color(fp))
-        fp.seek(0)
+        f = discord.File(fp=file, filename=filename)
+        c = Color.from_rgb(*utils.get_dominant_color(file))
         share_url = f"http://pokefusion.japeal.com/{body_id}/{head_id}/{color_id}"
         embed = discord.Embed(title=f"{user.display_name}'s totem", url=share_url, color=c)
         embed.set_thumbnail(url=user.avatar_url)

@@ -32,6 +32,7 @@ def get_dominant_color(f):
     im = Image.open(f)
     w, h = im.size
     colors = im.convert("RGBA").getcolors(w * h)
+    f.seek(0)
     dominant = colors[0]
     for count, color in colors:
         cmax, cmin = max(color[:3]), min(color[:3])
