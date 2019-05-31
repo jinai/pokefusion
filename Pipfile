@@ -4,16 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-"discord.py" = {git = "git://github.com/Rapptz/discord.py", editable = true, ref = "rewrite"}
+discord-py = "*"
 unidecode = "*"
 requests = "*"
 pillow = "*"
 pymongo = "*"
 fuzzywuzzy = "*"
 selenium = "*"
-chromedriver-installer = "*"
 
 [dev-packages]
 
 [requires]
-python_full_version = "3.6.6"
+python_full_version = "3.6.8"
