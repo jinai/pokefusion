@@ -1,0 +1,27 @@
+{
+    "owner_id": "your_discord_id",
+    "default_prefix": "_",
+    "token": "your_bot_token",
+    "init_cogs": [
+        "database",
+        "events",
+        "scheduler",
+        "meta",
+        "misc",
+        "fusion",
+        "games",
+        "admin",
+        "owner",
+        "birthday",
+        "christmas"
+    ],
+    "database": {
+        "path": "pokefusion/db/pokefusion.prod.sqlite",
+        "pragmas": {
+            "journal_mode": "wal",
+            "foreign_keys": 1
+        }
+    },
+    "maintenance": false,
+    "block_dms": true
+}

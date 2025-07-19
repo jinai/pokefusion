@@ -1,8 +1,6 @@
 .idea/
 __pycache__/
-pokefusion/data/sprites/
-.token
-*.bat
-.env
-todo.txt
-*.log
+logs/
+pokefusion/config/config.*.json
+!pokefusion/config/config.example.json
+todo.md

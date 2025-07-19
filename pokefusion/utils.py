@@ -1,84 +1,13 @@
 import base64
-import datetime
 import io
-import os
+import json
+from collections.abc import Callable, Sequence
+from datetime import datetime
+from typing import Any
 
-import requests
 import unidecode
-from PIL import Image
 
-
-def get_token():
-    token = os.getenv("POKEFUSION_TOKEN")
-    if token:
-        return token
-    with open("data/.token", "r", encoding="utf-8") as f:
-        return f.read().strip()
-
-
-def get_changelog():
-    path = "../changelog.md"
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
-
-
-def normalize(string, wrap=lambda s: s.lower().replace(" ", "")):
-    return unidecode.unidecode(wrap(string))
-
-
-def get_dominant_color(f):
-    if isinstance(f, str):
-        f = open(f, 'rb')
-    im = Image.open(f)
-    w, h = im.size
-    colors = im.convert("RGBA").getcolors(w * h)
-    f.seek(0)
-    dominant = colors[0]
-    for count, color in colors:
-        cmax, cmin = max(color[:3]), min(color[:3])
-        lightness = (cmax + cmin) / 2
-        if lightness > 51 and count > dominant[0]:
-            # Discard transparent & dark pixels (lightness < 20%)
-            dominant = (count, color)
-    r, g, b, _ = dominant[1]
-    return r, g, b
-
-
-def zoom_image(f, factor=2):
-    if isinstance(f, str):
-        f = open(f, 'rb')
-    im = Image.open(f)
-    im = im.resize(tuple(factor * x for x in im.size), Image.NEAREST)
-    b = io.BytesIO()
-    im.save(b, "PNG")
-    return b
-
-
-def yes_or_no(s):
-    return s.lower() in ("yes", "no")
-
-
-def url_to_file(url):
-    r = requests.get(url)
-    if r.status_code == 200:
-        return io.BytesIO(r.content)
-    r.raise_for_status()
-
-
-def base64_to_file(data):
-    return io.BytesIO(base64.b64decode(data))
-
-
-def now():
-    return datetime.datetime.now()
-
-
-def get_timestamp(*, format="%Y-%m-%d %H:%M:%S", wrap=lambda ts: f"[{ts}]"):
-    return wrap(now().strftime(format))
-
-
-def strict_whitespace(s):
-    return " ".join(s.split())
+type JsonDict = dict[str, Any]
 
 
 class TwoWayDict(dict):
@@ -104,3 +33,58 @@ class TwoWayDict(dict):
 
     def __len__(self):
         return dict.__len__(self) // 2
+
+
+def load_json(path: str) -> JsonDict:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def get_timestamp(*, fmt: str = "%d %b %H:%M:%S", wrap: Callable[[str], str] = lambda ts: f"[{ts}]") -> str:
+    ts = datetime.now().strftime(fmt)
+    if callable(wrap):
+        return wrap(ts)
+    return ts
+
+
+def yes(s: str) -> bool:
+    return s.lower() in ("y", "yes", "o", "oui")
+
+
+def no(s: str) -> bool:
+    return s.lower() in ("n", "no", "non")
+
+
+def normalize(text: str, wrap: Callable[[str], str] = lambda s: s.title()) -> str:
+    return unidecode.unidecode(wrap(text))
+
+
+def base64_to_file(data: str) -> io.BytesIO:
+    return io.BytesIO(base64.b64decode(data))
+
+
+def cleanup_code(content: str) -> str:
+    if content.startswith('```') and content.endswith('```'):
+        return '\n'.join(content.split('\n')[1:-1])
+    return content.strip('` \n')
+
+
+def replace_all(text: str, dic: dict[str, str]) -> str:
+    for i, j in dic.items():
+        text = text.replace(i, j)
+    return text
+
+
+def remove_extra_spaces(text: str) -> str:
+    return " ".join(text.split())
+
+
+def special_join(sequence: Sequence[Any], main_join: str, last_join: str) -> str:
+    if len(sequence) == 0:
+        return ""
+    elif len(sequence) == 1:
+        return sequence[0]
+    elif len(sequence) == 2:
+        return last_join.join(sequence)
+    else:
+        return main_join.join(sequence[:-1]) + last_join + str(sequence[-1])

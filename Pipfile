@@ -1,18 +1,22 @@
 [[source]]
-url = "https://pypi.python.org/simple"
+url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
 [packages]
-discord-py = "*"
-unidecode = "*"
-requests = "*"
+"discord.py" = "*"
+peewee = "*"
+peewee-migrate = "*"
 pillow = "*"
-pymongo = "*"
 fuzzywuzzy = "*"
-selenium = "*"
-
-[dev-packages]
+unidecode = "*"
+python-levenshtein = "*"
+tzdata = "*"
+typer = "*"
+pyhyphen = "*"
+aiopokeapi = {git = "git+https://github.com/beastmatser/aiopokeapi.git#egg=aiopokeapi"}
 
 [requires]
-python_full_version = "3.6.8"
+python_version = "3.13"
+
+[dev-packages]
