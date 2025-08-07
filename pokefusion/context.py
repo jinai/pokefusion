@@ -25,6 +25,11 @@ class Context(commands.Context):
         r"mfa\.[\w-]{20,}",
         r"[\w-]{23,28}\.[\w-]{6,7}\.[\w-]{27,38}"
     ]
+    MEDALS = {
+        1: "\N{FIRST PLACE MEDAL}",
+        2: "\N{SECOND PLACE MEDAL}",
+        3: "\N{THIRD PLACE MEDAL}"
+    }
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -43,6 +48,15 @@ class Context(commands.Context):
         emoji = "\N{BALLOT BOX WITH CHECK}" if value else "\N{CROSS MARK}"
         try:
             await self.message.add_reaction(emoji)
+        except discord.HTTPException:
+            pass
+
+    async def score(self, rank: int = 1):
+        try:
+            if rank in Context.MEDALS:
+                await self.message.add_reaction(Context.MEDALS[rank])
+            else:
+                await self.tick(True)
         except discord.HTTPException:
             pass
 

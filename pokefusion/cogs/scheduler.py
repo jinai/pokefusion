@@ -22,14 +22,15 @@ RERALL_CHANNELS = [
     367074976827965450,  # Radio Eco
     357961752513871874,  # Weeaboo Lando
     1374426505387704370,  # Jinai
+    1398068543253123326,  # Serong
 ]
 
 
 class Scheduler(commands.Cog):
     def __init__(self, bot: PokeFusion) -> None:
         self.bot = bot
-        if self.bot.config.env is Environment.DEV:
-            self.pull_reminder.start()
+        # if self.bot.config.env is Environment.DEV:
+        #     self.pull_reminder.start()
         self.rerall_task.start()
 
     def cog_unload(self) -> None:

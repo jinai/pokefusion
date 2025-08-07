@@ -23,6 +23,8 @@ def setup_logging(env: Environment):
     formatter = logging.Formatter('[{asctime}] [{levelname:<8}] {name}: {message}', dt_fmt, style='{')
     file_handler.setFormatter(formatter)
     root.addHandler(file_handler)
+    import pokefusion
+    logging.getLogger(pokefusion.__name__).setLevel(logging.DEBUG)
 
 
 def main(env: Annotated[Environment, typer.Option()]) -> None:

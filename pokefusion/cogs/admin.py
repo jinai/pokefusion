@@ -6,7 +6,7 @@ from discord.ext.commands import BadArgument, CommandError
 
 from pokefusion.bot import PokeFusion
 from pokefusion.context import Context
-from pokefusion.converters import LangConverter, PrefixConverter
+from pokefusion.converters import LanguageConverter, PrefixConverter
 from pokefusion.fusionapi import Language
 
 
@@ -33,7 +33,7 @@ class Admin(commands.Cog):
             await ctx.tick(True)
 
     @commands.command()
-    async def lang(self, ctx: Context, *, new_lang: Annotated[Language, LangConverter] = None) -> None:
+    async def lang(self, ctx: Context, *, new_lang: Annotated[Language, LanguageConverter] = None) -> None:
         if new_lang is None:
             await ctx.send(f"Current language: `{ctx.lang}`")
         else:

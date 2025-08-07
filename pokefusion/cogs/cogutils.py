@@ -90,7 +90,8 @@ def base_embed(ctx: Context, **kwargs) -> tuple[Embed, list[File]]:
 
 
 def footer_embed(ctx: Context, **kwargs) -> tuple[Embed, list[File]]:
-    return base_embed(ctx, footer=EmbedFooter(f"Requested by {ctx.author.display_name}"), **kwargs)
+    # return base_embed(ctx, footer=EmbedFooter(f"Requested by {ctx.author.display_name}"), **kwargs)
+    return base_embed(ctx, footer=EmbedFooter("Type !guess <Pokémon>"), **kwargs)
 
 
 def fusion_embed(ctx: Context, result: FusionResult, **kwargs) -> tuple[Embed, list[File]]:
@@ -108,23 +109,32 @@ def fusion_embed(ctx: Context, result: FusionResult, **kwargs) -> tuple[Embed, l
     return footer_embed(ctx, color=color, fields=fields, attachments=(fusions, eggs), **kwargs)
 
 
-def guess_fusion_embed(ctx: Context, result: FusionResult, title: str = "Devine la fusion !") -> tuple[
+def guess_fusion_embed(ctx: Context, result: FusionResult, filters: list[FilterType] = None,
+                       title: str = "Devine la fusion !") -> tuple[
     Embed, list[File]]:
     color = Color.from_rgb(*imagelib.get_dominant_color(result.path))
-    # combined = imagelib.merge_images(result.path, result.swap().path, pixel_gap=50, crop_bbox=True)
-    fusion = EmbedAttachment(fp=result.path, filename="guess.png", type=AttachmentType.IMAGE)
     fields = (EmbedField("Head", "?"), EmbedField("Body", "?"))
-    return footer_embed(ctx, title=title, color=color, fields=fields, attachments=(fusion,))
+    # combined = imagelib.merge_images(result.path, result.swap().path, pixel_gap=50, crop_bbox=True)
+
+    filtered = result.path
+    if filters:
+        for filter_ in filters:
+            filtered = imagelib.apply_filter(filtered, filter_type=filter_)
+
+    fusion = EmbedAttachment(fp=filtered, filename="guess.png", type=AttachmentType.IMAGE)
+    # return footer_embed(ctx, title=title, color=color, fields=fields, attachments=(fusion,))
+    return base_embed(ctx, title=title, color=color, fields=fields, attachments=(fusion,),
+                      footer=EmbedFooter("Type !guess <Pokémon> <Pokémon>"))
 
 
 def guess_filter_embed(ctx: Context, filters: list[FilterType], sprite: Sprite, title: str = "Devine le Pokémon !") -> \
         tuple[Embed, list[File]]:
-    silhouette = imagelib.apply_filter(sprite.path, filter_type=filters[0], scale=3)
+    filtered = imagelib.apply_filter(sprite.path, filter_type=filters[0], scale=3)
 
     for filter_ in filters[1:]:
-        silhouette = imagelib.apply_filter(silhouette, filter_type=filter_)
+        filtered = imagelib.apply_filter(filtered, filter_type=filter_)
 
-    attachment = EmbedAttachment(silhouette, "guess.png", AttachmentType.IMAGE)
+    attachment = EmbedAttachment(filtered, "guess.png", AttachmentType.IMAGE)
     return footer_embed(ctx, title=title, attachments=(attachment,))
 
 

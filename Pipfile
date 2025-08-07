@@ -14,7 +14,7 @@ python-levenshtein = "*"
 tzdata = "*"
 typer = "*"
 pyhyphen = "*"
-aiopokeapi = {git = "git+https://github.com/beastmatser/aiopokeapi.git#egg=aiopokeapi"}
+aiopokeapi = "*"
 
 [requires]
 python_version = "3.13"

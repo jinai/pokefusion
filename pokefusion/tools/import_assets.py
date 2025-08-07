@@ -65,7 +65,7 @@ def get_fusions_diff(old: dict[int, list[int]], new: dict[int, list[int]]) -> di
 
 def import_autogen_sprites(verbose: bool = True) -> None:
     start_time = time.perf_counter()
-    input_folder = r"input\Full Sprite pack 1-114 (May 2025)\spritesheets\spritesheets_autogen"
+    input_folder = os.path.join("input", "Full Sprite pack 1-114 (May 2025)", "spritesheets", "spritesheets_autogen")
     output_folder = os.path.join("output", "fusions", "autogen")
     sprite_count = 0
     file_count = 0
@@ -102,7 +102,7 @@ def import_autogen_sprites(verbose: bool = True) -> None:
 
 def import_custom_sprites(verbose: bool = True) -> None:
     start_time = time.perf_counter()
-    input_folder = r"D:\infinitefusion\Full Sprite pack 1-111 (February 2025)\CustomBattlers"
+    input_folder = os.path.join("input", "Full Sprite pack 1-114 (May 2025)", "CustomBattlers")
     output_folder = os.path.join("output", "fusions", "custom")
     sprite_count = 0
     file_count = 0
@@ -131,12 +131,12 @@ def import_custom_sprites(verbose: bool = True) -> None:
 def save_diff() -> None:
     start_time = time.perf_counter()
 
-    autogen_folder_old = r"D:\Discord\PokeFusion\pokefusion\assets\fusions\autogen"
-    autogen_folder_new = r"D:\Discord\PokeFusion\pokefusion\tools\fusions\autogen"
-    custom_folder_old = r"D:\Discord\PokeFusion\pokefusion\assets\fusions\custom"
-    custom_folder_new = r"D:\Discord\PokeFusion\pokefusion\tools\fusions\custom"
+    autogen_folder_old = os.path.join("..", "assets", "fusions", "autogen")
+    autogen_folder_new = os.path.join("output", "fusions", "autogen")
+    custom_folder_old = os.path.join("..", "assets", "fusions", "custom")
+    custom_folder_new = os.path.join("output", "fusions", "custom")
 
-    base_output = os.path.join("output")
+    base_output = "output"
     custom_fusions_output = os.path.join(base_output, "custom_fusions.json")
     autogen_diff_added_output = os.path.join(base_output, "autogen_diff_added.json")
     autogen_diff_removed_output = os.path.join(base_output, "autogen_diff_removed.json")
@@ -183,13 +183,14 @@ def save_diff() -> None:
 
 def run():
     start_time = time.perf_counter()
-    import_autogen_sprites(verbose=False)
-    import_custom_sprites(verbose=False)
+    verbose = True
+    import_autogen_sprites(verbose=verbose)
+    import_custom_sprites(verbose=verbose)
     save_diff()
     elapsed_time = time.perf_counter() - start_time
     print(f"Total runtime is {elapsed_time:.2f} seconds")
     print()
-    print("Don't forget to update fusionapi.PREVIOUS_MAX_ID if necessary (new sprites)")
+    print("Don't forget to update fusionapi.PREVIOUS_MAX_ID (even if no new base sprites)")
 
 
 if __name__ == "__main__":
