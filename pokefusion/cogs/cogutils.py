@@ -108,31 +108,39 @@ def fusion_embed(ctx: Context, result: FusionResult, **kwargs) -> tuple[Embed, l
     return footer_embed(ctx, color=color, fields=fields, attachments=(fusions, eggs), **kwargs)
 
 
-def guess_fusion_embed(ctx: Context, result: FusionResult, title: str = "Devine la fusion !") -> tuple[
+def guess_fusion_embed(ctx: Context, result: FusionResult, filters: list[FilterType] = None,
+                       title: str = "Guess the fusion!") -> tuple[
     Embed, list[File]]:
     color = Color.from_rgb(*imagelib.get_dominant_color(result.path))
-    # combined = imagelib.merge_images(result.path, result.swap().path, pixel_gap=50, crop_bbox=True)
-    fusion = EmbedAttachment(fp=result.path, filename="guess.png", type=AttachmentType.IMAGE)
     fields = (EmbedField("Head", "?"), EmbedField("Body", "?"))
-    return footer_embed(ctx, title=title, color=color, fields=fields, attachments=(fusion,))
+
+    filtered = result.path
+    if filters:
+        for filter_ in filters:
+            filtered = imagelib.apply_filter(filtered, filter_type=filter_)
+
+    fusion = EmbedAttachment(fp=filtered, filename="guess.png", type=AttachmentType.IMAGE)
+    return base_embed(ctx, title=title, color=color, fields=fields, attachments=(fusion,),
+                      footer=EmbedFooter(f"Type {ctx.prefix}guess <Pokémon> <Pokémon>"))
 
 
-def guess_filter_embed(ctx: Context, filters: list[FilterType], sprite: Sprite, title: str = "Devine le Pokémon !") -> \
+def guess_filter_embed(ctx: Context, filters: list[FilterType], sprite: Sprite, title: str = "Guess the Pokémon!") -> \
         tuple[Embed, list[File]]:
-    silhouette = imagelib.apply_filter(sprite.path, filter_type=filters[0], scale=3)
+    filtered = imagelib.apply_filter(sprite.path, filter_type=filters[0], scale=3)
 
     for filter_ in filters[1:]:
-        silhouette = imagelib.apply_filter(silhouette, filter_type=filter_)
+        filtered = imagelib.apply_filter(filtered, filter_type=filter_)
 
-    attachment = EmbedAttachment(silhouette, "guess.png", AttachmentType.IMAGE)
-    return footer_embed(ctx, title=title, attachments=(attachment,))
+    attachment = EmbedAttachment(filtered, "guess.png", AttachmentType.IMAGE)
+    return base_embed(ctx, title=title, attachments=(attachment,), footer=EmbedFooter("Type <Pokémon>"))
 
 
-def description_embed(ctx: Context, description: str, title: str = "Devine le Pokémon !") -> tuple[Embed, list[File]]:
+def description_embed(ctx: Context, description: str, title: str = "Guess the Pokémon!") -> tuple[Embed, list[File]]:
     attachment = EmbedAttachment(os.path.join(AssetManager.MISC_DIR, "Substitute.png"), "Substitute.png",
                                  AttachmentType.THUMBNAIL)
     color = AssetManager.get_asset_color(attachment.fp)
-    return footer_embed(ctx, title=title, description=description, color=color, attachments=(attachment,))
+    return base_embed(ctx, title=title, description=description, color=color, attachments=(attachment,),
+                      footer=EmbedFooter(f"Type {ctx.prefix}guess <Pokémon>"))
 
 
 def birthday_embed(ctx: Context, color: Color, upload_attachment: bool = True) -> tuple[Embed, list[File]]:
@@ -143,7 +151,8 @@ def birthday_embed(ctx: Context, color: Color, upload_attachment: bool = True) -
     else:
         attachments = ()
     footer = EmbedFooter(f"Happy birthday {ctx.author.display_name}!")
-    return base_embed(ctx, title="Birthday event", description="Use !bday for free rerolls during your birthday!",
+    return base_embed(ctx, title="Birthday event",
+                      description=f"Use {ctx.prefix}bday for free rerolls during your birthday!",
                       footer=footer, color=color, attachments=attachments)
 
 
@@ -155,7 +164,8 @@ def christmas_embed(ctx: Context, color: Color, upload_attachment: bool = True) 
     else:
         attachments = ()
     footer = EmbedFooter(f"Happy Holidays!")
-    return base_embed(ctx, title="Christmas event", description="Use !kdo for free rerolls until January 1!",
+    return base_embed(ctx, title="Christmas event",
+                      description=f"Use {ctx.prefix}kdo for free rerolls until January 1!",
                       footer=footer, color=color, attachments=attachments)
 
 

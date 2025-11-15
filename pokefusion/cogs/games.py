@@ -1,5 +1,4 @@
 from collections import defaultdict
-from enum import IntEnum, auto
 
 from discord import TextChannel
 from discord.ext import commands
@@ -11,20 +10,16 @@ from pokefusion.context import Context
 from pokefusion.fusionapi import FusionResult, Sprite
 from pokefusion.imagelib import FilterType
 from pokefusion.pokeapi import PokeApiClient, PokeApiResult
-from pokefusion.utils import remove_extra_spaces
+
+
+def normalize(string: str) -> str:
+    return utils.remove_extra_spaces(utils.normalize(string.lower()))
 
 
 def remove_forms(name: str) -> str:
     if (index := name.find("-")) != -1:
         return name[:index]
     return name
-
-
-class Difficilty(IntEnum):
-    EASY = auto()
-    MEDIUM = auto()
-    HARD = auto()
-    EXPERT = auto()
 
 
 class Games(commands.Cog):
@@ -35,26 +30,27 @@ class Games(commands.Cog):
         self.last_answers: dict[TextChannel, Sprite | FusionResult | PokeApiResult] = {}
         self.hints_counter: defaultdict[TextChannel, int] = defaultdict(int)
 
-    @commands.group(invoke_without_command=True, pass_context=True)
+    @commands.group(invoke_without_command=True)
     async def guess(self, ctx: Context, *, message: str = ""):
-        if ctx.channel in self.last_answers:
-            normalize = lambda s: remove_extra_spaces(utils.normalize(s.lower()))
-            user_answer = normalize(message)
-            correct_answer = self.last_answers[ctx.channel]
-            if isinstance(correct_answer, Sprite):
-                compare = lambda x, y: x == normalize(y.lookup.species)
-            elif isinstance(correct_answer, FusionResult):
-                compare = lambda x, y: set([remove_forms(p) for p in x.split(" ")]) == {
-                    remove_forms(normalize(y.head.species)), remove_forms(normalize(y.body.species))}
-            else:  # PokeApiResult
-                compare = lambda x, y: x == normalize(y.name_fr)
+        if ctx.channel not in self.last_answers:
+            return
 
-            if compare(user_answer, correct_answer):
-                del self.last_answers[ctx.channel]
-                self.hints_counter.pop(ctx.channel, None)
-                await ctx.tick(True)
-            else:
-                await ctx.tick(False)
+        correct_answer = self.last_answers[ctx.channel]
+        if isinstance(correct_answer, Sprite):
+            compare = lambda x, y: x == normalize(y.lookup.species)
+        elif isinstance(correct_answer, FusionResult):
+            compare = lambda x, y: set([remove_forms(p) for p in x.split(" ")]) == {
+                remove_forms(normalize(y.head.species)), remove_forms(normalize(y.body.species))}
+        else:  # PokeApiResult
+            compare = lambda x, y: x == normalize(y.name_fr)
+
+        user_answer = normalize(message)
+        if compare(user_answer, correct_answer):
+            del self.last_answers[ctx.channel]
+            self.hints_counter.pop(ctx.channel, None)
+            await ctx.tick(True)
+        else:
+            await ctx.tick(False)
 
     @guess.command(name="giveup", aliases=["ff"])
     async def guess_giveup(self, ctx: Context):
@@ -84,6 +80,30 @@ class Games(commands.Cog):
         embed, files = guess_filter_embed(ctx, [FilterType.PIXELATE], sprite)
         await ctx.send(embed=embed, files=files)
 
+    @guess.command(name="grayscale", aliases=["gray", "grey", "greyscale"])
+    async def guess_grayscale(self, ctx: Context) -> None:
+        sprite = self.sprite_client.get_sprite("?")
+        self.last_answers[ctx.channel] = sprite
+
+        embed, files = guess_filter_embed(ctx, [FilterType.GRAYSCALE], sprite)
+        await ctx.send(embed=embed, files=files)
+
+    @guess.command(name="edge", aliases=["edges"])
+    async def guess_edge(self, ctx: Context) -> None:
+        sprite = self.sprite_client.get_sprite("?")
+        self.last_answers[ctx.channel] = sprite
+
+        embed, files = guess_filter_embed(ctx, [FilterType.EDGE], sprite)
+        await ctx.send(embed=embed, files=files)
+
+    @guess.command(name="box")
+    async def guess_box(self, ctx: Context) -> None:
+        sprite = self.sprite_client.get_sprite("?")
+        self.last_answers[ctx.channel] = sprite
+
+        embed, files = guess_filter_embed(ctx, [FilterType.BOX], sprite)
+        await ctx.send(embed=embed, files=files)
+
     @guess.command(name="pixelblur", aliases=["pb"])
     async def guess_pixelblur(self, ctx: Context) -> None:
         sprite = self.sprite_client.get_sprite("?")
@@ -99,9 +119,16 @@ class Games(commands.Cog):
         embed, files = guess_fusion_embed(ctx, result)
         await ctx.send(embed=embed, files=files)
 
+    @guess.command(name="pf")
+    async def guess_pixelfusion(self, ctx: Context):
+        result = self.fusion_client.fusion()
+        self.last_answers[ctx.channel] = result
+        embed, files = guess_fusion_embed(ctx, result, filters=[FilterType.PIXELATE])
+        await ctx.send(embed=embed, files=files)
+
     # @guess.command(name="test")
     # async def guess_test(self, ctx: Context):
-    #     result = self.fusion_client.fusion("Plumeline-Flamenco", "?", lang=ctx.lang)
+    #     result = self.fusion_client.fusion("Plumeline-Flamenco", "Mime Jr.", lang=ctx.lang)
     #     self.last_answers[ctx.channel] = result
     #     embed, files = guess_fusion_embed(ctx, result)
     #     await ctx.send(embed=embed, files=files)
@@ -109,7 +136,6 @@ class Games(commands.Cog):
     @guess.command(name="description", aliases=["desc"])
     async def guess_description(self, ctx: Context) -> None:
         result = await PokeApiClient.get_random_pokemon()
-        # print(result.name_fr)  # TODO: remove
         self.last_answers[ctx.channel] = result
         embed, files = description_embed(ctx, result.get_random_desc())
         await ctx.send(embed=embed, files=files)
@@ -142,8 +168,12 @@ class Games(commands.Cog):
     @guess_silhouette.before_invoke
     @guess_pixel.before_invoke
     @guess_blur.before_invoke
+    @guess_grayscale.before_invoke
+    @guess_edge.before_invoke
+    @guess_box.before_invoke
     @guess_pixelblur.before_invoke
     @guess_fusion.before_invoke
+    @guess_pixelfusion.before_invoke
     @guess_description.before_invoke
     @guess_giveup.before_invoke
     async def reveal_answer(self, ctx: Context) -> None:

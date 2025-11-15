@@ -19,6 +19,9 @@ class FilterType(Enum):
     SILHOUETTE = auto()
     GAUSSIAN_BLUR = auto()
     PIXELATE = auto()
+    GRAYSCALE = auto()
+    EDGE = auto()
+    BOX = auto()
     DEFAULT = SILHOUETTE
 
 
@@ -114,7 +117,7 @@ def normalize_image(image: PathOrBytes, crop_bbox: bool = True) -> BytesIO:
 
 
 def apply_filter(image: PathOrBytes, normalize: bool = True, filter_type: FilterType = FilterType.DEFAULT,
-                 scale=1) -> BytesIO:
+                 scale: int = 1) -> BytesIO:
     if normalize:
         image = normalize_image(image, crop_bbox=False)
 
@@ -126,8 +129,24 @@ def apply_filter(image: PathOrBytes, normalize: bool = True, filter_type: Filter
         return _filter_silhouette(base)
     elif filter_type is FilterType.GAUSSIAN_BLUR:
         return _filter_gaussian_blur(base)
-    else:  # FilterType.PIXELATE
+    elif filter_type is FilterType.PIXELATE:
         return _filter_pixelate(base)
+    elif filter_type is FilterType.GRAYSCALE:
+        return _filter_grayscale(base)
+    elif filter_type is FilterType.EDGE:
+        return _filter_edge(base)
+    elif filter_type is FilterType.BOX:
+        return _filter_box(base)
+    else:
+        return _filter_noop(base)
+
+
+def _filter_noop(image: Image.Image) -> BytesIO:
+    buffer = BytesIO()
+    image.save(buffer, "PNG")
+    buffer.seek(0)
+
+    return buffer
 
 
 def _filter_silhouette(image: Image.Image) -> BytesIO:
@@ -152,9 +171,9 @@ def _filter_gaussian_blur(image: Image.Image) -> BytesIO:
     return buffer
 
 
-def _filter_pixelate(image: Image.Image) -> BytesIO:
-    downscaled = image.resize(tuple(int(x / 14) for x in image.size), resample=Image.Resampling.NEAREST)
-    upscaled = downscaled.resize(tuple(int(x * 14) for x in downscaled.size), resample=Image.Resampling.NEAREST)
+def _filter_pixelate(image: Image.Image, factor: int = 14) -> BytesIO:
+    downscaled = image.resize(tuple(int(x / factor) for x in image.size), resample=Image.Resampling.NEAREST)
+    upscaled = downscaled.resize(tuple(int(x * factor) for x in downscaled.size), resample=Image.Resampling.NEAREST)
 
     buffer = BytesIO()
     upscaled.save(buffer, "PNG")
@@ -163,10 +182,38 @@ def _filter_pixelate(image: Image.Image) -> BytesIO:
     return buffer
 
 
+def _filter_grayscale(image: Image.Image) -> BytesIO:
+    grayscaled = image.convert("L")
+
+    buffer = BytesIO()
+    grayscaled.save(buffer, "PNG")
+    buffer.seek(0)
+
+    return buffer
+
+
+def _filter_edge(image: Image.Image) -> BytesIO:
+    edge = image.filter(ImageFilter.FIND_EDGES)
+
+    buffer = BytesIO()
+    edge.save(buffer, "PNG")
+    buffer.seek(0)
+
+    return buffer
+
+
+def _filter_box(image: Image.Image) -> BytesIO:
+    downscaled = image.resize(tuple(int(x / 14) for x in image.size), resample=Image.Resampling.NEAREST)
+    upscaled = downscaled.resize(tuple(int(x * 14) for x in downscaled.size), resample=Image.Resampling.NEAREST)
+    box = upscaled.convert("L").filter(ImageFilter.FIND_EDGES)
+
+    buffer = BytesIO()
+    box.save(buffer, "PNG")
+    buffer.seek(0)
+
+    return buffer
+
+
 def save_to_file(path: str, image: BinaryIO) -> None:
     with open(path, "wb") as f:
         f.write(image.read())
-
-
-if __name__ == "__main__":
-    im = Image.open(r"/pokefusion/assets\fusions\custom\57\57.150.png")
