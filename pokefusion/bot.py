@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any
 
 import discord
-from discord import Message, User
+from discord import Interaction, Message, User
 from discord.ext import commands
 from discord.ext.commands import CommandError
 
@@ -120,8 +120,8 @@ class PokeFusion(commands.Bot):
                 self._main_color = discord.Color.light_grey()
         return self._main_color
 
-    async def get_context(self, message, *, cls=Context) -> Context:
-        return await super().get_context(message, cls=cls)
+    async def get_context(self, origin: Message | Interaction, /, *, cls=Context) -> Context:
+        return await super().get_context(origin, cls=cls)
 
     async def setup_hook(self) -> None:
         for cog in self.init_cogs:

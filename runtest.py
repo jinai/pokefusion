@@ -52,7 +52,7 @@ def hyphens() -> None:
         print(h.syllables(name))
 
 
-if __name__ == "__main__":
+def main():
     import logging
 
     logging.basicConfig(level=logging.INFO)
@@ -62,3 +62,7 @@ if __name__ == "__main__":
     # migrate_db(env)
     run_migrations(config.database)
     # keyval_db(env)
+
+
+if __name__ == "__main__":
+    main()
