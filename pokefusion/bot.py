@@ -25,7 +25,12 @@ logger = logging.getLogger(__name__)
 def get_prefix(bot: PokeFusion, message: Message) -> Sequence[str]:
     if not message.guild:
         return bot.default_prefix
-    prefix = bot.db.get_server(message.guild).prefix
+
+    try:
+        prefix = bot.db.get_server(message.guild).prefix
+    except AttributeError:
+        prefix = bot.default_prefix
+
     return commands.when_mentioned_or(prefix)(bot, message)
 
 
