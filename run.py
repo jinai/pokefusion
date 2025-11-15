@@ -1,5 +1,7 @@
 import logging
 import os
+import platform
+import time
 from logging.handlers import TimedRotatingFileHandler
 from typing import Annotated
 
@@ -13,6 +15,10 @@ from pokefusion.environment import Environment
 
 
 def setup_logging(env: Environment):
+    if platform.system() == "Linux":
+        os.environ["TZ"] = "CET"
+        time.tzset()
+
     os.makedirs("logs", exist_ok=True)
     discord.utils.setup_logging()
     root = logging.getLogger()
