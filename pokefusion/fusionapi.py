@@ -176,8 +176,13 @@ class FusionClient(BaseClient):
     def __init__(self):
         super().__init__(ConfigManager.get_infinitedex())
 
-    def fusion(self, head: str = "?", body: str = "?", lang: Language = Language.DEFAULT) -> FusionResult:
+    def fusion(self, head: str = "?", body: str = "?", lang: Language = Language.DEFAULT,
+               custom_only: bool = False) -> FusionResult:
         head_result = self.lookup(head, lang)
+
+        if custom_only and head_result.succeeded:
+            body = str(random.choice(FusionClient.get_custom_fusions(head=head_result.dex_id)))
+
         body_result = self.lookup(body, lang)
         return FusionResult(head_result, body_result, head, body)
 

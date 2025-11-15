@@ -5,7 +5,7 @@ from discord.ext import commands
 
 from pokefusion.bot import PokeFusion
 from pokefusion.context import Context, Reply
-from pokefusion.fusionapi import FusionResult
+from pokefusion.fusionapi import FusionClient, FusionResult
 from .cogutils import fusion_embed, guess_prompt
 
 
@@ -21,7 +21,7 @@ class Fusion(commands.Cog):
         await ctx.send(embed=embed, files=files)
 
     @commands.command(aliases=["f"])
-    async def fusion(self, ctx: Context, head="?", body="?"):
+    async def fusion(self, ctx: Context, head: str = "?", body: str = "?"):
         result = self.client.fusion(head, body, ctx.lang)
         if result.succeeded:
             await self._send_embed(ctx, result, title="Fusion")
@@ -30,12 +30,28 @@ class Fusion(commands.Cog):
             body_guess = result.body.guess if result.body.failed else body
 
             cmd = f"{ctx.prefix}{ctx.invoked_with} {head_guess} {body_guess}"
-            desc = f"Did you mean: `{cmd}`\n\n[List of available Pokémon](https://infinitefusion.fandom.com/wiki/Pokédex) (up to #{self.client.MAX_ID})"
+            desc = f"Did you mean: `{cmd}`\n\n[List of available Pokémon](https://infinitefusion.fandom.com/wiki/Pokédex) (up to #{FusionClient.MAX_ID})"
             reply = await guess_prompt(ctx, desc)
 
             if reply == Reply.Yes:
                 # noinspection PyTypeChecker
                 await ctx.invoke(self.fusion, head=head_guess, body=body_guess)
+
+    @commands.command(aliases=["fc"])
+    async def fusion_custom(self, ctx: Context, head: str = "?"):
+        result = self.client.fusion(head, "?", ctx.lang, custom_only=True)
+        if result.succeeded:
+            await self._send_embed(ctx, result, title="Fusion")
+        else:
+            head_guess = result.head.guess if result.head.failed else head
+
+            cmd = f"{ctx.prefix}{ctx.invoked_with} {head_guess}"
+            desc = f"Did you mean: `{cmd}`\n\n[List of available Pokémon](https://infinitefusion.fandom.com/wiki/Pokédex) (up to #{FusionClient.MAX_ID})"
+            reply = await guess_prompt(ctx, desc)
+
+            if reply == Reply.Yes:
+                # noinspection PyTypeChecker
+                await ctx.invoke(self.fusion_custom, head=head_guess)
 
     @commands.command(aliases=["s"])
     async def swap(self, ctx: Context):
