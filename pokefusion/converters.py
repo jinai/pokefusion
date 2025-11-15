@@ -4,9 +4,6 @@ from pokefusion.context import Context
 from pokefusion.fusionapi import Language
 from pokefusion.utils import special_join
 
-# languages = " / ".join([str(lang).upper() for lang in Language])
-languages = special_join([f"`{lang}`" for lang in Language], ", ", " or ")
-
 
 class PrefixConverter(Converter):
     async def convert(self, ctx: Context, argument: str) -> str:
@@ -16,10 +13,12 @@ class PrefixConverter(Converter):
         return argument
 
 
-class LangConverter(Converter):
+class LanguageConverter(Converter):
+    LANGUAGES = special_join([f"`{lang}`" for lang in Language], ", ", " or ")
+
     async def convert(self, ctx: Context, argument: str) -> Language:
         if argument not in Language:
-            raise BadArgument(f"The language must be one of {languages}")
+            raise BadArgument(f"The language must be one of {LanguageConverter.LANGUAGES}")
         return Language(argument)
 
 
