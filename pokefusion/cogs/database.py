@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import Any, Dict, TYPE_CHECKING
 
@@ -12,15 +13,22 @@ from pokefusion.models.models import Server, Settings, User
 if TYPE_CHECKING:
     from pokefusion.bot import PokeFusion
 
+logger = logging.getLogger(__name__)
+
 
 class Database(commands.Cog, command_attrs=dict(hidden=True)):
     def __init__(self, bot: PokeFusion):
         self.bot = bot
-        Settings.get_or_create(id=1)
 
-    @staticmethod
-    def close():
-        models.close_db()
+    def cog_load(self) -> None:
+        models.database.init(self.bot.config.database.path, pragmas=self.bot.config.database.pragmas)
+        logger.info(f"Opened connection to {models.database.database}")
+        global_seed = Settings.get_or_create(id=1)[0].global_seed
+        logger.info(f"Global seed: {global_seed}")
+
+    def cog_unload(self) -> None:
+        models.database.close()
+        logger.info(f"Closed connection to {models.database.database}")
 
     @staticmethod
     def get_settings() -> Settings:

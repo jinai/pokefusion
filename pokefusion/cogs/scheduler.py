@@ -28,13 +28,17 @@ RERALL_CHANNELS = [
 class Scheduler(commands.Cog):
     def __init__(self, bot: PokeFusion) -> None:
         self.bot = bot
+
+    def cog_load(self) -> None:
+        logger.info("Scheduling initial tasks")
+        self.rerall_task.start()
         if self.bot.config.env is Environment.DEV:
             self.pull_reminder.start()
-        self.rerall_task.start()
 
     def cog_unload(self) -> None:
-        self.pull_reminder.cancel()
+        logger.info("Unscheduling initial tasks")
         self.rerall_task.cancel()
+        self.pull_reminder.cancel()
 
     @tasks.loop(time=PULL_REMINDER_TIMES)
     async def pull_reminder(self) -> None:
@@ -55,7 +59,7 @@ class Scheduler(commands.Cog):
                     embed, files = embed_factory(title="Rerall", description="All Totems have been reset!",
                                                  attachments=(avatar,), color=self.bot.main_color)
                     await channel.send(embed=embed, files=files)
-            logger.debug(f"rerall_task: new_seed={new_seed}")
+            logger.info(f"New global seed: {new_seed}")
 
 
 async def setup(bot: PokeFusion) -> None:

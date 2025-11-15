@@ -125,6 +125,7 @@ class PokeFusion(commands.Bot):
 
     async def setup_hook(self) -> None:
         for cog in self.init_cogs:
+            logger.info(f"Loading cog: {cog}")
             await self.load_extension(f"{PokeFusion.COGS_MODULE_PREFIX}.{cog}")
 
     # noinspection PyMethodMayBeStatic
@@ -137,10 +138,6 @@ class PokeFusion(commands.Bot):
         msg = ctx.message.content.replace(ctx.prefix, "", 1)
         logger.info(f"{msg} in #{ctx.channel} ({ctx.guild}) by {ctx.author}")
 
-    async def graceful_exit(self) -> None:
-        self.db.close()
-        logger.info(f"Graceful exit")
-
     async def close(self) -> None:
-        await self.graceful_exit()
+        logger.info(f"Initiating graceful exit")
         await super().close()

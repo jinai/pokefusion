@@ -21,14 +21,12 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild: Guild) -> None:
         rowid = self.bot.db.add_server(guild, self.bot.default_prefix)
-        logger.info(f"Joined {guild.name} (ID: {guild.id})")
-        logger.debug(f"Joined Server with rowid={rowid}")
+        logger.info(f"Joined {guild.name} (Guild ID: {guild.id}, Row ID: {rowid})")
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: Guild) -> None:
         rowid = self.bot.db.remove_server(guild)
-        logger.info(f"Left {guild.name} (ID: {guild.id})")
-        logger.debug(f"Left Server with rowid={rowid}")
+        logger.info(f"Left {guild.name} (Guild ID: {guild.id}, Row ID: {rowid})")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: Context, error: CommandError):

@@ -1,34 +1,23 @@
 import datetime
 import logging
 
-from peewee import BooleanField, CharField, DatabaseProxy, DateTimeField, IntegerField, Model, SqliteDatabase
+from peewee import BooleanField, CharField, DateTimeField, IntegerField, Model, SqliteDatabase
 
 from pokefusion.configmanager import DatabaseConfig
 from pokefusion.fusionapi import Language
 
 logger = logging.getLogger(__name__)
-database = DatabaseProxy()
+database = SqliteDatabase(None)
 
 
 def init_db(config: DatabaseConfig, drop_tables: bool = False):
-    open_db(config)
+    global database
+
+    database.init(config.path, pragmas=config.pragmas)
     with database:
         if drop_tables:
             database.drop_tables(MODELS)
         database.create_tables(MODELS)
-
-
-def open_db(config: DatabaseConfig):
-    global database
-    runtime_db = SqliteDatabase(config.path, pragmas=config.pragmas)
-    database.initialize(runtime_db)
-    logger.info(f"Opened connection to {database.database}")
-
-
-def close_db():
-    global database
-    database.close()
-    logger.info(f"Closed connection to {database.database}")
 
 
 class EnumField(CharField):

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import date, datetime
 
 from discord import Color, User
@@ -10,12 +11,18 @@ from pokefusion.context import Context
 from .cogutils import birthday_embed
 from ..configmanager import ConfigManager
 
+logger = logging.getLogger(__name__)
+
 
 class Birthday(commands.Cog):
     def __init__(self, bot: PokeFusion):
         self.bot = bot
         self.bot.after_invoke(self.bday_event)
+        self.birthdays = {}
+
+    def cog_load(self) -> None:
         self.birthdays = ConfigManager.read_json("birthdays.json")
+        logger.info(f"Loaded {len(self.birthdays)} birthdays")
 
     async def cog_check(self, ctx: Context) -> bool:
         return await commands.guild_only().predicate(ctx) and self.is_birthday(ctx.author)

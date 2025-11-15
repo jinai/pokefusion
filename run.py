@@ -1,5 +1,5 @@
 import logging
-import os.path
+import os
 from logging.handlers import TimedRotatingFileHandler
 from typing import Annotated
 
@@ -10,7 +10,6 @@ from discord import Intents
 from pokefusion.bot import PokeFusion
 from pokefusion.configmanager import ConfigManager
 from pokefusion.environment import Environment
-from pokefusion.models import models
 
 
 def setup_logging(env: Environment):
@@ -28,7 +27,6 @@ def setup_logging(env: Environment):
 def main(env: Annotated[Environment, typer.Option()]) -> None:
     setup_logging(env)
     config = ConfigManager.get_bot_config(env)
-    models.open_db(config.database)
     intents = Intents.default()
     intents.members = False
     intents.presences = False
