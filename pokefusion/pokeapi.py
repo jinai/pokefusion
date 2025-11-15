@@ -21,6 +21,7 @@ class PokeApiClient:
             dex_id: int = random.randint(PokeApiClient.MIN_ID, PokeApiClient.MAX_ID)
             species = await client.get_pokemon_species(dex_id)
             pokemon = await client.get_pokemon(dex_id)
+            generation = (await species.generation.fetch()).id
             type_1 = await pokemon.types[0].type.fetch()
             type_2 = await pokemon.types[1].type.fetch() if len(pokemon.types) > 1 else None
             name_fr, name_en = "", ""
@@ -44,7 +45,7 @@ class PokeApiClient:
                     if name.language.name == "fr":
                         type_2_name = name.name
 
-            poke = PokeApiResult(dex_id, name_fr, name_en, desc_fr, desc_en, type_1_name, type_2_name)
+            poke = PokeApiResult(dex_id, name_fr, name_en, desc_fr, desc_en, type_1_name, type_2_name, generation)
             return poke
 
 
@@ -59,6 +60,7 @@ class PokeApiResult:
     desc_en: list[str] = field(default_factory=list)
     type_1: str = ""
     type_2: str = ""
+    generation: int = 0
 
     def get_random_desc(self):
         desc = random.choice(self.desc_fr if self.desc_fr else self.desc_en)

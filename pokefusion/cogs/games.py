@@ -117,21 +117,24 @@ class Games(commands.Cog):
     @commands.group(invoke_without_command=True, pass_context=True)
     async def hint(self, ctx: Context):
         if ctx.channel in self.last_answers:
-            hint = self.hints_counter[ctx.channel]
+            hint_num = self.hints_counter[ctx.channel]
             answer = self.last_answers[ctx.channel]
             if isinstance(answer, Sprite):
-                message = f"Indice : `{answer.lookup.species[:hint + 1]}`"
+                message = f"Indice : `{answer.lookup.species[:hint_num + 1]}`"
             elif isinstance(answer, FusionResult):
                 head, body = answer.head, answer.body
-                message = f"Indice : `{head.species[:hint + 1]}...    {body.species[:hint + 1]}...`"
+                message = f"Indice : `{head.species[:hint_num + 1]}    {body.species[:hint_num + 1]}`"
             else:  # PokeApiResult
-                if hint < 1:
+                if hint_num == 0:
+                    message = f"Indice : `{answer.generation}G`"
+                elif hint_num == 1:
                     if not answer.type_2:
                         message = f"Indice : `{answer.type_1}`"
                     else:
                         message = f"Indice : `{answer.type_1} {PokeApiClient.REDACTED_STRING}`"
                 else:
-                    message = f"Indice : `{answer.type_1} {answer.type_2}`"
+                    types = f"{answer.type_1} {answer.type_2}".strip()
+                    message = f"Indice : `{types}`"
 
             self.hints_counter[ctx.channel] += 1
             await ctx.send(message)
