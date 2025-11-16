@@ -171,7 +171,7 @@ class BaseClient:
 class FusionClient(BaseClient):
     MIN_ID = 1
     MAX_ID = 501
-    PREVIOUS_MAX_ID = 470  # TODO: update when adding sprites
+    PREVIOUS_MAX_ID = 501  # TODO: update when adding sprites
 
     def __init__(self):
         super().__init__(ConfigManager.get_infinitedex())

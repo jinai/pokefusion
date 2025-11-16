@@ -41,9 +41,9 @@ class Meta(commands.Cog):
     async def version(self, ctx: Context):
         await ctx.send((
             "```asciidoc\n"
-            "Version   :: Sprite_Pack_112_March_2025\n"
-            "Timestamp :: 2025-05-08 19:40:00\n"
-            "Changed   :: +15531 autogen fusions / +7363 custom fusions / +232 eggs\n"
+            "Version   :: Sprite_Pack_118_September_2025\n"
+            "Timestamp :: 2025-11-16 16:17:00\n"
+            "Changed   :: +13401/-141 custom fusions\n"
             "```"
         ))
 
