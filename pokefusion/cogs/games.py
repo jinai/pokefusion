@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from discord import TextChannel
+from discord import Message, TextChannel
 from discord.ext import commands
 
 from pokefusion import utils
@@ -30,11 +30,12 @@ class Games(commands.Cog):
         self.last_answers: dict[TextChannel, Sprite | FusionResult | PokeApiResult] = {}
         self.hints_counter: defaultdict[TextChannel, int] = defaultdict(int)
 
-    @commands.group(invoke_without_command=True)
-    async def guess(self, ctx: Context, *, message: str = ""):
-        if ctx.channel not in self.last_answers:
+    @commands.Cog.listener()
+    async def on_message(self, message: Message) -> None:
+        if message.author.id == self.bot.user.id or message.channel not in self.last_answers:
             return
 
+        ctx = await self.bot.get_context(message)
         correct_answer = self.last_answers[ctx.channel]
         if isinstance(correct_answer, Sprite):
             compare = lambda x, y: x == normalize(y.lookup.species)
@@ -44,13 +45,16 @@ class Games(commands.Cog):
         else:  # PokeApiResult
             compare = lambda x, y: x == normalize(y.name_fr)
 
-        user_answer = normalize(message)
-        if compare(user_answer, correct_answer):
+        message_content = normalize(ctx.message.content)
+        if compare(message_content, correct_answer):
             del self.last_answers[ctx.channel]
             self.hints_counter.pop(ctx.channel, None)
             await ctx.tick(True)
-        else:
-            await ctx.tick(False)
+
+    @commands.group(invoke_without_command=True)
+    async def guess(self, ctx: Context):
+        await ctx.send(
+            "Available guessing games: Silhouette, Blur, Pixel, Grayscale, Edge, Box, PixelBlur, Fusion, PixelFusion, Description")
 
     @guess.command(name="giveup", aliases=["ff"])
     async def guess_giveup(self, ctx: Context):

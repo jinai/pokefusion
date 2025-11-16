@@ -109,8 +109,7 @@ def fusion_embed(ctx: Context, result: FusionResult, **kwargs) -> tuple[Embed, l
 
 
 def guess_fusion_embed(ctx: Context, result: FusionResult, filters: list[FilterType] = None,
-                       title: str = "Guess the fusion!") -> tuple[
-    Embed, list[File]]:
+                       title: str = "Guess the fusion!") -> tuple[Embed, list[File]]:
     color = Color.from_rgb(*imagelib.get_dominant_color(result.path))
     fields = (EmbedField("Head", "?"), EmbedField("Body", "?"))
 
@@ -121,7 +120,7 @@ def guess_fusion_embed(ctx: Context, result: FusionResult, filters: list[FilterT
 
     fusion = EmbedAttachment(fp=filtered, filename="guess.png", type=AttachmentType.IMAGE)
     return base_embed(ctx, title=title, color=color, fields=fields, attachments=(fusion,),
-                      footer=EmbedFooter(f"Type {ctx.prefix}guess <Pokémon> <Pokémon>"))
+                      footer=EmbedFooter("Type <Pokémon> <Pokémon>"))
 
 
 def guess_filter_embed(ctx: Context, filters: list[FilterType], sprite: Sprite, title: str = "Guess the Pokémon!") -> \
@@ -140,7 +139,7 @@ def description_embed(ctx: Context, description: str, title: str = "Guess the Po
                                  AttachmentType.THUMBNAIL)
     color = AssetManager.get_asset_color(attachment.fp)
     return base_embed(ctx, title=title, description=description, color=color, attachments=(attachment,),
-                      footer=EmbedFooter(f"Type {ctx.prefix}guess <Pokémon>"))
+                      footer=EmbedFooter("Type <Pokémon>"))
 
 
 def birthday_embed(ctx: Context, color: Color, upload_attachment: bool = True) -> tuple[Embed, list[File]]:
