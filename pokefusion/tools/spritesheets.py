@@ -6,7 +6,7 @@ from PIL import Image
 from PIL.Image import Resampling
 from tqdm import tqdm
 
-from tools.import_assets import MAX_ID
+from import_assets import MAX_ID
 
 SPRITESHEET_ROWS = 51
 SPRITESHEET_COLUMNS = 10
