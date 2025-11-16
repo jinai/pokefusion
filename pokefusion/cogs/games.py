@@ -49,7 +49,7 @@ class Games(commands.Cog):
         if compare(message_content, correct_answer):
             del self.last_answers[ctx.channel]
             self.hints_counter.pop(ctx.channel, None)
-            await ctx.tick(True)
+            await ctx.score(1)
 
     @commands.group(invoke_without_command=True)
     async def guess(self, ctx: Context):
