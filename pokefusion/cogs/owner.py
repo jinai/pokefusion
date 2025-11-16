@@ -79,7 +79,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
         await prompt.edit(embed=embed)
 
     @commands.command(aliases=["give_fr"])
-    async def give_freererolls(self, ctx: Context, target: Member = None, amount: int = 1):
+    async def give_freererolls(self, ctx: Context, amount: int = 1, target: Member = None):
         desc = f"Give free reroll(s) to **everyone**?" if target is None else f"Give free reroll(s) to **{target.display_name}**?"
         embed = Embed(description=desc, color=Color.light_grey())
         embed.set_footer(text="Type yes or no.")
