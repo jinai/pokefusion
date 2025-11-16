@@ -1,3 +1,6 @@
+import logging
+import os
+import random
 from collections import defaultdict
 
 from discord import Message, TextChannel
@@ -6,20 +9,38 @@ from discord.ext import commands
 from pokefusion import utils
 from pokefusion.bot import PokeFusion
 from pokefusion.cogs.cogutils import description_embed, guess_filter_embed, guess_fusion_embed
+from pokefusion.configmanager import ConfigManager
 from pokefusion.context import Context
-from pokefusion.fusionapi import FusionResult, Sprite
+from pokefusion.fusionapi import FusionResult, Language, Sprite
 from pokefusion.imagelib import FilterType
 from pokefusion.pokeapi import PokeApiClient, PokeApiResult
 
+logger = logging.getLogger(__name__)
+
 
 def normalize(string: str) -> str:
-    return utils.remove_extra_spaces(utils.normalize(string.lower()))
+    return utils.normalize(string, wrap=lambda s: s.lower(), remove_extra_spaces=True)
+
+
+def shuffle(word: str) -> str:
+    characters = list(word)
+    random.shuffle(characters)
+    return ''.join(characters)
 
 
 def remove_forms(name: str) -> str:
     if (index := name.find("-")) != -1:
         return name[:index]
     return name
+
+
+def load_pokemon_names() -> dict[Language, list[str]]:
+    data = {}
+    for path in ConfigManager.get_pokedex():
+        lang = Language(os.path.splitext(filename := os.path.basename(path))[0].split("_")[-1])  # pokedex_{lang}.json
+        raw = ConfigManager.read_json(filename)
+        data[lang] = [normalize(value) for key, value in raw.items() if int(key) < 899]
+    return data
 
 
 class Games(commands.Cog):
@@ -29,10 +50,20 @@ class Games(commands.Cog):
         self.sprite_client = bot.sprite_client
         self.last_answers: dict[TextChannel, Sprite | FusionResult | PokeApiResult] = {}
         self.hints_counter: defaultdict[TextChannel, int] = defaultdict(int)
+        self.last_shuffles: defaultdict[TextChannel, list[tuple[str, str]]] = defaultdict(list)
+        self._pokemon_names: dict[Language, list[str]] = {}
+
+    def cog_load(self) -> None:
+        self._pokemon_names = load_pokemon_names()
+        logger.info(f"Loaded {len(self._pokemon_names[Language.DEFAULT])} Pokémon names")
+
+    def cog_unload(self) -> None:
+        self._pokemon_names = {}
 
     @commands.Cog.listener()
     async def on_message(self, message: Message) -> None:
-        if message.author.id == self.bot.user.id or message.channel not in self.last_answers:
+        game_ongoing = message.channel in self.last_answers or message.channel in self.last_shuffles
+        if message.author.bot or not game_ongoing:
             return
 
         ctx = await self.bot.get_context(message)
@@ -195,6 +226,40 @@ class Games(commands.Cog):
             self.hints_counter.pop(ctx.channel, None)
 
             await ctx.send(message)
+
+    @commands.group(invoke_without_command=True)
+    async def shuffle(self, ctx: Context):
+        if self.last_shuffles[ctx.channel]:
+            words = utils.special_join([f"**{word[0]}**" for word in self.last_shuffles[ctx.channel]], ", ", " et ")
+            await ctx.send(f"Pokémon names to find: {words}")
+        else:
+            await ctx.send(
+                f"No Pokémon name to find, use `{ctx.prefix}shuffle new` to get one")
+
+    @shuffle.command(name="new")
+    async def shuffle_new(self, ctx: Context):
+        word = random.choice(self._pokemon_names[ctx.lang])
+        shuffled = shuffle(word).lower()
+        self.last_shuffles[ctx.channel].append((shuffled, word))
+        await ctx.send(f"Find the Pokémon name: **{shuffled}**")
+
+    @shuffle.command(name="giveup", aliases=["ff"])
+    async def shuffle_giveup(self, ctx: Context):
+        if ctx.channel in self.last_shuffles:
+            solution = self.last_shuffles[ctx.channel][-1]  # last solution
+            message = f"The last Pokémon name was: **{solution}**"
+
+            self.last_shuffles[ctx.channel].remove(solution)
+            await ctx.send(message)
+
+    @commands.is_owner()
+    @shuffle.command(name="debug")
+    async def shuffle_debug(self, ctx: Context):
+        output = f"```\n#{ctx.channel.name}:\n"
+        for solution in self.last_shuffles[ctx.channel]:
+            output += f"\t{solution}\n"
+        output += "```"
+        await ctx.send(output)
 
 
 async def setup(bot: PokeFusion) -> None:

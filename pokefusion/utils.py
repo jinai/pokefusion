@@ -55,8 +55,11 @@ def no(s: str) -> bool:
     return s.lower() in ("n", "no", "non")
 
 
-def normalize(text: str, wrap: Callable[[str], str] = lambda s: s.title()) -> str:
-    return unidecode.unidecode(wrap(text))
+def normalize(text: str, wrap: Callable[[str], str] = lambda s: s.title(), remove_extra_spaces: bool = False) -> str:
+    normalized = unidecode.unidecode(wrap(text))
+    if remove_extra_spaces:
+        normalized = " ".join(normalized.split())
+    return normalized
 
 
 def base64_to_file(data: str) -> io.BytesIO:
@@ -73,10 +76,6 @@ def replace_all(text: str, dic: dict[str, str]) -> str:
     for i, j in dic.items():
         text = text.replace(i, j)
     return text
-
-
-def remove_extra_spaces(text: str) -> str:
-    return " ".join(text.split())
 
 
 def special_join(sequence: Sequence[Any], main_join: str, last_join: str) -> str:
