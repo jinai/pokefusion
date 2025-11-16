@@ -71,7 +71,7 @@ class Games(commands.Cog):
         if isinstance(correct_answer, Sprite):
             compare = lambda x, y: x == normalize(y.lookup.species)
         elif isinstance(correct_answer, FusionResult):
-            compare = lambda x, y: set([remove_forms(p) for p in x.split(" ")]) == {
+            compare = lambda x, y: set([remove_forms(p) for p in x.split(" ", 1)]) == {
                 remove_forms(normalize(y.head.species)), remove_forms(normalize(y.body.species))}
         else:  # PokeApiResult
             compare = lambda x, y: x == normalize(y.name_fr)
@@ -181,21 +181,21 @@ class Games(commands.Cog):
             hint_num = self.hints_counter[ctx.channel]
             answer = self.last_answers[ctx.channel]
             if isinstance(answer, Sprite):
-                message = f"Indice : `{answer.lookup.species[:hint_num + 1]}`"
+                message = f"Hint: `{answer.lookup.species[:hint_num + 1]}`"
             elif isinstance(answer, FusionResult):
                 head, body = answer.head, answer.body
-                message = f"Indice : `{head.species[:hint_num + 1]}    {body.species[:hint_num + 1]}`"
+                message = f"Hint: `{head.species[:hint_num + 1]}    {body.species[:hint_num + 1]}`"
             else:  # PokeApiResult
                 if hint_num == 0:
-                    message = f"Indice : `{answer.generation}G`"
+                    message = f"Hint: `{answer.generation}G`"
                 elif hint_num == 1:
                     if not answer.type_2:
-                        message = f"Indice : `{answer.type_1}`"
+                        message = f"Hint: `{answer.type_1}`"
                     else:
-                        message = f"Indice : `{answer.type_1} {PokeApiClient.REDACTED_STRING}`"
+                        message = f"Hint: `{answer.type_1} {PokeApiClient.REDACTED_STRING}`"
                 else:
                     types = f"{answer.type_1} {answer.type_2}".strip()
-                    message = f"Indice : `{types}`"
+                    message = f"Hint: `{types}`"
 
             self.hints_counter[ctx.channel] += 1
             await ctx.send(message)
@@ -215,12 +215,12 @@ class Games(commands.Cog):
         if ctx.channel in self.last_answers:
             answer = self.last_answers[ctx.channel]
             if isinstance(answer, Sprite):
-                message = f"La réponse était : **{answer.lookup.species}**"
+                message = f"The answer was: **{answer.lookup.species}**"
             elif isinstance(answer, FusionResult):
                 head, body = answer.head, answer.body
-                message = f"La réponse était : **{head.species} {body.species}**"
+                message = f"The answer was: **{head.species} {body.species}**"
             else:  # PokeApiResult
-                message = f"La réponse était : **{answer.name_fr}**"
+                message = f"The answer was: **{answer.name_fr}**"
 
             del self.last_answers[ctx.channel]
             self.hints_counter.pop(ctx.channel, None)

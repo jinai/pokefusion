@@ -16,12 +16,13 @@ PULL_REMINDER_MINUTE = 38  # minute on the clock (e.g. 10:38)
 PULL_REMINDER_TIMES = [time(hour=h % 24, minute=PULL_REMINDER_MINUTE, second=1, tzinfo=tz) for h in range(9, 27, 3)]
 
 RERALL_DAY = WeekDay.THURSDAY
-RERALL_TIME = time(hour=0, minute=0, second=5, tzinfo=tz)
+RERALL_TIME = time(hour=0, minute=5, second=0, tzinfo=tz)
 RERALL_CHANNELS = [
     695415114203136031,  # BTA
     367074976827965450,  # Radio Eco
     357961752513871874,  # Weeaboo Lando
     1374426505387704370,  # Jinai
+    1398068543253123326,  # Serong
 ]
 
 
@@ -51,6 +52,7 @@ class Scheduler(commands.Cog):
         if WeekDay(date.today().isoweekday()) is RERALL_DAY:
             new_seed = self.bot.db.get_settings().global_seed + 1
             self.bot.db.update_settings(params={"global_seed": new_seed, "updated_at": datetime.now()})
+            logger.info(f"New global seed: {new_seed}")
             avatar = EmbedAttachment(AssetManager.get_avatar_path(self.bot.config.env), "avatar.png",
                                      AttachmentType.THUMBNAIL)
             for channel_id in RERALL_CHANNELS:
@@ -59,7 +61,6 @@ class Scheduler(commands.Cog):
                     embed, files = embed_factory(title="Rerall", description="All Totems have been reset!",
                                                  attachments=(avatar,), color=self.bot.main_color)
                     await channel.send(embed=embed, files=files)
-            logger.info(f"New global seed: {new_seed}")
 
 
 async def setup(bot: PokeFusion) -> None:
