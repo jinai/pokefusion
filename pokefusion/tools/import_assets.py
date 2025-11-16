@@ -1,142 +1,133 @@
 import json
 import os
 import re
-import shutil
+import subprocess
+import tempfile
 import time
+import zipfile
 from collections import defaultdict
 from collections.abc import Generator
-from io import BytesIO
+from pathlib import Path
+from typing import Iterable
 
-from PIL import Image
+from colorama import Fore, init
+from tqdm import tqdm
 
-from pokefusion import imagelib
+import spritesheets
 
-AUTOGEN_SPRITE_PATTERN = re.compile(r"[0-9]+\.png")
-CUSTOM_SPRITE_PATTERN = re.compile(r"[0-9]+\.[0-9]+\.png")
-SPRITESHEET_ROWS = 51
-SPRITESHEET_COLUMNS = 10
-SPRITE_WIDTH = 96
-SPRITE_HEIGHT = 96
+init(autoreset=True)
+
+ZIP_FUSION_PATTERN = re.compile(r"CustomBattlers/\d+\.\d+\.png")
+ZIP_EGG_PATTERN = re.compile(r"Other/Eggs/(?!000)\d+.png")
+SPRITE_PATTERN = re.compile(r"\d+\.\d+\.png")
 MAX_ID = 501
 
 
-def regex_filter(sequence: list[str], pattern: re.Pattern[str]) -> Generator[str, None, None]:
-    for elem in sequence:
-        if pattern.match(elem):
-            yield elem
-
-
-def split_spritesheet(path: str, rows: int, columns: int, height: int, width: int) -> Generator[BytesIO, None, None]:
-    with Image.open(path) as im:
-        for row in range(rows):
-            for col in range(columns):
-                x = col * width
-                y = row * height
-                box = (x, y, x + width, y + height)
-                sprite = im.crop(box)
-                buffer = BytesIO()
-                sprite.save(buffer, format="png")
-                yield buffer
-
-
-def get_fusions(folder: str) -> dict[int, list[int]]:
-    fusions = defaultdict(list)
-    for root, directories, filenames in os.walk(folder):
-        for filename in sorted(regex_filter(filenames, CUSTOM_SPRITE_PATTERN)):
-            head, body = os.path.splitext(filename)[0].split(".", 1)
-            fusions[int(head)].append(int(body))
-
-    return {key: sorted(val) for key, val in sorted(fusions.items(), key=lambda item: item[0])}
-
-
-def get_fusions_diff(old: dict[int, list[int]], new: dict[int, list[int]]) -> dict[int, list[int]]:
-    diff = defaultdict(list)
-
-    for head in new:
-        if head in old:
-            for body in new[head]:
-                if body not in old[head]:
-                    diff[head].append(body)
-        else:
-            diff[head] = new[head][:]
-
-    return diff
-
-
-def import_autogen_sprites(verbose: bool = True) -> None:
+def import_autogen_sprites() -> None:
     start_time = time.perf_counter()
-    input_folder = r"input\Full Sprite pack 1-114 (May 2025)\spritesheets\spritesheets_autogen"
-    output_folder = os.path.join("output", "fusions", "autogen")
-    sprite_count = 0
-    file_count = 0
-    existing_folders = set()
 
-    for root, directories, filenames in os.walk(input_folder):
-        file_count += len(filenames)
-        for filename in regex_filter(filenames, AUTOGEN_SPRITE_PATTERN):
-            path = os.path.join(root, filename)
-            head = os.path.splitext(filename)[0]
-            folder = os.path.join(output_folder, head)
-            if head not in existing_folders:
-                os.makedirs(folder, exist_ok=True)
-                existing_folders.add(head)
-            for body, buffer in enumerate(
-                    split_spritesheet(path, SPRITESHEET_ROWS, SPRITESHEET_COLUMNS, SPRITE_HEIGHT, SPRITE_WIDTH)):
-                if body == 0 or body > MAX_ID:  # unused sprites
-                    continue
-                sprite_count += 1
-                sprite_path = os.path.join(folder, f"{head}.{body}.png")
+    print(Fore.CYAN + "Downloading autogen spritesheets...")
+    output_dir = os.path.join("output", "fusions", "autogen")
+    git_folder = Path("Graphics", "Battlers", "spritesheets_autogen")
 
-                # Autogen sprites have a 1:1 pixel ratio whereas custom sprites have a 3:1 pixel ratio
-                zoomed = imagelib.zoom_image(buffer, factor=3)
+    tempdir = tempfile.TemporaryDirectory(prefix="pokefusion_")
+    commands = [
+        f"git clone -n --depth=1 --filter=tree:0 -b releases --single-branch https://github.com/infinitefusion/infinitefusion-e18.git \"{tempdir.name}\"",
+        f"git sparse-checkout set --no-cone /{git_folder.as_posix()}",
+        "git checkout",
+    ]
+    for command in commands:
+        subprocess.run(command, shell=True, cwd=tempdir.name)
+    input_dir = os.path.join(tempdir.name, git_folder)
+    sheet_count = len(next(os.walk(input_dir))[2])
+    elapsed_time = time.perf_counter() - start_time
+    print(f"Downloaded {sheet_count} autogen spritesheets in {elapsed_time:.2f} seconds")
+    if sheet_count > MAX_ID:
+        print(
+            Fore.RED + f"\nFound more than {MAX_ID} autogen spritesheets! Check if new autogen sprites were released, and adapt MAX_ID accordingly\n")
 
-                with open(sprite_path, "wb") as f:
-                    f.write(zoomed.getvalue())
-
-                if verbose:
-                    print(f"[{str(sprite_count).zfill(6)}/{head.zfill(6)}] {sprite_path}")
+    start_time = time.perf_counter()
+    spritesheets.process_dir(input_dir, output_dir)
+    tempdir.cleanup()
+    sprite_count = sum(len(filenames) for _, _, filenames in os.walk(output_dir))
 
     elapsed_time = time.perf_counter() - start_time
-    print(f"Processed {sprite_count} autogen sprites (out of {file_count} spritesheets) in {elapsed_time:.2f} seconds")
+    print(f"Processed {sprite_count} autogen sprites (from {sheet_count} spritesheets) in {elapsed_time:.2f} seconds")
 
 
-def import_custom_sprites(verbose: bool = True) -> None:
+def import_custom_sprites(pack_name: str) -> None:
     start_time = time.perf_counter()
-    input_folder = r"D:\infinitefusion\Full Sprite pack 1-111 (February 2025)\CustomBattlers"
-    output_folder = os.path.join("output", "fusions", "custom")
+
+    print(Fore.CYAN + "Importing custom sprites...")
+    input_file = os.path.join("input", pack_name)
+    if not zipfile.is_zipfile(input_file):
+        print(f"Invalid ZIP: {input_file}")
+        return
+
+    output_dir = os.path.join("output", "fusions", "custom")
     sprite_count = 0
     file_count = 0
     existing_folders = set()
-
-    for root, directories, filenames in os.walk(input_folder):
-        file_count += len(filenames)
-        for filename in regex_filter(filenames, CUSTOM_SPRITE_PATTERN):
-            head, body = os.path.splitext(filename)[0].split(".", 1)
-            if int(head) > MAX_ID or int(body) > MAX_ID:
+    with zipfile.ZipFile(input_file, "r") as zipf:
+        desc = f"Importing sprites from ZIP file"
+        for filename in regex_filter(tqdm(zipf.namelist(), desc=desc), ZIP_FUSION_PATTERN):
+            file_count += 1
+            head, body = map(int, os.path.splitext(os.path.basename(filename))[0].split(".", 1))
+            if head > MAX_ID or body > MAX_ID:
                 continue
             sprite_count += 1
-            sprite_path = os.path.join(root, filename)
-            folder = os.path.join(output_folder, head)
+            sprite_output_dir = os.path.join(output_dir, str(head))
             if head not in existing_folders:
-                os.makedirs(folder, exist_ok=True)
+                os.makedirs(sprite_output_dir, exist_ok=True)
                 existing_folders.add(head)
-            shutil.copy2(sprite_path, folder)
-            if verbose:
-                print(f"[{str(sprite_count).zfill(6)}/{str(file_count).zfill(6)}] {sprite_path}")
+            with open(os.path.join(sprite_output_dir, f"{head}.{body}.png"), "wb") as sprite_file:
+                sprite_file.write(zipf.read(filename))
 
     elapsed_time = time.perf_counter() - start_time
-    print(f"Processed {sprite_count} custom sprites (out of {file_count} files) in {elapsed_time:.2f} seconds")
+    print(
+        f"Processed {sprite_count} custom sprites (discarded {file_count - sprite_count} sprites > MAX_ID) in {elapsed_time:.2f} seconds")
+
+
+def import_eggs(pack_name: str) -> None:
+    start_time = time.perf_counter()
+
+    print(Fore.CYAN + "Importing eggs...")
+    input_file = os.path.join("input", pack_name)
+    if not zipfile.is_zipfile(input_file):
+        print(f"Invalid ZIP: {input_file}")
+        return
+
+    output_dir = os.path.join("output", "eggs")
+    os.makedirs(output_dir, exist_ok=True)
+    egg_count = 0
+    file_count = 0
+    with zipfile.ZipFile(input_file, "r") as zipf:
+        desc = f"Importing eggs from ZIP file"
+        for filename in regex_filter(tqdm(zipf.namelist(), desc=desc), ZIP_EGG_PATTERN):
+            file_count += 1
+            dex_id = int(os.path.splitext(os.path.basename(filename))[0])
+            if dex_id < 1 or dex_id > MAX_ID:
+                continue
+            egg_count += 1
+            with open(os.path.join(output_dir, f"{dex_id}.png"), "wb") as egg_file:
+                egg_file.write(zipf.read(filename))
+
+    elapsed_time = time.perf_counter() - start_time
+    print(
+        f"Processed {egg_count} eggs (discarded {file_count - egg_count} eggs > MAX_ID) in {elapsed_time:.2f} seconds")
 
 
 def save_diff() -> None:
     start_time = time.perf_counter()
 
-    autogen_folder_old = r"D:\Discord\PokeFusion\pokefusion\assets\fusions\autogen"
-    autogen_folder_new = r"D:\Discord\PokeFusion\pokefusion\tools\fusions\autogen"
-    custom_folder_old = r"D:\Discord\PokeFusion\pokefusion\assets\fusions\custom"
-    custom_folder_new = r"D:\Discord\PokeFusion\pokefusion\tools\fusions\custom"
+    print(Fore.CYAN + "Saving diffs...")
 
-    base_output = os.path.join("output")
+    autogen_folder_old = os.path.join("..", "assets", "fusions", "autogen")
+    autogen_folder_new = os.path.join("output", "fusions", "autogen")
+    custom_folder_old = os.path.join("..", "assets", "fusions", "custom")
+    custom_folder_new = os.path.join("output", "fusions", "custom")
+
+    base_output = "output"
     custom_fusions_output = os.path.join(base_output, "custom_fusions.json")
     autogen_diff_added_output = os.path.join(base_output, "autogen_diff_added.json")
     autogen_diff_removed_output = os.path.join(base_output, "autogen_diff_removed.json")
@@ -181,15 +172,50 @@ def save_diff() -> None:
         f"Saved diffs for +{autogen_diff_added_count}/-{autogen_diff_removed_count} autogen and +{custom_diff_added_count}/-{custom_diff_removed_count} custom fusions in {elapsed_time:.2f} seconds")
 
 
+def regex_filter(sequence: Iterable[str], pattern: re.Pattern[str]) -> Generator[str, None, None]:
+    for elem in sequence:
+        if pattern.match(elem):
+            yield elem
+
+
+def get_fusions(folder: str) -> dict[int, list[int]]:
+    fusions = defaultdict(list)
+    for root, directories, filenames in os.walk(folder):
+        for filename in sorted(regex_filter(filenames, SPRITE_PATTERN)):
+            head, body = os.path.splitext(filename)[0].split(".", 1)
+            fusions[int(head)].append(int(body))
+
+    return {key: sorted(val) for key, val in sorted(fusions.items(), key=lambda item: item[0])}
+
+
+def get_fusions_diff(old: dict[int, list[int]], new: dict[int, list[int]]) -> dict[int, list[int]]:
+    diff = defaultdict(list)
+
+    for head in new:
+        if head in old:
+            for body in new[head]:
+                if body not in old[head]:
+                    diff[head].append(body)
+        else:
+            diff[head] = new[head][:]
+
+    return diff
+
+
 def run():
     start_time = time.perf_counter()
-    import_autogen_sprites(verbose=False)
-    import_custom_sprites(verbose=False)
-    save_diff()
-    elapsed_time = time.perf_counter() - start_time
-    print(f"Total runtime is {elapsed_time:.2f} seconds")
+    pack_name = "Full Sprite pack 1-118 (September 2025).zip"
+    import_autogen_sprites()
     print()
-    print("Don't forget to update fusionapi.PREVIOUS_MAX_ID if necessary (new sprites)")
+    import_custom_sprites(pack_name=pack_name)
+    print()
+    import_eggs(pack_name=pack_name)
+    print()
+    save_diff()
+    print()
+    elapsed_time = time.perf_counter() - start_time
+    print(Fore.CYAN + f"Total runtime is {elapsed_time:.2f} seconds")
+    print(Fore.MAGENTA + "Don't forget to update fusionapi.PREVIOUS_MAX_ID (even if no new base sprites)")
 
 
 if __name__ == "__main__":
