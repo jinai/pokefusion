@@ -11,9 +11,12 @@ from discord.ext import commands
 from discord.ext.commands import CommandError, NotOwner
 
 from pokefusion import utils
+from pokefusion.assetmanager import AssetManager
 from pokefusion.bot import PokeFusion
 from pokefusion.context import Context, Reply
 from pokefusion.converters import ModuleConverter
+from .cogutils import AttachmentType, EmbedAttachment, embed_factory
+from .scheduler import NOTIF_CHANNELS
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +97,48 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
             embed.set_footer(text=f"{ctx.author} replied yes.")
             self.bot.db.update_freererolls(target, amount)
 
+        await prompt.edit(embed=embed)
+
+    @commands.command()
+    async def notify_update(self, ctx: Context, free_rerolls: int = 1) -> None:
+        warning = "The following embed will be sent to **all** notification subscribers, are you sure?"
+        embed = Embed(description=warning, color=ctx.bot.main_color)
+        embed.set_footer(text="Type yes or no.")
+        prompt = await ctx.send(embed=embed)
+        embed.set_footer(text=f"{ctx.author} replied yes.")
+
+        title = "New Update"
+        description = (
+            "The latest sprite pack was imported:"
+            ""
+            "```asciidoc\n"
+            "Sprite pack :: 118_September_2025\n"
+            "Timestamp   :: 2025-11-16 16:17:00\n"
+            "Changes     :: +13401/-141 custom fusions\n"
+            "```\n"
+        )
+        if free_rerolls > 0:
+            plural = "s" if free_rerolls > 1 else ""
+            description += f"⚠️ All Totems had to be reset️. To compensate, everyone got **+{free_rerolls} free reroll{plural}**! Check how many you have with `{ctx.prefix}fru`"
+        avatar = EmbedAttachment(AssetManager.get_avatar_path(self.bot.config.env), "avatar.png",
+                                 AttachmentType.THUMBNAIL)
+        preview, files = embed_factory(title=title, description=description, attachments=(avatar,),
+                                       color=ctx.bot.main_color)
+        await ctx.send(embed=preview, files=files)
+
+        reply = await ctx.prompt(timeout=20)
+        if reply == Reply.NoReply:
+            embed.set_footer(text=f"{ctx.author} didn't reply.")
+        elif reply == Reply.No:
+            embed.set_footer(text=f"{ctx.author} replied no.")
+        else:
+            embed.set_footer(text=f"{ctx.author} replied yes.")
+            for channel_id in NOTIF_CHANNELS:
+                channel = self.bot.get_channel(channel_id)
+                if channel:
+                    embed, files = embed_factory(title=title, description=description, attachments=(avatar,),
+                                                 color=ctx.bot.main_color)
+                    await channel.send(embed=embed, files=files)
         await prompt.edit(embed=embed)
 
     @commands.command()
