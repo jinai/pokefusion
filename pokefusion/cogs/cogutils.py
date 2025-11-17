@@ -151,7 +151,7 @@ def birthday_embed(ctx: Context, color: Color, upload_attachment: bool = True) -
         attachments = ()
     footer = EmbedFooter(f"Happy birthday {ctx.author.display_name}!")
     return base_embed(ctx, title="Birthday event",
-                      description=f"Use {ctx.prefix}bday for free rerolls during your birthday!",
+                      description=f"Use `{ctx.prefix}bday` for free rerolls during your birthday!",
                       footer=footer, color=color, attachments=attachments)
 
 
@@ -164,7 +164,7 @@ def christmas_embed(ctx: Context, color: Color, upload_attachment: bool = True) 
         attachments = ()
     footer = EmbedFooter(f"Happy Holidays!")
     return base_embed(ctx, title="Christmas event",
-                      description=f"Use {ctx.prefix}kdo for free rerolls until January 1!",
+                      description=f"Use `{ctx.prefix}kdo` for free rerolls until January 1!",
                       footer=footer, color=color, attachments=attachments)
 
 

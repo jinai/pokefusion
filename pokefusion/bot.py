@@ -135,8 +135,7 @@ class PokeFusion(commands.Bot):
 
     @staticmethod
     async def log_command(ctx: Context) -> None:
-        msg = ctx.message.content.replace(ctx.prefix, "", 1)
-        logger.info(f"{msg} in #{ctx.channel} ({ctx.guild}) by {ctx.author}")
+        logger.info(f"{ctx.message.content} in #{ctx.channel} ({ctx.guild}) by {ctx.author}")
 
     async def close(self) -> None:
         logger.info(f"Initiating graceful exit")

@@ -6,8 +6,8 @@ from discord.ext import commands, tasks
 
 from pokefusion.assetmanager import AssetManager
 from pokefusion.bot import PokeFusion
-from pokefusion.cogs.cogutils import AttachmentType, EmbedAttachment, WeekDay, embed_factory
 from pokefusion.environment import Environment
+from .cogutils import AttachmentType, EmbedAttachment, WeekDay, embed_factory
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ PULL_REMINDER_TIMES = [time(hour=h % 24, minute=PULL_REMINDER_MINUTE, second=1, 
 
 RERALL_DAY = WeekDay.THURSDAY
 RERALL_TIME = time(hour=0, minute=5, second=0, tzinfo=tz)
-RERALL_CHANNELS = [
+NOTIF_CHANNELS = [
     695415114203136031,  # BTA
     367074976827965450,  # Radio Eco
     357961752513871874,  # Weeaboo Lando
@@ -55,7 +55,7 @@ class Scheduler(commands.Cog):
             logger.info(f"New global seed: {new_seed}")
             avatar = EmbedAttachment(AssetManager.get_avatar_path(self.bot.config.env), "avatar.png",
                                      AttachmentType.THUMBNAIL)
-            for channel_id in RERALL_CHANNELS:
+            for channel_id in NOTIF_CHANNELS:
                 channel = self.bot.get_channel(channel_id)
                 if channel:
                     embed, files = embed_factory(title="Rerall", description="All Totems have been reset!",

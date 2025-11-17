@@ -76,7 +76,7 @@ class Fusion(commands.Cog):
         result = self.client.totem(seed, ctx.lang)
         await self._send_embed(ctx, result, title=f"Totem - {user.display_name}")
 
-    @commands.command(aliases=["fr", "cadeau"])
+    @commands.command(aliases=["fr"])
     async def freereroll(self, ctx: Context):
         user = ctx.author
         user_db = self.bot.db.get_or_create_user(user)
@@ -84,7 +84,7 @@ class Fusion(commands.Cog):
         if user_db.free_rerolls < 1:
             await ctx.send("You don't have enough free rerolls.")
         else:
-            desc = f"Reroll {user.display_name}'s totem?"
+            desc = f"Reroll your totem?"
             embed = Embed(description=desc, color=Color.light_grey())
             embed.set_footer(text="Type yes or no.")
             prompt = await ctx.send(embed=embed)
@@ -109,7 +109,7 @@ class Fusion(commands.Cog):
     async def fru(self, ctx: Context, user: Member = None):
         user = user or ctx.author
         user_db = self.bot.db.get_or_create_user(user)
-        msg = f"You have {user_db.free_rerolls} free reroll(s)." if ctx.author.id == user.id else f"{user.display_name} has {user_db.free_rerolls} free rerolls."
+        msg = f"You have {user_db.free_rerolls} free reroll(s). Type `{ctx.prefix}fr` to use it." if ctx.author.id == user.id else f"{user.display_name} has {user_db.free_rerolls} free rerolls."
         await ctx.send(msg)
 
 

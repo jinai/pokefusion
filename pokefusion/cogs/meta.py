@@ -6,6 +6,7 @@ from discord.utils import oauth_url
 
 from pokefusion.bot import PokeFusion
 from pokefusion.context import Context
+from .cogutils import base_embed
 
 
 class Meta(commands.Cog):
@@ -39,13 +40,14 @@ class Meta(commands.Cog):
 
     @commands.command(aliases=["ver", "v"])
     async def version(self, ctx: Context):
-        await ctx.send((
+        embed, _ = base_embed(ctx, description=(
             "```asciidoc\n"
-            "Version   :: Sprite_Pack_118_September_2025\n"
-            "Timestamp :: 2025-11-16 16:17:00\n"
-            "Changed   :: +13401/-141 custom fusions\n"
+            "Sprite pack :: 118_September_2025\n"
+            "Timestamp   :: 2025-11-16 16:17:00\n"
+            "Changes     :: +13401/-141 custom fusions\n"
             "```"
         ))
+        await ctx.send(embed=embed)
 
 
 async def setup(bot: PokeFusion) -> None:

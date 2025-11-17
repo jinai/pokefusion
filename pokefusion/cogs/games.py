@@ -8,12 +8,12 @@ from discord.ext import commands
 
 from pokefusion import utils
 from pokefusion.bot import PokeFusion
-from pokefusion.cogs.cogutils import description_embed, guess_filter_embed, guess_fusion_embed
 from pokefusion.configmanager import ConfigManager
 from pokefusion.context import Context
 from pokefusion.fusionapi import FusionResult, Language, Sprite
 from pokefusion.imagelib import FilterType
 from pokefusion.pokeapi import PokeApiClient, PokeApiResult
+from .cogutils import description_embed, guess_filter_embed, guess_fusion_embed
 
 logger = logging.getLogger(__name__)
 
