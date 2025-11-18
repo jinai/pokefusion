@@ -2,7 +2,9 @@ from enum import Enum, auto
 from io import BytesIO
 from typing import BinaryIO
 
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFile, ImageFilter
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 type RGB = tuple[int, int, int]
 type RGBA = tuple[int, int, int, int]
