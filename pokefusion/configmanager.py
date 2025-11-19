@@ -6,7 +6,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Self
 
-from pokefusion.environment import Environment
+from .environment import Environment
 
 type JsonDict = dict[str, Any]
 

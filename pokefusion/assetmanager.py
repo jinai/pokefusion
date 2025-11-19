@@ -2,8 +2,8 @@ import os
 
 from discord import Color
 
-from pokefusion import imagelib
-from pokefusion.environment import Environment
+from . import imagelib
+from .environment import Environment
 
 
 class AssetManager:

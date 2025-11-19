@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 import aiopoke
 
-from pokefusion import utils
+from . import utils
 
 
 def get_names(base_name) -> tuple[str, ...]:
