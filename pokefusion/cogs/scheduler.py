@@ -11,7 +11,7 @@ from .cogutils import AttachmentType, EmbedAttachment, WeekDay, embed_factory
 
 logger = logging.getLogger(__name__)
 
-tz = ZoneInfo("Europe/Brussels")
+tz = ZoneInfo("CET")
 PULL_REMINDER_MINUTE = 38  # minute on the clock (e.g. 10:38)
 PULL_REMINDER_TIMES = [time(hour=h % 24, minute=PULL_REMINDER_MINUTE, second=1, tzinfo=tz) for h in range(9, 27, 3)]
 
