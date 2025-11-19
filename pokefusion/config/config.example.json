@@ -23,5 +23,6 @@
         }
     },
     "maintenance": false,
-    "block_dms": true
+    "block_dms": true,
+    "main_color": "#FFFFFF"
 }

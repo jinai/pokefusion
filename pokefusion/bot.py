@@ -6,8 +6,7 @@ from collections.abc import Awaitable, Callable, Sequence
 from datetime import datetime
 from typing import Any
 
-import discord
-from discord import Interaction, Message, User
+from discord import Color, Interaction, Message, User
 from discord.ext import commands
 from discord.ext.commands import CommandError
 
@@ -47,7 +46,7 @@ class PokeFusion(commands.Bot):
         self.block_dms = config.block_dms
         self.fusion_client: FusionClient = FusionClient()
         self.sprite_client: SpriteClient = SpriteClient()
-        self._main_color: discord.Color | None = None
+        self._main_color: Color | None = None
         self._before_invokes: list[Callable[[Context], Awaitable[Any]]] = []
         self._after_invokes: list[Callable[[Context], Awaitable[Any]]] = []
         self.after_invoke: Callable[Callable[[Context], Awaitable[Any]], None] = lambda _: None
@@ -112,12 +111,15 @@ class PokeFusion(commands.Bot):
         return self.get_cog("Database")
 
     @property
-    def main_color(self) -> discord.Color:
+    def main_color(self) -> Color:
         if self._main_color is None:
             try:
-                self._main_color = AssetManager.get_asset_color(AssetManager.get_avatar_path(self.config.env))
-            except OSError:
-                self._main_color = discord.Color.light_grey()
+                self._main_color = Color.from_str(self.config.main_color)
+            except ValueError:
+                try:
+                    self._main_color = AssetManager.get_asset_color(AssetManager.get_avatar_path(self.config.env))
+                except OSError:
+                    self._main_color = Color.light_grey()
         return self._main_color
 
     async def get_context(self, origin: Message | Interaction, /, *, cls=Context) -> Context:

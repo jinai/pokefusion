@@ -44,6 +44,7 @@ class BotConfig:
     database: DatabaseConfig
     maintenance: bool
     block_dms: bool
+    main_color: str
 
     @classmethod
     def from_dict(cls, obj: JsonDict, env: Environment) -> Self:
@@ -54,8 +55,10 @@ class BotConfig:
         _database = DatabaseConfig.from_dict(obj.get("database"))
         _maintenance = obj.get("maintenance")
         _block_dms = obj.get("block_dms")
+        _main_color = obj.get("main_color")
 
-        return cls(env, _owner_id, _default_prefix, _token, _init_cogs, _database, _maintenance, _block_dms)
+        return cls(env, _owner_id, _default_prefix, _token, _init_cogs, _database, _maintenance, _block_dms,
+                   _main_color)
 
 
 @dataclass
