@@ -185,7 +185,7 @@ class Games(commands.Cog):
         embed, files = description_embed(ctx, result.get_random_desc())
         await ctx.send(embed=embed, files=files)
 
-    @commands.command()
+    @commands.command(aliases=["h"])
     async def hint(self, ctx: Context):
         if ctx.channel in self.last_answers:
             hint_num = self.hints_counter[ctx.channel]
