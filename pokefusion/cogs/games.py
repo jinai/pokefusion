@@ -96,7 +96,7 @@ class Games(commands.Cog):
     @commands.group(invoke_without_command=True)
     async def guess(self, ctx: Context):
         await ctx.send(
-            "Available guessing games: Silhouette, Blur, Pixel, Grayscale, Edge, Box, PixelBlur, Fusion, PixelFusion, Description")
+            "Available guessing games: Silhouette, Blur, Pixel, Grayscale, Edge, Box, PixelBlur, Fusion, PixelFusion, FusionBox and Description")
 
     @guess.command(name="giveup", aliases=["ff"])
     async def guess_giveup(self, ctx: Context):
