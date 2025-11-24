@@ -62,25 +62,35 @@ class Games(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: Message) -> None:
-        game_ongoing = message.channel in self.last_answers or message.channel in self.last_shuffles
-        if message.author.bot or not game_ongoing:
+        channel = message.channel
+        if message.author.bot or not (channel in self.last_answers or channel in self.last_shuffles):
             return
 
         ctx = await self.bot.get_context(message)
-        correct_answer = self.last_answers[ctx.channel]
-        if isinstance(correct_answer, Sprite):
-            compare = lambda x, y: x == normalize(y.lookup.species)
-        elif isinstance(correct_answer, FusionResult):
-            compare = lambda x, y: set([remove_forms(p) for p in x.split(" ", 1)]) == {
-                remove_forms(normalize(y.head.species)), remove_forms(normalize(y.body.species))}
-        else:  # PokeApiResult
-            compare = lambda x, y: x == normalize(y.name_fr)
-
         message_content = normalize(ctx.message.content)
-        if compare(message_content, correct_answer):
-            del self.last_answers[ctx.channel]
-            self.hints_counter.pop(ctx.channel, None)
-            await ctx.score(1)
+
+        if channel in self.last_shuffles:
+            for index in range(len(self.last_shuffles[channel]) - 1, -1, -1):
+                word = self.last_shuffles[channel][index]
+                if normalize(word[1]) in message_content:
+                    del self.last_shuffles[channel][index]
+                    await ctx.score(rank=1)
+                    await ctx.send(f"Pokémon name found: **{word[0]}** -> **{word[1]}**")
+
+        if channel in self.last_answers:
+            answer = self.last_answers[channel]
+            if isinstance(answer, Sprite):
+                compare = lambda x, y: x == normalize(y.lookup.species)
+            elif isinstance(answer, FusionResult):
+                compare = lambda x, y: set([remove_forms(p) for p in x.split(" ", 1)]) == {
+                    remove_forms(normalize(y.head.species)), remove_forms(normalize(y.body.species))}
+            else:  # PokeApiResult
+                compare = lambda x, y: x == normalize(y.name_fr)
+
+            if compare(message_content, answer):
+                del self.last_answers[channel]
+                self.hints_counter.pop(channel, None)
+                await ctx.score(1)
 
     @commands.group(invoke_without_command=True)
     async def guess(self, ctx: Context):
