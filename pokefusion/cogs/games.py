@@ -171,6 +171,13 @@ class Games(commands.Cog):
         embed, files = guess_fusion_embed(ctx, result, filters=[FilterType.PIXELATE])
         await ctx.send(embed=embed, files=files)
 
+    @guess.command(name="fb")
+    async def guess_fusionbox(self, ctx: Context):
+        result = self.fusion_client.fusion()
+        self.last_answers[ctx.channel] = result
+        embed, files = guess_fusion_embed(ctx, result, filters=[FilterType.BOX])
+        await ctx.send(embed=embed, files=files)
+
     # @guess.command(name="test")
     # async def guess_test(self, ctx: Context):
     #     result = self.fusion_client.fusion("Plumeline-Flamenco", "Mime Jr.", lang=ctx.lang)
@@ -219,6 +226,7 @@ class Games(commands.Cog):
     @guess_pixelblur.before_invoke
     @guess_fusion.before_invoke
     @guess_pixelfusion.before_invoke
+    @guess_fusionbox.before_invoke
     @guess_description.before_invoke
     @guess_giveup.before_invoke
     async def reveal_answer(self, ctx: Context) -> None:
