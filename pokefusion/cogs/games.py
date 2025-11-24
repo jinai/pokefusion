@@ -80,12 +80,13 @@ class Games(commands.Cog):
         if channel in self.last_answers:
             answer = self.last_answers[channel]
             if isinstance(answer, Sprite):
-                compare = lambda x, y: x == normalize(y.lookup.species)
+                compare = lambda x, y: normalize(y.lookup.species) in x
             elif isinstance(answer, FusionResult):
-                compare = lambda x, y: set([remove_forms(p) for p in x.split(" ", 1)]) == {
-                    remove_forms(normalize(y.head.species)), remove_forms(normalize(y.body.species))}
+                compare = lambda x, y: set([remove_forms(p) for p in x.split(" ")]).issuperset(set([p for p in
+                                                                                                    f"{remove_forms(normalize(y.head.species))} {remove_forms(normalize(y.body.species))}".split(
+                                                                                                        " ")]))
             else:  # PokeApiResult
-                compare = lambda x, y: x == normalize(y.name_fr)
+                compare = lambda x, y: normalize(y.name_fr) in x
 
             if compare(message_content, answer):
                 del self.last_answers[channel]
