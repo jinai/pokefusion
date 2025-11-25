@@ -3,6 +3,11 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+[[source]]
+url = "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple"
+verify_ssl = true
+name = "anaconda"
+
 [packages]
 "discord.py" = "*"
 peewee = "*"
@@ -15,6 +20,7 @@ tzdata = "*"
 typer = "*"
 aiopokeapi = "*"
 tqdm = "*"
+scikit-image = {version = "*", index = "anaconda"}
 
 [requires]
 python_version = "3"

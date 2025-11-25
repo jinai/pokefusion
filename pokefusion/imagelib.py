@@ -2,7 +2,9 @@ from enum import Enum, auto
 from io import BytesIO
 from typing import BinaryIO
 
+import numpy as np
 from PIL import Image, ImageFile, ImageFilter
+from skimage.transform import swirl
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -24,6 +26,7 @@ class FilterType(Enum):
     GRAYSCALE = auto()
     EDGE = auto()
     BOX = auto()
+    SWIRL = auto()
     DEFAULT = SILHOUETTE
 
 
@@ -121,7 +124,7 @@ def normalize_image(image: PathOrBytes, crop_bbox: bool = True) -> BytesIO:
 def apply_filter(image: PathOrBytes, normalize: bool = True, filter_type: FilterType = FilterType.DEFAULT,
                  scale: int = 1) -> BytesIO:
     if normalize:
-        image = normalize_image(image, crop_bbox=False)
+        image = normalize_image(image, crop_bbox=True if filter_type is FilterType.SWIRL else False)
 
     base = Image.open(image)
     if scale != 1:
@@ -139,6 +142,8 @@ def apply_filter(image: PathOrBytes, normalize: bool = True, filter_type: Filter
         return _filter_edge(base)
     elif filter_type is FilterType.BOX:
         return _filter_box(base)
+    elif filter_type is FilterType.SWIRL:
+        return _filter_swirl(base)
     else:
         return _filter_noop(base)
 
@@ -216,6 +221,40 @@ def _filter_box(image: Image.Image) -> BytesIO:
     return buffer
 
 
+def _filter_swirl(image: Image.Image) -> BytesIO:
+    radius = min(image.size)
+    a = to_numpy(image)
+    swirled = swirl(a, rotation=0, strength=30, radius=radius)
+
+    buffer = BytesIO()
+    Image.fromarray((swirled * 255).astype(np.uint8)).save(buffer, "PNG")
+    buffer.seek(0)
+
+    return buffer
+
+
 def save_to_file(path: str, image: BinaryIO) -> None:
     with open(path, "wb") as f:
         f.write(image.read())
+
+
+def to_numpy(im):
+    """https://uploadcare.com/blog/fast-import-of-pillow-images-to-numpy-opencv-arrays/"""
+    im.load()
+    # unpack data
+    e = Image._getencoder(im.mode, 'raw', im.mode)
+    e.setimage(im.im)
+
+    # NumPy buffer for the result
+    shape, typestr = Image._conv_type_shape(im)
+    data = np.empty(shape, dtype=np.dtype(typestr))
+    mem = data.data.cast('B', (data.data.nbytes,))
+
+    bufsize, s, offset = 65536, 0, 0
+    while not s:
+        l, s, d = e.encode(bufsize)
+        mem[offset:offset + len(d)] = d
+        offset += len(d)
+    if s < 0:
+        raise RuntimeError("encoder error %d in tobytes" % s)
+    return data

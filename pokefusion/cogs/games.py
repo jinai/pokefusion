@@ -96,7 +96,7 @@ class Games(commands.Cog):
     @commands.group(invoke_without_command=True)
     async def guess(self, ctx: Context):
         await ctx.send(
-            "Available guessing games: Silhouette, Blur, Pixel, Grayscale, Edge, Box, PixelBlur, Fusion, PixelFusion, FusionBox and Description")
+            "Available guessing games: Silhouette, Blur, Pixel, Grayscale, Edge, Box, Swirl, PixelBlur, Fusion, PixelFusion, FusionBox and Description")
 
     @guess.command(name="giveup", aliases=["ff"])
     async def guess_giveup(self, ctx: Context):
@@ -148,6 +148,14 @@ class Games(commands.Cog):
         self.last_answers[ctx.channel] = sprite
 
         embed, files = guess_filter_embed(ctx, [FilterType.BOX], sprite)
+        await ctx.send(embed=embed, files=files)
+
+    @guess.command(name="swirl", aliases=["sw"])
+    async def guess_swirl(self, ctx: Context) -> None:
+        sprite = self.sprite_client.get_sprite("?")
+        self.last_answers[ctx.channel] = sprite
+
+        embed, files = guess_filter_embed(ctx, [FilterType.SWIRL], sprite)
         await ctx.send(embed=embed, files=files)
 
     @guess.command(name="pixelblur", aliases=["pb"])
@@ -224,6 +232,7 @@ class Games(commands.Cog):
     @guess_grayscale.before_invoke
     @guess_edge.before_invoke
     @guess_box.before_invoke
+    @guess_swirl.before_invoke
     @guess_pixelblur.before_invoke
     @guess_fusion.before_invoke
     @guess_pixelfusion.before_invoke
