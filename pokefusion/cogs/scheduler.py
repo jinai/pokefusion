@@ -6,17 +6,13 @@ from discord.ext import commands, tasks
 
 from pokefusion.assetmanager import AssetManager
 from pokefusion.bot import PokeFusion
-from pokefusion.environment import Environment
 from .cogutils import AttachmentType, EmbedAttachment, WeekDay, embed_factory
 
 logger = logging.getLogger(__name__)
 
-tz = ZoneInfo("CET")
-PULL_REMINDER_MINUTE = 38  # minute on the clock (e.g. 10:38)
-PULL_REMINDER_TIMES = [time(hour=h % 24, minute=PULL_REMINDER_MINUTE, second=1, tzinfo=tz) for h in range(9, 27, 3)]
-
+TZ = ZoneInfo("CET")
 RERALL_DAY = WeekDay.THURSDAY
-RERALL_TIME = time(hour=0, minute=5, second=0, tzinfo=tz)
+RERALL_TIME = time(hour=0, minute=5, second=0, tzinfo=TZ)
 NOTIF_CHANNELS = [
     695415114203136031,  # BTA
     367074976827965450,  # Radio Eco
@@ -33,19 +29,10 @@ class Scheduler(commands.Cog):
     def cog_load(self) -> None:
         logger.info("Scheduling initial tasks")
         self.rerall_task.start()
-        if self.bot.config.env is Environment.DEV:
-            self.pull_reminder.start()
 
     def cog_unload(self) -> None:
         logger.info("Unscheduling initial tasks")
         self.rerall_task.cancel()
-        self.pull_reminder.cancel()
-
-    @tasks.loop(time=PULL_REMINDER_TIMES)
-    async def pull_reminder(self) -> None:
-        message = "NEXT RESET IN 5 MINUTES ⚠️"
-        owner = await self.bot.get_owner()
-        await owner.send(message)
 
     @tasks.loop(time=RERALL_TIME)
     async def rerall_task(self) -> None:
