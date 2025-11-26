@@ -173,14 +173,14 @@ class Games(commands.Cog):
         embed, files = guess_fusion_embed(ctx, result)
         await ctx.send(embed=embed, files=files)
 
-    @guess.command(name="pf")
+    @guess.command(name="pixelfusion", aliases=["pf"])
     async def guess_pixelfusion(self, ctx: Context):
         result = self.fusion_client.fusion()
         self.last_answers[ctx.channel] = result
         embed, files = guess_fusion_embed(ctx, result, filters=[FilterType.PIXELATE])
         await ctx.send(embed=embed, files=files)
 
-    @guess.command(name="fb")
+    @guess.command(name="fusionbox", aliases=["fb"])
     async def guess_fusionbox(self, ctx: Context):
         result = self.fusion_client.fusion()
         self.last_answers[ctx.channel] = result
