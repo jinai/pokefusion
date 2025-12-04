@@ -112,9 +112,9 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
             "The latest sprite pack was imported:"
             ""
             "```asciidoc\n"
-            "Sprite pack :: 118_September_2025\n"
-            "Timestamp   :: 2025-11-16 16:17:00\n"
-            "Changes     :: +13401/-141 custom fusions\n"
+            "Sprite pack :: 119_October_2025\n"
+            "Timestamp   :: 2025-12-04 03:00:00\n"
+            "Changes     :: +1170/-12 custom fusions\n"
             "```\n"
         )
         if free_rerolls > 0:
