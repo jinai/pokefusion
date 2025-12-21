@@ -1,0 +1,31 @@
+[project]
+name = "pokefusion"
+version = "2.0.0"
+requires-python = "~=3.13.0"
+dependencies = [
+    "aiopokeapi>=0.1.12",
+    "discord-py>=2.6.4",
+    "fuzzywuzzy>=0.18.0",
+    "levenshtein>=0.27.3",
+    "peewee>=3.18.3",
+    "peewee-migrate>=1.14.3",
+    "pillow>=12.0.0",
+    "scikit-image>=0.26.1rc0.dev0",
+    "tqdm>=4.67.1",
+    "typer>=0.20.1",
+    "tzdata>=2025.3",
+    "unidecode>=1.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyhyphen>=4.0.4",
+]
+
+[tool.uv.sources]
+scikit-image = { index = "anaconda" }
+
+[[tool.uv.index]]
+name = "anaconda"
+url = "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple"
+explicit = true
