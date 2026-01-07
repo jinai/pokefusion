@@ -496,6 +496,7 @@ version = "2.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aiopokeapi" },
+    { name = "colorama" },
     { name = "discord-py" },
     { name = "fuzzywuzzy" },
     { name = "levenshtein" },
@@ -517,6 +518,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiopokeapi", specifier = ">=0.1.12" },
+    { name = "colorama", specifier = ">=0.4.6" },
     { name = "discord-py", specifier = ">=2.6.4" },
     { name = "fuzzywuzzy", specifier = ">=0.18.0" },
     { name = "levenshtein", specifier = ">=0.27.3" },
