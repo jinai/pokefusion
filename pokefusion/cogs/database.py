@@ -47,8 +47,8 @@ class Database(commands.Cog, command_attrs=dict(hidden=True)):
         q = (Server
              .insert(discord_id=guild.id, name=guild.name, prefix=prefix, joined_at=now)
              .on_conflict(conflict_target=[Server.discord_id],
-                          preserve=[Server.name],  # Update the name just in case
-                          update={Server.active: True}))  # Mark server as active again
+                          update={Server.active: True,
+                                  Server.name: guild.name}))  # Mark server as active again and update name just in case
         return q.execute()
 
     @staticmethod

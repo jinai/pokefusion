@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo
 
 from discord.ext import commands, tasks
 
+from pokefusion.environment import Environment
 from pokefusion.assetmanager import AssetManager
 from pokefusion.bot import PokeFusion
 from .cogutils import AttachmentType, EmbedAttachment, WeekDay, embed_factory
@@ -28,7 +29,8 @@ class Scheduler(commands.Cog):
 
     def cog_load(self) -> None:
         logger.info("Scheduling initial tasks")
-        self.rerall_task.start()
+        if self.bot.config.env is Environment.PROD:
+            self.rerall_task.start()
 
     def cog_unload(self) -> None:
         logger.info("Unscheduling initial tasks")

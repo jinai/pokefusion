@@ -16,7 +16,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
-        logger.info(f"Authenticated as {self.bot.user} (ID: {self.bot.user.id})")
+        logger.info(f"Bot is ready, authenticated as {self.bot.user} (ID: {self.bot.user.id})")
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: Guild) -> None:

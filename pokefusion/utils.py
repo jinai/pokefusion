@@ -78,12 +78,12 @@ def replace_all(text: str, dic: dict[str, str]) -> str:
     return text
 
 
-def special_join(sequence: Sequence[Any], main_join: str, last_join: str) -> str:
+def special_join(sequence: Sequence[Any], separator: str, last_separator: str) -> str:
     if len(sequence) == 0:
         return ""
     elif len(sequence) == 1:
-        return sequence[0]
+        return str(sequence[0])
     elif len(sequence) == 2:
-        return last_join.join(sequence)
+        return last_separator.join(sequence)
     else:
-        return main_join.join(sequence[:-1]) + last_join + str(sequence[-1])
+        return separator.join(sequence[:-1]) + last_separator + str(sequence[-1])
