@@ -99,22 +99,22 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
 
         await prompt.edit(embed=embed)
 
-    @commands.command()
-    async def notify_update(self, ctx: Context, free_rerolls: int = 1) -> None:
+    @commands.command(aliases=["spu"])
+    async def sprite_pack_update(self, ctx: Context, free_rerolls: int = 0) -> None:
         warning = "The following embed will be sent to **all** notification subscribers, are you sure?"
         embed = Embed(description=warning, color=ctx.bot.main_color)
         embed.set_footer(text="Type yes or no.")
         prompt = await ctx.send(embed=embed)
         embed.set_footer(text=f"{ctx.author} replied yes.")
 
-        title = "New Update"
+        title = "Sprite Pack Update"
         description = (
             "The latest sprite pack was imported:"
             ""
             "```asciidoc\n"
-            "Sprite pack :: 119_October_2025\n"
-            "Timestamp   :: 2025-12-04 03:00:00\n"
-            "Changes     :: +1170/-12 custom fusions\n"
+            "Sprite pack :: 120_November_2025\n"
+            "Timestamp   :: 2026-01-08 00:23:00\n"
+            "Changes     :: +1203/-17 custom fusions\n"
             "```\n"
         )
         if free_rerolls > 0:

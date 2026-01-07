@@ -204,7 +204,7 @@ def get_fusions_diff(old: dict[int, list[int]], new: dict[int, list[int]]) -> di
 
 def run():
     start_time = time.perf_counter()
-    pack_name = "Full Sprite pack 1-119 (October 2025).zip"
+    pack_name = "Full Sprite pack 1-120 (November 2025).zip"
     import_autogen_sprites()
     print()
     import_custom_sprites(pack_name=pack_name)
@@ -215,7 +215,7 @@ def run():
     print()
     elapsed_time = time.perf_counter() - start_time
     print(Fore.CYAN + f"Total runtime is {elapsed_time:.2f} seconds")
-    print(Fore.MAGENTA + "Don't forget to update fusionapi.PREVIOUS_MAX_ID (even if no new base sprites)")
+    print(Fore.MAGENTA + "Don't forget to update fusionapi.PREVIOUS_MAX_ID if necessary")
 
 
 if __name__ == "__main__":
