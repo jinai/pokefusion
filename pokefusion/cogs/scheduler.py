@@ -1,5 +1,5 @@
 import logging
-from datetime import date, datetime, time
+from datetime import date, time
 from zoneinfo import ZoneInfo
 
 from discord.ext import commands, tasks
@@ -39,9 +39,9 @@ class Scheduler(commands.Cog):
     @tasks.loop(time=RERALL_TIME)
     async def rerall_task(self) -> None:
         if WeekDay(date.today().isoweekday()) is RERALL_DAY:
-            new_seed = self.bot.db.get_settings().global_seed + 1
-            self.bot.db.update_settings(params={"global_seed": new_seed, "updated_at": datetime.now()})
-            logger.info(f"New global seed: {new_seed}")
+            logger.info("Rerolling all totems...")
+            self.bot.db.reroll_all_totems()
+            logger.info(f"Reroll done!")
             avatar = EmbedAttachment(AssetManager.get_avatar_path(self.bot.config.env), "avatar.png",
                                      AttachmentType.THUMBNAIL)
             for channel_id in NOTIF_CHANNELS:

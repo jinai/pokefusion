@@ -70,10 +70,7 @@ class Fusion(commands.Cog):
     @commands.command(aliases=["t"])
     async def totem(self, ctx: Context, user: Member = None):
         user = user or ctx.author
-        user_db = self.bot.db.get_or_create_user(user)
-        settings = self.bot.db.get_settings()
-        seed = settings.global_seed + user_db.seed + user.id
-        result = self.client.totem(seed, ctx.lang)
+        result = self.bot.db.get_or_create_totem(user)
         await self._send_embed(ctx, result, title=f"Totem - {user.display_name}")
 
     @commands.command(aliases=["fr"])
@@ -97,9 +94,9 @@ class Fusion(commands.Cog):
             else:
                 embed.set_footer(text=f"{ctx.author} replied yes.")
                 user_db = self.bot.db.get_or_create_user(user)
+                self.bot.db.reroll_totem(user)
                 self.bot.db.update_user(user,
-                                        params={"seed": user_db.seed + 1, "free_rerolls": user_db.free_rerolls - 1,
-                                                "updated_at": datetime.now()})
+                                        params={"free_rerolls": user_db.free_rerolls - 1, "updated_at": datetime.now()})
                 # noinspection PyTypeChecker
                 await ctx.invoke(self.totem)
 

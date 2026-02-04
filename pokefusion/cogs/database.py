@@ -7,8 +7,9 @@ from typing import Any, Dict, TYPE_CHECKING
 from discord import Guild, Member
 from discord.ext import commands
 
+from pokefusion.fusionapi import FusionResult
 from pokefusion.models import models
-from pokefusion.models.models import Server, Settings, User
+from pokefusion.models.models import Server, Settings, Totem, User
 
 if TYPE_CHECKING:
     from pokefusion.bot import PokeFusion
@@ -23,8 +24,6 @@ class Database(commands.Cog, command_attrs=dict(hidden=True)):
     def cog_load(self) -> None:
         models.database.init(self.bot.config.database.path, pragmas=self.bot.config.database.pragmas)
         logger.info(f"Opened connection to {models.database.database}")
-        global_seed = Settings.get_or_create(id=1)[0].global_seed
-        logger.info(f"Global seed: {global_seed}")
 
     def cog_unload(self) -> None:
         models.database.close()
@@ -88,6 +87,30 @@ class Database(commands.Cog, command_attrs=dict(hidden=True)):
         else:
             query = User.update(free_rerolls=User.free_rerolls + amount).where(User.discord_id == user.id)
         return query.execute()
+
+    def get_or_create_totem(self, user: Member) -> FusionResult:
+        totem = Totem.get_or_create(discord_id=user.id)[0]
+        if totem.head == 0:
+            temp = self.bot.fusion_client.totem(None)
+            totem.head = temp.head.dex_id
+            totem.body = temp.body.dex_id
+            totem.save()
+
+        result = self.bot.fusion_client.fusion(str(totem.head), str(totem.body))
+        return result
+
+    def reroll_totem(self, user: Member) -> FusionResult:
+        totem = self.bot.fusion_client.totem(None)
+        Totem.replace(discord_id=user.id, head=totem.head.dex_id, body=totem.body.dex_id,
+                      updated_at=Totem.updated_at.default()).execute()
+        return totem
+
+    def reroll_all_totems(self):
+        with models.database.atomic():
+            for (id_,) in Totem.select(Totem.id).tuples():
+                totem = self.bot.fusion_client.totem(None)
+                Totem.update(head=totem.head.dex_id, body=totem.body.dex_id,
+                             updated_at=Totem.updated_at.default()).where(Totem.id == id_).execute()
 
 
 async def setup(bot: PokeFusion) -> None:

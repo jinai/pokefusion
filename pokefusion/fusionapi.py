@@ -186,7 +186,7 @@ class FusionClient(BaseClient):
         body_result = self.lookup(body, lang)
         return FusionResult(head_result, body_result, head, body)
 
-    def totem(self, seed: int, lang: Language = Language.DEFAULT) -> FusionResult:
+    def totem(self, seed: int | None, lang: Language = Language.DEFAULT) -> FusionResult:
         rand = random.Random(seed)
         head = rand.randint(FusionClient.MIN_ID, FusionClient.MAX_ID)
         body = rand.choice(FusionClient.get_custom_fusions(head=head))  # Only custom fusions for Totems
