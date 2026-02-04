@@ -42,9 +42,9 @@ class Meta(commands.Cog):
     async def version(self, ctx: Context):
         embed, _ = base_embed(ctx, description=(
             "```asciidoc\n"
-            "Sprite pack :: 120_November_2025\n"
-            "Timestamp   :: 2026-01-08 00:23:00\n"
-            "Changes     :: +1203/-17 custom fusions\n"
+            "Sprite pack :: 121_December_2025\n"
+            "Timestamp   :: 2026-02-05 00:05:00\n"
+            "Changes     :: +2234/-23 custom fusions\n"
             "```"
         ))
         await ctx.send(embed=embed)

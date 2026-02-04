@@ -204,7 +204,7 @@ def get_fusions_diff(old: dict[int, list[int]], new: dict[int, list[int]]) -> di
 
 def run():
     start_time = time.perf_counter()
-    pack_name = "Full Sprite pack 1-120 (November 2025).zip"
+    pack_name = "Full Sprite pack 1-121 (December 2025).zip"
     import_autogen_sprites()
     print()
     import_custom_sprites(pack_name=pack_name)
