@@ -7,7 +7,7 @@ from pokefusion.cogs.cogutils import WeekDay
 from pokefusion.configmanager import ConfigManager
 from pokefusion.environment import Environment
 from pokefusion.models import models
-from tools.dbutils import create_migration, keyval_store, run_migrations
+from pokefusion.tools.dbutils import create_migration, run_migrations
 
 
 def next_weekday(d: date, weekday: WeekDay) -> date:
@@ -17,30 +17,14 @@ def next_weekday(d: date, weekday: WeekDay) -> date:
     return d + timedelta(days_ahead)
 
 
-def main() -> None:
-    day = WeekDay.THURSDAY
-    day2 = WeekDay(4)
-    print(day is day2)
-
-    today = date.today()
-    for i in range(WeekDay.SUNDAY):
-        weekday = WeekDay(i + 1)
-        print(next_weekday(today, weekday))
-
-
 def create_db(env: Environment) -> None:
     config = ConfigManager.get_bot_config(env)
     models.init_db(config.database, drop_tables=True)
 
 
-def migrate_db(env: Environment) -> None:
-    config = ConfigManager.get_bot_config(env)
-    create_migration(config.database)
-
-
-def keyval_db(env: Environment) -> None:
-    config = ConfigManager.get_bot_config(env)
-    keyval_store(config.database)
+# def keyval_db(env: Environment) -> None:
+#     config = ConfigManager.get_bot_config(env)
+#     keyval_store(config.database)
 
 
 def hyphens() -> None:
@@ -58,10 +42,9 @@ def main():
     logging.basicConfig(level=logging.INFO)
     env = Environment.PROD
     config = ConfigManager.get_bot_config(env)
-    # create_db(env)
-    # migrate_db(env)
     run_migrations(config.database)
-    # keyval_db(env)
+    # create_migration(config.database, "remove_seeds")
+    # # rollback_migration(config.database)
 
 
 if __name__ == "__main__":
