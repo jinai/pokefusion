@@ -19,9 +19,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = [
-    "pyhyphen>=4.0.4",
-]
+dev = []
 
 [tool.uv.sources]
 scikit-image = { index = "anaconda" }
