@@ -1,23 +1,9 @@
 import datetime
-import logging
 
-from peewee import BooleanField, CharField, DateTimeField, IntegerField, Model, SqliteDatabase
+from peewee import BooleanField, CharField, DateTimeField, IntegerField, Model
 
-from pokefusion.configmanager import DatabaseConfig
+from pokefusion.db.database import database
 from pokefusion.fusionapi import Language
-
-logger = logging.getLogger(__name__)
-database = SqliteDatabase(None)
-
-
-def init_db(config: DatabaseConfig, drop_tables: bool = False):
-    global database
-
-    database.init(config.path, pragmas=config.pragmas)
-    with database:
-        if drop_tables:
-            database.drop_tables(MODELS)
-        database.create_tables(MODELS)
 
 
 class EnumField(CharField):
@@ -73,6 +59,3 @@ class Totem(BaseModel):
     head = IntegerField(default=0)
     body = IntegerField(default=0)
     updated_at = DateTimeField(default=datetime.datetime.now)
-
-
-MODELS = [Settings, Server, User, Blacklist, Totem]

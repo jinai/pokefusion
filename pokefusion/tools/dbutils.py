@@ -5,7 +5,7 @@ from peewee import SqliteDatabase
 from peewee_migrate import Router
 
 from pokefusion.configmanager import DatabaseConfig
-from pokefusion.models.models import BaseModel
+from pokefusion.db.models import BaseModel
 
 # from playhouse.kv import KeyValue
 
@@ -13,19 +13,19 @@ logger = logging.getLogger(__name__)
 
 
 def create_migration(config: DatabaseConfig, migration_name) -> None:
-    migrate_dir = os.path.join("pokefusion", "migrations")
+    migrate_dir = os.path.join("pokefusion", "db", "migrations")
     router = Router(SqliteDatabase(config.path, pragmas=config.pragmas), migrate_dir=migrate_dir,
                     ignore=[BaseModel._meta.name], logger=logger)
 
     # Create migration
-    router.create(migration_name, auto="pokefusion.models")
+    router.create(migration_name, auto="pokefusion.db")
 
     # Run all unapplied migrations
     router.run()
 
 
 def run_migrations(config: DatabaseConfig) -> None:
-    migrate_dir = os.path.join("pokefusion", "migrations")
+    migrate_dir = os.path.join("pokefusion", "db", "migrations")
     router = Router(SqliteDatabase(config.path, pragmas=config.pragmas), migrate_dir=migrate_dir,
                     ignore=[BaseModel._meta.name], logger=logger)
     router.run()

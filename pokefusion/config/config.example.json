@@ -16,7 +16,7 @@
         "christmas"
     ],
     "database": {
-        "path": "pokefusion/db/pokefusion.prod.sqlite",
+        "path": "data/pokefusion.prod.sqlite",
         "pragmas": {
             "journal_mode": "wal",
             "foreign_keys": 1

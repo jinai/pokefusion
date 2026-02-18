@@ -41,7 +41,7 @@ class BotConfig:
     default_prefix: str
     token: str
     init_cogs: list[str]
-    database: DatabaseConfig
+    dbconf: DatabaseConfig
     maintenance: bool
     block_dms: bool
     main_color: str

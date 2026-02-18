@@ -7,9 +7,9 @@ from typing import Any, Dict, TYPE_CHECKING
 from discord import Guild, Member
 from discord.ext import commands
 
+from pokefusion.db.database import database
+from pokefusion.db.models import Server, Settings, Totem, User
 from pokefusion.fusionapi import FusionResult
-from pokefusion.models import models
-from pokefusion.models.models import Server, Settings, Totem, User
 
 if TYPE_CHECKING:
     from pokefusion.bot import PokeFusion
@@ -22,12 +22,12 @@ class Database(commands.Cog, command_attrs=dict(hidden=True)):
         self.bot = bot
 
     def cog_load(self) -> None:
-        models.database.init(self.bot.config.database.path, pragmas=self.bot.config.database.pragmas)
-        logger.info(f"Opened connection to {models.database.database}")
+        database.init(self.bot.config.dbconf.path, pragmas=self.bot.config.dbconf.pragmas)
+        logger.info(f"Opened connection to {database.database}")
 
     def cog_unload(self) -> None:
-        models.database.close()
-        logger.info(f"Closed connection to {models.database.database}")
+        database.close()
+        logger.info(f"Closed connection to {database.database}")
 
     @staticmethod
     def get_settings() -> Settings:
@@ -106,7 +106,7 @@ class Database(commands.Cog, command_attrs=dict(hidden=True)):
         return totem
 
     def reroll_all_totems(self):
-        with models.database.atomic():
+        with database.atomic():
             for (id_,) in Totem.select(Totem.id).tuples():
                 totem = self.bot.fusion_client.totem(None)
                 Totem.update(head=totem.head.dex_id, body=totem.body.dex_id,
