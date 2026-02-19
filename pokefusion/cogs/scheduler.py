@@ -4,7 +4,6 @@ from zoneinfo import ZoneInfo
 
 from discord.ext import commands, tasks
 
-from pokefusion.environment import Environment
 from pokefusion.assetmanager import AssetManager
 from pokefusion.bot import PokeFusion
 from .cogutils import AttachmentType, EmbedAttachment, WeekDay, embed_factory
@@ -13,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 TZ = ZoneInfo("CET")
 RERALL_DAY = WeekDay.THURSDAY
-RERALL_TIME = time(hour=0, minute=5, second=0, tzinfo=TZ)
+RERALL_TIME = time(hour=0, minute=0, second=30, tzinfo=TZ)
 NOTIF_CHANNELS = [
     695415114203136031,  # BTA
     367074976827965450,  # Radio Eco
@@ -29,8 +28,7 @@ class Scheduler(commands.Cog):
 
     def cog_load(self) -> None:
         logger.info("Scheduling initial tasks")
-        if self.bot.config.env is Environment.PROD:
-            self.rerall_task.start()
+        self.rerall_task.start()
 
     def cog_unload(self) -> None:
         logger.info("Unscheduling initial tasks")

@@ -30,7 +30,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: Context, error: CommandError):
-        logger.error(f"{error.__class__.__name__} {error}")
+        logger.error(f"{error.__class__.__name__} [{ctx.command.name}] {error}")
         logger.error(f"Message: {ctx.message.content}")
 
 
