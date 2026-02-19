@@ -3,14 +3,9 @@ import os
 import platform
 import time
 from logging.handlers import TimedRotatingFileHandler
-from typing import Annotated
 
 import discord
-import typer
-from discord import Intents
 
-from pokefusion.bot import PokeFusion
-from pokefusion.configmanager import ConfigManager
 from pokefusion.environment import Environment
 
 
@@ -28,18 +23,3 @@ def setup_logging(env: Environment):
     formatter = logging.Formatter('[{asctime}] [{levelname:<8}] {name}: {message}', dt_fmt, style='{')
     file_handler.setFormatter(formatter)
     root.addHandler(file_handler)
-
-
-def main(env: Annotated[Environment, typer.Option()]) -> None:
-    setup_logging(env)
-    config = ConfigManager.get_bot_config(env)
-    intents = Intents.default()
-    intents.members = False
-    intents.presences = False
-    intents.message_content = True
-    bot = PokeFusion(case_insensitive=True, intents=intents, config=config)
-    bot.run(config.token, log_handler=None)
-
-
-if __name__ == "__main__":
-    typer.run(main)

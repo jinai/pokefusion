@@ -6,7 +6,7 @@ from PIL import Image
 from PIL.Image import Resampling
 from tqdm import tqdm
 
-from import_assets import MAX_ID
+from pokefusion.fusionapi import FusionClient
 
 SPRITESHEET_ROWS = 51
 SPRITESHEET_COLUMNS = 10
@@ -51,7 +51,7 @@ def split_spritesheet(path: str, output_dir: str):
         sheet_output_dir = os.path.join(output_dir, sheet_name)
         os.makedirs(sheet_output_dir, exist_ok=True)
 
-        for index, box in enumerate(boxes[1:MAX_ID + 1]):
+        for index, box in enumerate(boxes[1:FusionClient.MAX_ID + 1]):
             output_file = os.path.join(sheet_output_dir, f"{sheet_name}.{index + 1}.png")
             sprite = sheet.crop(box)
             sprite.save(output_file)

@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import subprocess
@@ -10,24 +11,22 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import Iterable
 
-from colorama import Fore, init
 from tqdm import tqdm
 
-import spritesheets
+from pokefusion.fusionapi import FusionClient
+from . import spritesheets
 
-init(autoreset=True)
+logger = logging.getLogger(__name__)
 
 ZIP_FUSION_PATTERN = re.compile(r"CustomBattlers/\d+\.\d+\.png")
 ZIP_EGG_PATTERN = re.compile(r"Other/Eggs/(?!000)\d+.png")
 SPRITE_PATTERN = re.compile(r"\d+\.\d+\.png")
-MAX_ID = 501
 
 
 def import_autogen_sprites() -> None:
     start_time = time.perf_counter()
 
-    print(Fore.CYAN + "Downloading autogen spritesheets...")
-    output_dir = os.path.join("output", "fusions", "autogen")
+    output_dir = os.path.join("pokefusion", "tools", "output", "fusions", "autogen")
     git_folder = Path("Graphics", "Battlers", "spritesheets_autogen")
 
     tempdir = tempfile.TemporaryDirectory(prefix="pokefusion_")
@@ -41,10 +40,10 @@ def import_autogen_sprites() -> None:
     input_dir = os.path.join(tempdir.name, git_folder)
     sheet_count = len(next(os.walk(input_dir))[2])
     elapsed_time = time.perf_counter() - start_time
-    print(f"Downloaded {sheet_count} autogen spritesheets in {elapsed_time:.2f} seconds")
-    if sheet_count > MAX_ID:
-        print(
-            Fore.RED + f"\nFound more than {MAX_ID} autogen spritesheets! Check if new autogen sprites were released, and adapt MAX_ID accordingly\n")
+    logger.info(f"Downloaded {sheet_count} autogen spritesheets in {elapsed_time:.2f} seconds")
+    if sheet_count > FusionClient.MAX_ID:
+        logger.warning(
+            f"Found more than {FusionClient.MAX_ID} autogen spritesheets! Check if new autogen sprites were released, and adapt MAX_ID accordingly")
 
     start_time = time.perf_counter()
     spritesheets.process_dir(input_dir, output_dir)
@@ -52,19 +51,19 @@ def import_autogen_sprites() -> None:
     sprite_count = sum(len(filenames) for _, _, filenames in os.walk(output_dir))
 
     elapsed_time = time.perf_counter() - start_time
-    print(f"Processed {sprite_count} autogen sprites (from {sheet_count} spritesheets) in {elapsed_time:.2f} seconds")
+    logger.info(
+        f"Processed {sprite_count} autogen sprites (from {sheet_count} spritesheets) in {elapsed_time:.2f} seconds")
 
 
 def import_custom_sprites(pack_name: str) -> None:
     start_time = time.perf_counter()
 
-    print(Fore.CYAN + "Importing custom sprites...")
-    input_file = os.path.join("input", pack_name)
+    input_file = os.path.join("pokefusion", "tools", "input", pack_name)
     if not zipfile.is_zipfile(input_file):
-        print(f"Invalid ZIP: {input_file}")
+        logger.error(f"Invalid ZIP: {input_file}")
         return
 
-    output_dir = os.path.join("output", "fusions", "custom")
+    output_dir = os.path.join("pokefusion", "tools", "output", "fusions", "custom")
     sprite_count = 0
     file_count = 0
     existing_folders = set()
@@ -73,7 +72,7 @@ def import_custom_sprites(pack_name: str) -> None:
         for filename in regex_filter(tqdm(zipf.namelist(), desc=desc), ZIP_FUSION_PATTERN):
             file_count += 1
             head, body = map(int, os.path.splitext(os.path.basename(filename))[0].split(".", 1))
-            if head > MAX_ID or body > MAX_ID:
+            if head > FusionClient.MAX_ID or body > FusionClient.MAX_ID:
                 continue
             sprite_count += 1
             sprite_output_dir = os.path.join(output_dir, str(head))
@@ -84,20 +83,19 @@ def import_custom_sprites(pack_name: str) -> None:
                 sprite_file.write(zipf.read(filename))
 
     elapsed_time = time.perf_counter() - start_time
-    print(
+    logger.info(
         f"Processed {sprite_count} custom sprites (discarded {file_count - sprite_count} sprites > MAX_ID) in {elapsed_time:.2f} seconds")
 
 
 def import_eggs(pack_name: str) -> None:
     start_time = time.perf_counter()
 
-    print(Fore.CYAN + "Importing eggs...")
-    input_file = os.path.join("input", pack_name)
+    input_file = os.path.join("pokefusion", "tools", "input", pack_name)
     if not zipfile.is_zipfile(input_file):
-        print(f"Invalid ZIP: {input_file}")
+        logger.error(f"Invalid ZIP: {input_file}")
         return
 
-    output_dir = os.path.join("output", "eggs")
+    output_dir = os.path.join("pokefusion", "tools", "output", "eggs")
     os.makedirs(output_dir, exist_ok=True)
     egg_count = 0
     file_count = 0
@@ -106,28 +104,26 @@ def import_eggs(pack_name: str) -> None:
         for filename in regex_filter(tqdm(zipf.namelist(), desc=desc), ZIP_EGG_PATTERN):
             file_count += 1
             dex_id = int(os.path.splitext(os.path.basename(filename))[0])
-            if dex_id < 1 or dex_id > MAX_ID:
+            if dex_id < 1 or dex_id > FusionClient.MAX_ID:
                 continue
             egg_count += 1
             with open(os.path.join(output_dir, f"{dex_id}.png"), "wb") as egg_file:
                 egg_file.write(zipf.read(filename))
 
     elapsed_time = time.perf_counter() - start_time
-    print(
+    logger.info(
         f"Processed {egg_count} eggs (discarded {file_count - egg_count} eggs > MAX_ID) in {elapsed_time:.2f} seconds")
 
 
 def save_diff() -> None:
     start_time = time.perf_counter()
 
-    print(Fore.CYAN + "Saving diffs...")
+    autogen_folder_old = os.path.join("pokefusion", "assets", "fusions", "autogen")
+    autogen_folder_new = os.path.join("pokefusion", "tools", "output", "fusions", "autogen")
+    custom_folder_old = os.path.join("pokefusion", "assets", "fusions", "custom")
+    custom_folder_new = os.path.join("pokefusion", "tools", "output", "fusions", "custom")
 
-    autogen_folder_old = os.path.join("..", "assets", "fusions", "autogen")
-    autogen_folder_new = os.path.join("output", "fusions", "autogen")
-    custom_folder_old = os.path.join("..", "assets", "fusions", "custom")
-    custom_folder_new = os.path.join("output", "fusions", "custom")
-
-    base_output = "output"
+    base_output = os.path.join("pokefusion", "tools", "output")
     custom_fusions_output = os.path.join(base_output, "custom_fusions.json")
     autogen_diff_added_output = os.path.join(base_output, "autogen_diff_added.json")
     autogen_diff_removed_output = os.path.join(base_output, "autogen_diff_removed.json")
@@ -168,7 +164,7 @@ def save_diff() -> None:
         json.dump(custom_diff_removed, f)
 
     elapsed_time = time.perf_counter() - start_time
-    print(
+    logger.info(
         f"Saved diffs for +{autogen_diff_added_count}/-{autogen_diff_removed_count} autogen and +{custom_diff_added_count}/-{custom_diff_removed_count} custom fusions in {elapsed_time:.2f} seconds")
 
 
@@ -200,23 +196,3 @@ def get_fusions_diff(old: dict[int, list[int]], new: dict[int, list[int]]) -> di
             diff[head] = new[head][:]
 
     return diff
-
-
-def run():
-    start_time = time.perf_counter()
-    pack_name = "Full Sprite pack 1-121 (December 2025).zip"
-    import_autogen_sprites()
-    print()
-    import_custom_sprites(pack_name=pack_name)
-    print()
-    import_eggs(pack_name=pack_name)
-    print()
-    save_diff()
-    print()
-    elapsed_time = time.perf_counter() - start_time
-    print(Fore.CYAN + f"Total runtime is {elapsed_time:.2f} seconds")
-    print(Fore.MAGENTA + "Don't forget to update fusionapi.PREVIOUS_MAX_ID if necessary")
-
-
-if __name__ == "__main__":
-    run()
