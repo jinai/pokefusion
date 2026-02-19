@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date, datetime
+from datetime import date
 
 from discord import Color
 from discord.ext import commands
@@ -33,15 +33,8 @@ class Christmas(commands.Cog):
             await ctx.send("Christmas event is over.")
 
     @commands.command(aliases=["xmas"])
-    async def kdo(self, ctx: Context, delta: int = 1):
-        target = ctx.author
-        user_db = self.bot.db.get_or_create_user(target)
-
-        seed = user_db.seed + delta
-        xmas_rerolls = user_db.xmas_rerolls + 1
-        xmas_delta = user_db.xmas_delta + delta
-        params = {"seed": seed, "xmas_rerolls": xmas_rerolls, "xmas_delta": xmas_delta, "updated_at": datetime.now()}
-        self.bot.db.update_user(target, params=params)
+    async def kdo(self, ctx: Context):
+        self.bot.db.reroll_totem(ctx.author)
         # noinspection PyTypeChecker
         await ctx.invoke(self.bot.get_command("totem"))
 

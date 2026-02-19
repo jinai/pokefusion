@@ -3,7 +3,6 @@ import logging
 import textwrap
 import traceback
 from contextlib import redirect_stdout
-from datetime import datetime
 from typing import Annotated
 
 from discord import Color, Embed, Member
@@ -43,7 +42,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
             await ctx.send(f"Maintenance mode is now {['off', 'on'][new_state]}.")
 
     @commands.command(aliases=["rr"])
-    async def reroll(self, ctx: Context, target: Member = None, delta: int = 1):
+    async def reroll(self, ctx: Context, target: Member = None):
         target = target or ctx.author
         desc = f"Reroll {target.display_name}'s totem?"
         embed = Embed(description=desc, color=Color.light_grey())
@@ -57,13 +56,12 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
             embed.set_footer(text=f"{ctx.author} replied no.")
         else:
             embed.set_footer(text=f"{ctx.author} replied yes.")
-            new_seed = self.bot.db.get_or_create_user(target).seed + delta
-            self.bot.db.update_user(target, params={"seed": new_seed, "updated_at": datetime.now()})
+            self.bot.db.reroll_totem(target)
 
         await prompt.edit(embed=embed)
 
     @commands.command(aliases=["rrg", "rr_global", "rerall"])
-    async def reroll_global(self, ctx: Context, delta: int = 1):
+    async def reroll_global(self, ctx: Context):
         desc = f"Reroll **all** totems for **every** server?"
         embed = Embed(description=desc, color=Color.light_grey())
         embed.set_footer(text="Type yes or no.")
@@ -76,8 +74,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
             embed.set_footer(text=f"{ctx.author} replied no.")
         else:
             embed.set_footer(text=f"{ctx.author} replied yes.")
-            new_seed = self.bot.db.get_settings().global_seed + delta
-            self.bot.db.update_settings(params={"global_seed": new_seed, "updated_at": datetime.now()})
+            self.bot.db.reroll_all_totems()
 
         await prompt.edit(embed=embed)
 

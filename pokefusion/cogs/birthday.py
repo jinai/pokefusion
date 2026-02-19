@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import date, datetime
+from datetime import date
 
 from discord import Color, User
 from discord.ext import commands
@@ -46,15 +46,8 @@ class Birthday(commands.Cog):
         return bday == today
 
     @commands.command(aliases=["bday"])
-    async def kdo2(self, ctx: Context, delta: int = 1):
-        target = ctx.author
-        user_db = self.bot.db.get_or_create_user(target)
-
-        seed = user_db.seed + delta
-        bday_rerolls = user_db.bday_rerolls + 1
-        bday_delta = user_db.bday_delta + delta
-        params = {"seed": seed, "bday_rerolls": bday_rerolls, "bday_delta": bday_delta, "updated_at": datetime.now()}
-        self.bot.db.update_user(target, params=params)
+    async def kdo2(self, ctx: Context):
+        self.bot.db.reroll_totem(ctx.author)
         # noinspection PyTypeChecker
         await ctx.invoke(self.bot.get_command("totem"))
 
