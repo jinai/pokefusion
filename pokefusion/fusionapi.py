@@ -19,7 +19,6 @@ temp = ConfigManager.read_json("custom_fusions.json")
 CUSTOM_FUSIONS: dict[int, list[int]] = {int(key): value for key, value in temp.items()}
 
 
-# noinspection PyEnum
 class Language(StrEnum):
     FR = auto()
     EN = auto()
