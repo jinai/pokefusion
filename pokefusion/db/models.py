@@ -39,6 +39,9 @@ class Server(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     active = BooleanField(default=True)
 
+    class Meta:
+        table_name = 'servers'
+
 
 class User(BaseModel):
     discord_id = IntegerField(unique=True)
@@ -47,6 +50,9 @@ class User(BaseModel):
     xmas_prompt = BooleanField(default=False)
     bday_prompt = BooleanField(default=False)
     free_rerolls = IntegerField(default=3)
+
+    class Meta:
+        table_name = 'users'
 
 
 class Blacklist(BaseModel):
@@ -59,3 +65,6 @@ class Totem(BaseModel):
     head = IntegerField(default=0)
     body = IntegerField(default=0)
     updated_at = DateTimeField(default=datetime.datetime.now)
+
+    class Meta:
+        table_name = 'totems'
