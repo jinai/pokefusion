@@ -39,9 +39,21 @@ def migrate(migrator: Migrator, database: pw.Database, *, fake=False):
 
     migrator.rename_table('server', 'servers')
 
+    migrator.sql('DROP INDEX server_discord_id')
+
+    migrator.sql('CREATE UNIQUE INDEX "servers_discord_id" ON "servers" ("discord_id")')
+
     migrator.rename_table('totem', 'totems')
 
+    migrator.sql('DROP INDEX totem_discord_id')
+
+    migrator.sql('CREATE UNIQUE INDEX "totems_discord_id" ON "totems" ("discord_id")')
+
     migrator.rename_table('user', 'users')
+
+    migrator.sql('DROP INDEX user_discord_id')
+
+    migrator.sql('CREATE UNIQUE INDEX "users_discord_id" ON "users" ("discord_id")')
 
 
 def rollback(migrator: Migrator, database: pw.Database, *, fake=False):
@@ -49,6 +61,18 @@ def rollback(migrator: Migrator, database: pw.Database, *, fake=False):
 
     migrator.rename_table('users', 'user')
 
+    migrator.sql('DROP INDEX users_discord_id')
+
+    migrator.sql('CREATE UNIQUE INDEX "user_discord_id" ON "user" ("discord_id")')
+
     migrator.rename_table('totems', 'totem')
 
+    migrator.sql('DROP INDEX totems_discord_id')
+
+    migrator.sql('CREATE UNIQUE INDEX "totem_discord_id" ON "totem" ("discord_id")')
+
     migrator.rename_table('servers', 'server')
+
+    migrator.sql('DROP INDEX servers_discord_id')
+
+    migrator.sql('CREATE UNIQUE INDEX "server_discord_id" ON "server" ("discord_id")')
