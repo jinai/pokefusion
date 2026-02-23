@@ -44,7 +44,7 @@ def create_migration(name: str) -> None:
 @migrations_app.command(name="apply")
 @handle_migration_errors
 def apply_migrations(name: Annotated[str, typer.Option()] = None, env: Environment = env_option) -> None:
-    ctx = Context(env, require_confirmation=True, action="Apply pending migrations")
+    ctx = Context(env, require_confirmation=True, action="Apply pending migrations (make a backup first!)")
     ctx.migration_service.apply(name)
 
 
@@ -52,7 +52,8 @@ def apply_migrations(name: Annotated[str, typer.Option()] = None, env: Environme
 @handle_migration_errors
 def rollback_migration(count: Annotated[int, typer.Argument(callback=count_callback)] = 1,
                        env: Environment = env_option) -> None:
-    ctx = Context(env, require_confirmation=True, action=f"Rollback {count} migration{'s' if count > 1 else ''}")
+    ctx = Context(env, require_confirmation=True,
+                  action=f"Rollback {count} migration{'s' if count > 1 else ''} (make a backup first!)")
     ctx.migration_service.rollback(count)
 
 
@@ -75,6 +76,6 @@ def remove_migration(name: str,
                      force: Annotated[
                          bool, typer.Option("--force", "-f", help="Rollback and remove even if applied.")] = False,
                      env: Environment = env_option) -> None:
-    ctx = Context(env, require_confirmation=True, action=f"Remove '{name}'")
+    ctx = Context(env, require_confirmation=True, action=f"Remove '{name}' (make a backup first!)")
     ctx.migration_service.remove(name, force)
     logger.info(f"Removed migration '{name}' from disk")
