@@ -29,6 +29,9 @@ class Settings(BaseModel):
     updated_at = DateTimeField(default=datetime.datetime.now)
     maintenance_mode = BooleanField(default=False)
 
+    class Meta:
+        table_name = 'settings'
+
 
 class Server(BaseModel):
     discord_id = IntegerField(unique=True)
@@ -58,6 +61,9 @@ class User(BaseModel):
 class Blacklist(BaseModel):
     discord_id = IntegerField(unique=True)
     reason = CharField(null=True)
+
+    class Meta:
+        table_name = 'blacklist'
 
 
 class Totem(BaseModel):
