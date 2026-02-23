@@ -36,8 +36,8 @@ def handle_migration_errors(func):
 
 @migrations_app.command(name="new")
 @handle_migration_errors
-def create_migration(name: str, env: Environment = env_option) -> None:
-    ctx = Context(env)
+def create_migration(name: str) -> None:
+    ctx = Context(Environment.DEV)
     ctx.migration_service.create(name)
 
 
