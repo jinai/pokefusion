@@ -3,7 +3,6 @@
     "default_prefix": "_",
     "token": "your_bot_token",
     "init_cogs": [
-        "database",
         "events",
         "scheduler",
         "meta",

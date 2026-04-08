@@ -7,3 +7,4 @@ database = SqliteDatabase(None)
 
 def init_db(config: DatabaseConfig):
     database.init(config.path, pragmas=config.pragmas)
+    database.connect()

@@ -2,20 +2,21 @@ import asyncio
 import logging
 from datetime import date
 
-from discord import Color, User
+from discord import Color, Member
 from discord.ext import commands
 from discord.ext.commands import CheckFailure, CommandError, NoPrivateMessage
 
 from pokefusion.bot import PokeFusion
 from pokefusion.configmanager import ConfigManager
 from pokefusion.context import Context
+from pokefusion.db.models import User
 from .cogutils import birthday_embed
 
 logger = logging.getLogger(__name__)
 
 
 class Birthday(commands.Cog):
-    def __init__(self, bot: PokeFusion):
+    def __init__(self, bot: PokeFusion) -> None:
         self.bot = bot
         self.bot.after_invoke(self.bday_event)
         self.birthdays = {}
@@ -33,7 +34,7 @@ class Birthday(commands.Cog):
         elif isinstance(error, CheckFailure):
             await ctx.send("It's not your birthday!")
 
-    def is_birthday(self, user: User) -> bool:
+    def is_birthday(self, user: Member) -> bool:
         key = str(user.id)
         if key not in self.birthdays:
             return False
@@ -47,17 +48,18 @@ class Birthday(commands.Cog):
 
     @commands.command(aliases=["bday"])
     async def kdo2(self, ctx: Context):
-        self.bot.db.reroll_totem(ctx.author)
+        self.bot.totem_service.reroll_totem(ctx.author)
         # noinspection PyTypeChecker
         await ctx.invoke(self.bot.get_command("totem"))
 
     async def bday_event(self, ctx: Context) -> None:
         if ctx.guild is not None and self.is_birthday(ctx.author):
-            if not self.bot.db.get_or_create_user(ctx.author).bday_prompt:
+            user_db = User.get_or_create(discord_id=ctx.author.id, defaults={"name": ctx.author.name})[0]
+            if not user_db.bday_prompt:
                 embed, files = birthday_embed(ctx, color=Color.from_str("#FC47AB"))
                 prompt = await ctx.send(embed=embed, files=files)
                 thumbnail_url = prompt.embeds[0].thumbnail.url
-                self.bot.db.update_user(ctx.author, {"bday_prompt": True})
+                User.update(bday_prompt=True).where(User.discord_id == ctx.author.id).execute()
                 for i in range(8):
                     await asyncio.sleep(0.5)
                     colors = [Color.yellow(), Color.from_str("#4DE30F"), Color.from_str("#62D4F3"),

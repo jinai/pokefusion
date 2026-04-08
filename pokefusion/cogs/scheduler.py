@@ -38,7 +38,7 @@ class Scheduler(commands.Cog):
     async def rerall_task(self) -> None:
         if WeekDay(date.today().isoweekday()) is RERALL_DAY:
             logger.info("Rerolling all totems...")
-            self.bot.db.reroll_all_totems()
+            self.bot.totem_service.reroll_all_totems()
             logger.info(f"Reroll done!")
             avatar = EmbedAttachment(AssetManager.get_avatar_path(self.bot.config.env), "avatar.png",
                                      AttachmentType.THUMBNAIL)

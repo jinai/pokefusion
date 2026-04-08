@@ -6,6 +6,7 @@ from discord.ext.commands import CommandError
 
 from pokefusion.bot import PokeFusion
 from pokefusion.context import Context
+from pokefusion.db.models import Server
 
 logger = logging.getLogger(__name__)
 
@@ -20,12 +21,12 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: Guild) -> None:
-        rowid = self.bot.db.add_server(guild, self.bot.default_prefix)
+        rowid = Server.add(guild.id, guild.name, self.bot.default_prefix)
         logger.info(f"Joined {guild.name} (Guild ID: {guild.id}, Row ID: {rowid})")
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: Guild) -> None:
-        rowid = self.bot.db.remove_server(guild)
+        rowid = Server.remove(guild.id)
         logger.info(f"Left {guild.name} (Guild ID: {guild.id}, Row ID: {rowid})")
 
     @commands.Cog.listener()

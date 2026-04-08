@@ -9,7 +9,7 @@ from discord import Message
 from discord.ext import commands
 
 from . import utils
-from .cogs.database import Database
+from .db.models import Server
 from .fusionapi import Language
 
 
@@ -35,14 +35,10 @@ class Context(commands.Context):
         super().__init__(**kwargs)
 
     @property
-    def db(self) -> Database | None:
-        return self.bot.db
-
-    @property
     def lang(self) -> Language:
         if self.guild is None:
             return Language.DEFAULT
-        return self.db.get_server(self.guild).lang
+        return Server.get(Server.discord_id == self.guild.id).lang
 
     async def tick(self, value: bool = True, /):
         emoji = "\N{BALLOT BOX WITH CHECK}" if value else "\N{CROSS MARK}"

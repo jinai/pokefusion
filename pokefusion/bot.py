@@ -12,11 +12,12 @@ from discord.ext.commands import CommandError
 
 from . import cogs
 from .assetmanager import AssetManager
-from .cogs.database import Database
 from .configmanager import BotConfig
 from .context import Context
+from .db.models import Server, Settings
 from .environment import Environment
 from .fusionapi import FusionClient, SpriteClient
+from .services.totem import TotemService
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ def get_prefix(bot: PokeFusion, message: Message) -> Sequence[str]:
         return bot.default_prefix
 
     try:
-        prefix = bot.db.get_server(message.guild).prefix
+        prefix = Server.get(Server.discord_id == message.guild.id).prefix
     except AttributeError:
         prefix = bot.default_prefix
 
@@ -46,6 +47,7 @@ class PokeFusion(commands.Bot):
         self.block_dms = config.block_dms
         self.fusion_client: FusionClient = FusionClient()
         self.sprite_client: SpriteClient = SpriteClient()
+        self.totem_service = TotemService(self.fusion_client)
         self._main_color: Color | None = None
         self._before_invokes: list[Callable[[Context], Awaitable[Any]]] = []
         self._after_invokes: list[Callable[[Context], Awaitable[Any]]] = []
@@ -79,14 +81,15 @@ class PokeFusion(commands.Bot):
         self.before_invoke = before_invoke
         self.after_invoke = after_invoke
 
-    async def check_maintenance(self, ctx: Context) -> bool:
+    @staticmethod
+    async def check_maintenance(ctx: Context) -> bool:
         if await ctx.bot.is_owner(ctx.author):
             return True
 
-        is_maintenance = self.db.get_settings().maintenance_mode
-        if is_maintenance:
+        maintenance = Settings.is_maintenance()
+        if maintenance:
             await ctx.send("Please wait, the bot is in maintenance mode.")
-        return not is_maintenance
+        return not maintenance
 
     async def check_block_dms(self, ctx: Context) -> bool:
         if self.block_dms and ctx.guild is None:
@@ -105,10 +108,6 @@ class PokeFusion(commands.Bot):
     def uptime(self) -> float:
         delta = datetime.now() - self.boot_time
         return delta.total_seconds()
-
-    @property
-    def db(self) -> Database | None:
-        return self.get_cog("Database")
 
     @property
     def main_color(self) -> Color:
@@ -138,7 +137,3 @@ class PokeFusion(commands.Bot):
     @staticmethod
     async def log_command(ctx: Context) -> None:
         logger.info(f"{ctx.message.content} in #{ctx.channel} ({ctx.guild}) by {ctx.author}")
-
-    async def close(self) -> None:
-        logger.info(f"Initiating graceful exit")
-        await super().close()

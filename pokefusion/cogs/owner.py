@@ -14,6 +14,8 @@ from pokefusion.assetmanager import AssetManager
 from pokefusion.bot import PokeFusion
 from pokefusion.context import Context, Reply
 from pokefusion.converters import ModuleConverter
+from pokefusion.db import models
+from pokefusion.db.models import Settings, User
 from .cogutils import AttachmentType, EmbedAttachment, embed_factory
 from .scheduler import NOTIF_CHANNELS
 
@@ -35,10 +37,10 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.command(aliases=["mm"])
     async def maintenance(self, ctx: Context, new_state: bool | None = None) -> None:
         if new_state is None:
-            current_state = self.bot.db.get_settings().maintenance_mode
+            current_state = Settings.is_maintenance()
             await ctx.send(f"Maintenance mode is {['off', 'on'][current_state]}.")
         else:
-            self.bot.db.update_settings(params={"maintenance_mode": new_state})
+            Settings.set_maintenance(new_state)
             await ctx.send(f"Maintenance mode is now {['off', 'on'][new_state]}.")
 
     @commands.command(aliases=["rr"])
@@ -56,7 +58,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
             embed.set_footer(text=f"{ctx.author} replied no.")
         else:
             embed.set_footer(text=f"{ctx.author} replied yes.")
-            self.bot.db.reroll_totem(target)
+            self.bot.totem_service.reroll_totem(target.id)
 
         await prompt.edit(embed=embed)
 
@@ -74,7 +76,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
             embed.set_footer(text=f"{ctx.author} replied no.")
         else:
             embed.set_footer(text=f"{ctx.author} replied yes.")
-            self.bot.db.reroll_all_totems()
+            self.bot.totem_service.reroll_all_totems()
 
         await prompt.edit(embed=embed)
 
@@ -92,7 +94,10 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
             embed.set_footer(text=f"{ctx.author} replied no.")
         else:
             embed.set_footer(text=f"{ctx.author} replied yes.")
-            self.bot.db.update_freererolls(target, amount)
+            if target is None:
+                User.add_free_rerolls_to_all(amount)
+            else:
+                User.add_free_rerolls(target.id, amount)
 
         await prompt.edit(embed=embed)
 
@@ -174,7 +179,8 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
         env = {
             "self": self,
             "bot": self.bot,
-            "db": self.bot.db,
+            "models": models,
+            "totem": self.bot.totem_service,
             "ctx": ctx,
             "channel": ctx.channel,
             "author": ctx.author,

@@ -7,6 +7,7 @@ from discord.ext.commands import CheckFailure, CommandError
 
 from pokefusion.bot import PokeFusion
 from pokefusion.context import Context
+from pokefusion.db.models import User
 from .cogutils import christmas_embed
 
 
@@ -20,9 +21,8 @@ def is_christmas_period() -> bool:
 
 
 class Christmas(commands.Cog):
-    def __init__(self, bot: PokeFusion):
+    def __init__(self, bot: PokeFusion) -> None:
         self.bot = bot
-        self.client = bot.sprite_client
         self.bot.after_invoke(self.christmas_event)
 
     async def cog_check(self, ctx: Context) -> bool:
@@ -34,17 +34,19 @@ class Christmas(commands.Cog):
 
     @commands.command(aliases=["xmas"])
     async def kdo(self, ctx: Context):
-        self.bot.db.reroll_totem(ctx.author)
+        self.bot.totem_service.reroll_totem(ctx.author)
         # noinspection PyTypeChecker
         await ctx.invoke(self.bot.get_command("totem"))
 
-    async def christmas_event(self, ctx: Context) -> None:
+    @staticmethod
+    async def christmas_event(ctx: Context) -> None:
         if is_christmas_period():
-            if not self.bot.db.get_or_create_user(ctx.author).xmas_prompt:
+            user_db = User.get_or_create(discord_id=ctx.author.id, defaults={"name": ctx.author.name})[0]
+            if not user_db.xmas_prompt:
                 embed, files = christmas_embed(ctx, color=Color.red())
                 prompt = await ctx.send(embed=embed, files=files)
                 thumbnail_url = prompt.embeds[0].thumbnail.url
-                self.bot.db.update_user(ctx.author, {"xmas_prompt": True})
+                User.update(xmas_prompt=True).where(User.discord_id == ctx.author.id).execute()
                 for i in range(10):
                     await asyncio.sleep(0.6)
                     color = Color.green() if i % 2 == 0 else Color.red()

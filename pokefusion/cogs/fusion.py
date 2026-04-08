@@ -1,16 +1,16 @@
-from datetime import datetime
-
 from discord import Color, Embed, Member
 from discord.ext import commands
 
 from pokefusion.bot import PokeFusion
 from pokefusion.context import Context, Reply
+from pokefusion.db.models import User
 from pokefusion.fusionapi import FusionClient, FusionResult
 from .cogutils import fusion_embed, guess_prompt
+from ..db.database import database
 
 
 class Fusion(commands.Cog):
-    def __init__(self, bot: PokeFusion):
+    def __init__(self, bot: PokeFusion) -> None:
         self.bot = bot
         self.client = bot.fusion_client
         self.last_queries = {}
@@ -70,13 +70,13 @@ class Fusion(commands.Cog):
     @commands.command(aliases=["t"])
     async def totem(self, ctx: Context, user: Member = None):
         user = user or ctx.author
-        result = self.bot.db.get_or_create_totem(user)
+        result = self.bot.totem_service.get_or_create(user.id)
         await self._send_embed(ctx, result, title=f"Totem - {user.display_name}")
 
     @commands.command(aliases=["fr"])
     async def freereroll(self, ctx: Context):
         user = ctx.author
-        user_db = self.bot.db.get_or_create_user(user)
+        user_db = User.get_or_create(discord_id=ctx.author.id, defaults={"name": ctx.author.name})[0]
 
         if user_db.free_rerolls < 1:
             await ctx.send("You don't have enough free rerolls.")
@@ -88,15 +88,14 @@ class Fusion(commands.Cog):
             reply = await ctx.prompt(timeout=10, delete_reply=True)
 
             if reply == Reply.NoReply:
-                embed.set_footer(text=f"{ctx.author} didn't reply.")
+                embed.set_footer(text=f"{user} didn't reply.")
             elif reply == Reply.No:
-                embed.set_footer(text=f"{ctx.author} replied no.")
+                embed.set_footer(text=f"{user} replied no.")
             else:
-                embed.set_footer(text=f"{ctx.author} replied yes.")
-                user_db = self.bot.db.get_or_create_user(user)
-                self.bot.db.reroll_totem(user)
-                self.bot.db.update_user(user,
-                                        params={"free_rerolls": user_db.free_rerolls - 1, "updated_at": datetime.now()})
+                embed.set_footer(text=f"{user} replied yes.")
+                with database.atomic():
+                    self.bot.totem_service.reroll_totem(user.id)
+                    User.add_free_rerolls(user.id, -1)
                 # noinspection PyTypeChecker
                 await ctx.invoke(self.totem)
 
@@ -105,8 +104,11 @@ class Fusion(commands.Cog):
     @commands.command()
     async def fru(self, ctx: Context, user: Member = None):
         user = user or ctx.author
-        user_db = self.bot.db.get_or_create_user(user)
-        msg = f"You have {user_db.free_rerolls} free reroll(s). Type `{ctx.prefix}fr` to use it." if ctx.author.id == user.id else f"{user.display_name} has {user_db.free_rerolls} free rerolls."
+        user_db = User.get_or_create(discord_id=ctx.author.id, defaults={"name": ctx.author.name})[0]
+        if ctx.author.id == user.id:
+            msg = f"You have {user_db.free_rerolls} free reroll(s). Type `{ctx.prefix}fr` to use it."
+        else:
+            msg = f"{user.display_name} has {user_db.free_rerolls} free rerolls."
         await ctx.send(msg)
 
 

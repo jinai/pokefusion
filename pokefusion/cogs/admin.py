@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Annotated
 
 from discord.ext import commands
@@ -7,6 +6,7 @@ from discord.ext.commands import BadArgument, CommandError
 from pokefusion.bot import PokeFusion
 from pokefusion.context import Context
 from pokefusion.converters import LanguageConverter, PrefixConverter
+from pokefusion.db.models import Server
 from pokefusion.fusionapi import Language
 
 
@@ -26,19 +26,19 @@ class Admin(commands.Cog):
     @commands.command()
     async def prefix(self, ctx: Context, *, new_prefix: Annotated[str, PrefixConverter] = None) -> None:
         if new_prefix is None:
-            prefix = ctx.db.get_server(ctx.guild).prefix
+            prefix = Server.get(Server.discord_id == ctx.guild.id).prefix
             await ctx.send(f"Current prefix: `{prefix}`")
         else:
-            ctx.db.update_server(ctx.guild, {"prefix": new_prefix, "updated_at": datetime.now()})
-            await ctx.tick(True)
+            q = Server.update(prefix=new_prefix).where(Server.discord_id == ctx.guild.id)
+            await ctx.tick(q.execute())
 
     @commands.command()
     async def lang(self, ctx: Context, *, new_lang: Annotated[Language, LanguageConverter] = None) -> None:
         if new_lang is None:
             await ctx.send(f"Current language: `{ctx.lang}`")
         else:
-            ctx.db.update_server(ctx.guild, {"lang": new_lang, "updated_at": datetime.now()})
-            await ctx.tick(True)
+            q = Server.update(lang=new_lang).where(Server.discord_id == ctx.guild.id)
+            await ctx.tick(q.execute())
 
 
 async def setup(bot: PokeFusion) -> None:
