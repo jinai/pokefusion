@@ -6,9 +6,9 @@ from discord import Color, Member
 from discord.ext import commands
 from discord.ext.commands import CheckFailure, CommandError, NoPrivateMessage
 
-from pokefusion.bot import PokeFusion
+from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.configmanager import ConfigManager
-from pokefusion.context import Context
+from pokefusion.bot.context import Context
 from pokefusion.db.models import User
 from .cogutils import birthday_embed
 

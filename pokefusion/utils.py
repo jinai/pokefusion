@@ -1,8 +1,9 @@
 import base64
 import io
-import json
+import platform
+import shutil
+import subprocess
 from collections.abc import Callable, Sequence
-from datetime import datetime
 from typing import Any
 
 import unidecode
@@ -33,18 +34,6 @@ class TwoWayDict(dict):
 
     def __len__(self):
         return dict.__len__(self) // 2
-
-
-def load_json(path: str) -> JsonDict:
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def get_timestamp(*, fmt: str = "%d %b %H:%M:%S", wrap: Callable[[str], str] = lambda ts: f"[{ts}]") -> str:
-    ts = datetime.now().strftime(fmt)
-    if callable(wrap):
-        return wrap(ts)
-    return ts
 
 
 def yes(s: str) -> bool:
@@ -87,3 +76,13 @@ def special_join(sequence: Sequence[Any], separator: str, last_separator: str) -
         return last_separator.join(sequence)
     else:
         return separator.join(sequence[:-1]) + last_separator + str(sequence[-1])
+
+
+def fast_delete(path: str):
+    system = platform.system()
+    if system in ("Linux", "Darwin"):
+        subprocess.run(["rm", "-rf", path], check=True)
+    elif system == "Windows":
+        subprocess.run(["cmd", "/c", "rmdir", "/s", "/q", path], check=True)
+    else:
+        shutil.rmtree(path)

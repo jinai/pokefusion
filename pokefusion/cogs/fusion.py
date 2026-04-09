@@ -1,8 +1,8 @@
 from discord import Color, Embed, Member
 from discord.ext import commands
 
-from pokefusion.bot import PokeFusion
-from pokefusion.context import Context, Reply
+from pokefusion.bot.pokefusion import PokeFusion
+from pokefusion.bot.context import Context, Reply
 from pokefusion.db.models import User
 from pokefusion.fusionapi import FusionClient, FusionResult
 from .cogutils import fusion_embed, guess_prompt

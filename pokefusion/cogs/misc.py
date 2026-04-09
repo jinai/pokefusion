@@ -2,8 +2,8 @@ import discord
 from discord.ext import commands
 
 from pokefusion import imagelib
-from pokefusion.bot import PokeFusion
-from pokefusion.context import Context, Reply
+from pokefusion.bot.pokefusion import PokeFusion
+from pokefusion.bot.context import Context, Reply
 from .cogutils import guess_prompt
 
 

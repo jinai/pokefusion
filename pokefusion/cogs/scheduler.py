@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 from discord.ext import commands, tasks
 
 from pokefusion.assetmanager import AssetManager
-from pokefusion.bot import PokeFusion
+from pokefusion.bot.pokefusion import PokeFusion
 from .cogutils import AttachmentType, EmbedAttachment, WeekDay, embed_factory
 
 logger = logging.getLogger(__name__)

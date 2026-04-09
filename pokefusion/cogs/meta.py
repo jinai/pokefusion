@@ -4,8 +4,8 @@ from discord import Permissions
 from discord.ext import commands
 from discord.utils import oauth_url
 
-from pokefusion.bot import PokeFusion
-from pokefusion.context import Context
+from pokefusion.bot.pokefusion import PokeFusion
+from pokefusion.bot.context import Context
 from .cogutils import base_embed
 
 

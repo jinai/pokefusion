@@ -3,11 +3,11 @@ from typing import Annotated
 from discord.ext import commands
 from discord.ext.commands import BadArgument, CommandError
 
-from pokefusion.bot import PokeFusion
-from pokefusion.context import Context
-from pokefusion.converters import LanguageConverter, PrefixConverter
+from pokefusion.bot.context import Context
+from pokefusion.bot.converters import LanguageConverter, PrefixConverter
+from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.db.models import Server
-from pokefusion.fusionapi import Language
+from pokefusion.enums import Language
 
 
 class Admin(commands.Cog):

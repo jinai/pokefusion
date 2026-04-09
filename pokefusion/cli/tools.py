@@ -4,8 +4,8 @@ import time
 import typer
 
 from pokefusion.cli.context import Context
-from pokefusion.environment import Environment
-from pokefusion.tools.import_assets import import_autogen_sprites, import_custom_sprites, import_eggs, save_diff
+from pokefusion.enums import Environment
+from pokefusion.scripts.import_assets import import_autogen_sprites, import_custom_sprites, import_eggs, save_diff
 
 logger = logging.getLogger(__name__)
 tools_app = typer.Typer(no_args_is_help=True)

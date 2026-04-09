@@ -1,8 +1,8 @@
 from discord.ext.commands import BadArgument, Converter
 
-from .context import Context
-from .fusionapi import Language
-from .utils import special_join
+from pokefusion.bot.context import Context
+from pokefusion.enums import Language
+from pokefusion.utils import special_join
 
 
 class PrefixConverter(Converter):

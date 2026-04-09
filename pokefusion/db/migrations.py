@@ -7,7 +7,7 @@ from peewee_migrate import Router
 from pokefusion.configmanager import ConfigManager
 from pokefusion.db import models
 from pokefusion.db.models import BaseModel
-from pokefusion.environment import Environment
+from pokefusion.enums import Environment
 
 logger = logging.getLogger(__name__)
 

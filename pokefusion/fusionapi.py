@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import random
-from enum import StrEnum, auto
 from os.path import basename, splitext
 from typing import Self
 
@@ -11,19 +10,13 @@ from fuzzywuzzy import fuzz, process
 from . import utils
 from .assetmanager import AssetManager
 from .configmanager import ConfigManager
+from .enums import Language
 from .utils import TwoWayDict, normalize
 
 temp = ConfigManager.read_json("custom_diff_added.json")
 CUSTOM_DIFF_ADDED: dict[int, list[int]] = {int(key): value for key, value in temp.items()}
 temp = ConfigManager.read_json("custom_fusions.json")
 CUSTOM_FUSIONS: dict[int, list[int]] = {int(key): value for key, value in temp.items()}
-
-
-class Language(StrEnum):
-    FR = auto()
-    EN = auto()
-    DE = auto()
-    DEFAULT = FR
 
 
 class LookupResult:

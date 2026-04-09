@@ -8,9 +8,9 @@ import discord
 from discord import Message
 from discord.ext import commands
 
-from . import utils
-from .db.models import Server
-from .fusionapi import Language
+from pokefusion import utils
+from pokefusion.db.models import Server
+from pokefusion.enums import Language
 
 
 class Reply(Enum):

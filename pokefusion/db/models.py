@@ -4,7 +4,7 @@ from typing import Iterable
 from peewee import BooleanField, CharField, DateTimeField, IntegerField, Model
 
 from pokefusion.db.database import database
-from pokefusion.fusionapi import Language
+from pokefusion.enums import Language
 
 
 class EnumField(CharField):

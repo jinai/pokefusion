@@ -4,7 +4,7 @@ import platform
 import time
 from logging.handlers import TimedRotatingFileHandler
 
-from pokefusion.environment import Environment
+from pokefusion.enums import Environment
 
 
 class ColorFormatter(logging.Formatter):

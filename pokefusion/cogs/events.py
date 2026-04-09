@@ -4,8 +4,8 @@ from discord import Guild
 from discord.ext import commands
 from discord.ext.commands import CommandError
 
-from pokefusion.bot import PokeFusion
-from pokefusion.context import Context
+from pokefusion.bot.pokefusion import PokeFusion
+from pokefusion.bot.context import Context
 from pokefusion.db.models import Server
 
 logger = logging.getLogger(__name__)

@@ -11,9 +11,9 @@ from discord.ext.commands import CommandError, NotOwner
 
 from pokefusion import utils
 from pokefusion.assetmanager import AssetManager
-from pokefusion.bot import PokeFusion
-from pokefusion.context import Context, Reply
-from pokefusion.converters import ModuleConverter
+from pokefusion.bot.context import Context, Reply
+from pokefusion.bot.converters import ModuleConverter
+from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.db import models
 from pokefusion.db.models import Settings, User
 from .cogutils import AttachmentType, EmbedAttachment, embed_factory

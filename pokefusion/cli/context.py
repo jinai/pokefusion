@@ -2,7 +2,7 @@ import typer
 
 from pokefusion.configmanager import BotConfig, ConfigManager
 from pokefusion.db.migrations import MigrationService
-from pokefusion.environment import Environment
+from pokefusion.enums import Environment
 from pokefusion.log import setup_logging
 
 

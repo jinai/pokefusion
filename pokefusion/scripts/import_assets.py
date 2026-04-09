@@ -26,7 +26,7 @@ SPRITE_PATTERN = re.compile(r"\d+\.\d+\.png")
 def import_autogen_sprites() -> None:
     start_time = time.perf_counter()
 
-    output_dir = os.path.join("pokefusion", "tools", "output", "fusions", "autogen")
+    output_dir = os.path.join("pokefusion", "scripts", "output", "fusions", "autogen")
     git_folder = Path("Graphics", "Battlers", "spritesheets_autogen")
 
     tempdir = tempfile.TemporaryDirectory(prefix="pokefusion_")
@@ -58,12 +58,12 @@ def import_autogen_sprites() -> None:
 def import_custom_sprites(pack_name: str) -> None:
     start_time = time.perf_counter()
 
-    input_file = os.path.join("pokefusion", "tools", "input", pack_name)
+    input_file = os.path.join("pokefusion", "scripts", "input", pack_name)
     if not zipfile.is_zipfile(input_file):
         logger.error(f"Invalid ZIP: {input_file}")
         return
 
-    output_dir = os.path.join("pokefusion", "tools", "output", "fusions", "custom")
+    output_dir = os.path.join("pokefusion", "scripts", "output", "fusions", "custom")
     sprite_count = 0
     file_count = 0
     existing_folders = set()
@@ -90,12 +90,12 @@ def import_custom_sprites(pack_name: str) -> None:
 def import_eggs(pack_name: str) -> None:
     start_time = time.perf_counter()
 
-    input_file = os.path.join("pokefusion", "tools", "input", pack_name)
+    input_file = os.path.join("pokefusion", "scripts", "input", pack_name)
     if not zipfile.is_zipfile(input_file):
         logger.error(f"Invalid ZIP: {input_file}")
         return
 
-    output_dir = os.path.join("pokefusion", "tools", "output", "eggs")
+    output_dir = os.path.join("pokefusion", "scripts", "output", "eggs")
     os.makedirs(output_dir, exist_ok=True)
     egg_count = 0
     file_count = 0
@@ -119,11 +119,11 @@ def save_diff() -> None:
     start_time = time.perf_counter()
 
     autogen_folder_old = os.path.join("pokefusion", "assets", "fusions", "autogen")
-    autogen_folder_new = os.path.join("pokefusion", "tools", "output", "fusions", "autogen")
+    autogen_folder_new = os.path.join("pokefusion", "scripts", "output", "fusions", "autogen")
     custom_folder_old = os.path.join("pokefusion", "assets", "fusions", "custom")
-    custom_folder_new = os.path.join("pokefusion", "tools", "output", "fusions", "custom")
+    custom_folder_new = os.path.join("pokefusion", "scripts", "output", "fusions", "custom")
 
-    base_output = os.path.join("pokefusion", "tools", "output")
+    base_output = os.path.join("pokefusion", "scripts", "output")
     custom_fusions_output = os.path.join(base_output, "custom_fusions.json")
     autogen_diff_added_output = os.path.join(base_output, "autogen_diff_added.json")
     autogen_diff_removed_output = os.path.join(base_output, "autogen_diff_removed.json")

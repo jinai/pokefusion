@@ -6,7 +6,7 @@ from discord import Color, Embed, File
 
 from pokefusion import imagelib
 from pokefusion.assetmanager import AssetManager
-from pokefusion.context import Context, Reply
+from pokefusion.bot.context import Context, Reply
 from pokefusion.fusionapi import FusionResult, Sprite
 from pokefusion.imagelib import FilterType, PathOrBytes
 

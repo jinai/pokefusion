@@ -5,8 +5,8 @@ from discord import Color
 from discord.ext import commands
 from discord.ext.commands import CheckFailure, CommandError
 
-from pokefusion.bot import PokeFusion
-from pokefusion.context import Context
+from pokefusion.bot.pokefusion import PokeFusion
+from pokefusion.bot.context import Context
 from pokefusion.db.models import User
 from .cogutils import christmas_embed
 

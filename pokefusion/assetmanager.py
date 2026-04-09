@@ -3,7 +3,7 @@ import os
 from discord import Color
 
 from . import imagelib
-from .environment import Environment
+from .enums import Environment
 
 
 class AssetManager:
@@ -16,10 +16,11 @@ class AssetManager:
     SPRITES_DIR = os.path.join(ASSETS_DIR, "sprites")
     SPRITES_BASE_DIR = os.path.join(SPRITES_DIR, "base")
     SPRITES_SHINY_DIR = os.path.join(SPRITES_DIR, "shiny")
+    AVATARS_DIR = os.path.join(ASSETS_DIR, "avatars")
 
     @classmethod
     def get_avatar_path(cls, env: Environment) -> str:
-        return os.path.join(cls.ASSETS_DIR, f"avatar.{env}.png")
+        return os.path.join(cls.AVATARS_DIR, f"avatar.{env}.png")
 
     @classmethod
     def get_default_egg_path(cls) -> str:

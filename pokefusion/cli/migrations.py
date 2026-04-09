@@ -7,7 +7,7 @@ import typer
 from pokefusion.cli import env_option
 from pokefusion.cli.context import Context
 from pokefusion.db.migrations import ForceRequiredError, MigrationError
-from pokefusion.environment import Environment
+from pokefusion.enums import Environment
 
 logger = logging.getLogger(__name__)
 migrations_app = typer.Typer(no_args_is_help=True)

@@ -6,7 +6,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Self
 
-from .environment import Environment
+from .enums import Environment
 
 type JsonDict = dict[str, Any]
 

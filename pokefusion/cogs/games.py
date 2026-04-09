@@ -7,10 +7,11 @@ from discord import Message, TextChannel
 from discord.ext import commands
 
 from pokefusion import utils
-from pokefusion.bot import PokeFusion
+from pokefusion.bot.context import Context
+from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.configmanager import ConfigManager
-from pokefusion.context import Context
-from pokefusion.fusionapi import FusionResult, Language, Sprite
+from pokefusion.enums import Language
+from pokefusion.fusionapi import FusionResult, Sprite
 from pokefusion.imagelib import FilterType
 from pokefusion.pokeapi import PokeApiClient, PokeApiResult
 from .cogutils import description_embed, guess_filter_embed, guess_fusion_embed

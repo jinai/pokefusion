@@ -1,10 +1,10 @@
 from discord import Intents
 
-from pokefusion.bot import PokeFusion
+from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.cli import env_option
 from pokefusion.cli.context import Context
 from pokefusion.db.database import database, init_db
-from pokefusion.environment import Environment
+from pokefusion.enums import Environment
 
 
 def run_bot(env: Environment = env_option) -> None:

@@ -10,14 +10,14 @@ from discord import Color, Interaction, Message, User
 from discord.ext import commands
 from discord.ext.commands import CommandError
 
-from . import cogs
-from .assetmanager import AssetManager
-from .configmanager import BotConfig
-from .context import Context
-from .db.models import Server, Settings
-from .environment import Environment
-from .fusionapi import FusionClient, SpriteClient
-from .services.totem import TotemService
+from pokefusion import cogs
+from pokefusion.assetmanager import AssetManager
+from pokefusion.configmanager import BotConfig
+from pokefusion.bot.context import Context
+from pokefusion.db.models import Server, Settings
+from pokefusion.enums import Environment
+from pokefusion.fusionapi import FusionClient, SpriteClient
+from pokefusion.services.totem import TotemService
 
 logger = logging.getLogger(__name__)
 
