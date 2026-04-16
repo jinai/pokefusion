@@ -48,7 +48,7 @@ class Birthday(commands.Cog):
 
     @commands.command(aliases=["bday"])
     async def kdo2(self, ctx: Context):
-        self.bot.totem_service.reroll_totem(ctx.author)
+        self.bot.totem_service.reroll_totem(ctx.author.id)
         # noinspection PyTypeChecker
         await ctx.invoke(self.bot.get_command("totem"))
 

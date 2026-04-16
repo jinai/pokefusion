@@ -113,4 +113,4 @@ class Totem(BaseModel):
 
     @classmethod
     def get_all_ids(cls) -> Iterable[int]:
-        return cls.select(cls.id).tuples()
+        return cls.select(cls.discord_id).tuples()

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pokefusion.db.database import database
 from pokefusion.db.models import Totem
 from pokefusion.fusionapi import FusionClient, FusionResult
@@ -21,14 +23,14 @@ class TotemService:
 
     def reroll_totem(self, discord_id: int) -> FusionResult:
         fusion, head, body = self._generate_totem()
-        Totem.update(head=head, body=body).where(Totem.discord_id == discord_id).execute()
+        Totem.update(head=head, body=body, updated_at=datetime.now()).where(Totem.discord_id == discord_id).execute()
         return fusion
 
     def reroll_all_totems(self):
         with database.atomic("EXCLUSIVE"):
             # Todo: bulk update
-            for (totem_id,) in Totem.get_all_ids():
-                self.reroll_totem(totem_id)
+            for (discord_id,) in Totem.get_all_ids():
+                self.reroll_totem(discord_id)
 
     def _generate_totem(self):
         fusion = self.fusion_service.totem()
