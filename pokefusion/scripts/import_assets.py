@@ -2,19 +2,19 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import time
 import zipfile
 from collections import defaultdict
-from collections.abc import Generator
 from pathlib import Path
-from typing import Iterable
 
 from tqdm import tqdm
 
 from pokefusion.fusionapi import FusionClient
 from . import spritesheets
+from .utils import make_backup, regex_filter
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,7 @@ def import_custom_sprites(pack_name: str) -> None:
         f"Processed {sprite_count} custom sprites (discarded {file_count - sprite_count} sprites > MAX_ID) in {elapsed_time:.2f} seconds")
 
 
-def import_eggs(pack_name: str) -> None:
+def import_egg_sprites(pack_name: str) -> None:
     start_time = time.perf_counter()
 
     input_file = os.path.join("pokefusion", "scripts", "input", pack_name)
@@ -100,7 +100,7 @@ def import_eggs(pack_name: str) -> None:
     egg_count = 0
     file_count = 0
     with zipfile.ZipFile(input_file, "r") as zipf:
-        desc = f"Importing eggs from ZIP file"
+        desc = f"Importing egg sprites from ZIP file"
         for filename in regex_filter(tqdm(zipf.namelist(), desc=desc), ZIP_EGG_PATTERN):
             file_count += 1
             dex_id = int(os.path.splitext(os.path.basename(filename))[0])
@@ -112,7 +112,7 @@ def import_eggs(pack_name: str) -> None:
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(
-        f"Processed {egg_count} eggs (discarded {file_count - egg_count} eggs > MAX_ID) in {elapsed_time:.2f} seconds")
+        f"Processed {egg_count} egg sprites (discarded {file_count - egg_count} egg sprites > MAX_ID) in {elapsed_time:.2f} seconds")
 
 
 def save_diff() -> None:
@@ -168,10 +168,47 @@ def save_diff() -> None:
         f"Saved diffs for +{autogen_diff_added_count}/-{autogen_diff_removed_count} autogen and +{custom_diff_added_count}/-{custom_diff_removed_count} custom fusions in {elapsed_time:.2f} seconds")
 
 
-def regex_filter(sequence: Iterable[str], pattern: re.Pattern[str]) -> Generator[str, None, None]:
-    for elem in sequence:
-        if pattern.match(elem):
-            yield elem
+def move_to_assets():
+    start_time = time.perf_counter()
+
+    base_output = os.path.join("pokefusion", "scripts", "output")
+    autogen_output = os.path.join(base_output, "fusions", "autogen")
+    custom_output = os.path.join(base_output, "fusions", "custom")
+    eggs_output = os.path.join(base_output, "eggs")
+    custom_fusions_output = os.path.join(base_output, "custom_fusions.json")
+    custom_diff_added_output = os.path.join(base_output, "custom_diff_added.json")
+
+    base_assets = os.path.join("pokefusion", "assets")
+    base_assets_fusions = os.path.join(base_assets, "fusions")
+
+    base_config = os.path.join("pokefusion", "config")
+    custom_fusions_assets = os.path.join(base_config, "custom_fusions.json")
+    custom_diff_added_assets = os.path.join(base_config, "custom_diff_added.json")
+
+    move_autogen = os.path.exists(autogen_output)
+    move_custom = os.path.exists(custom_output)
+    move_eggs = os.path.exists(eggs_output)
+    move_config = os.path.exists(custom_fusions_output) and os.path.exists(custom_diff_added_output)
+
+    if move_autogen or move_custom:
+        os.makedirs(base_assets_fusions, exist_ok=True)
+
+    if move_autogen:
+        shutil.move(autogen_output, base_assets_fusions)
+    if move_custom:
+        shutil.move(custom_output, base_assets_fusions)
+    if move_eggs:
+        shutil.move(eggs_output, base_assets)
+    if move_config:
+        if os.path.exists(custom_fusions_assets):
+            make_backup(custom_fusions_assets)
+        if os.path.exists(custom_diff_added_assets):
+            make_backup(custom_diff_added_assets)
+        shutil.move(custom_fusions_output, custom_fusions_assets)
+        shutil.move(custom_diff_added_output, custom_diff_added_assets)
+
+    elapsed_time = time.perf_counter() - start_time
+    logger.info(f"Moved sprites to assets in {elapsed_time:.2f} seconds")
 
 
 def get_fusions(folder: str) -> dict[int, list[int]]:

@@ -1,8 +1,5 @@
 import base64
 import io
-import platform
-import shutil
-import subprocess
 from collections.abc import Callable, Sequence
 from typing import Any
 
@@ -76,13 +73,3 @@ def special_join(sequence: Sequence[Any], separator: str, last_separator: str) -
         return last_separator.join(sequence)
     else:
         return separator.join(sequence[:-1]) + last_separator + str(sequence[-1])
-
-
-def fast_delete(path: str):
-    system = platform.system()
-    if system in ("Linux", "Darwin"):
-        subprocess.run(["rm", "-rf", path], check=True)
-    elif system == "Windows":
-        subprocess.run(["cmd", "/c", "rmdir", "/s", "/q", path], check=True)
-    else:
-        shutil.rmtree(path)
