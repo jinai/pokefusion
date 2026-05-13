@@ -238,12 +238,12 @@ def save_to_file(path: str, image: BinaryIO) -> None:
         f.write(image.read())
 
 
-def to_numpy(im):
+def to_numpy(im: Image.Image):
     """https://uploadcare.com/blog/fast-import-of-pillow-images-to-numpy-opencv-arrays/"""
     im.load()
     # unpack data
     e = Image._getencoder(im.mode, 'raw', im.mode)
-    e.setimage(im.im)
+    e.setimage(im.im, (0, 0) + im.size)
 
     # NumPy buffer for the result
     shape, typestr = Image._conv_type_shape(im)
