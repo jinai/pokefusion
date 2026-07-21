@@ -4,8 +4,8 @@ from discord import Guild
 from discord.ext import commands
 from discord.ext.commands import CommandError
 
-from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.bot.context import Context
+from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.db.models import Server
 
 logger = logging.getLogger(__name__)
@@ -31,8 +31,12 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: Context, error: CommandError):
-        logger.error(f"{error.__class__.__name__} [{ctx.command.name}] {error}")
-        logger.error(f"Message: {ctx.message.content}")
+        log = f"{error.__class__.__name__}: {error} (message: {ctx.message.content})"
+
+        if ctx.command is not None:
+            log = f"[{ctx.prefix}{ctx.command.name}] " + log
+
+        logger.error(log)
 
 
 async def setup(bot: PokeFusion) -> None:
