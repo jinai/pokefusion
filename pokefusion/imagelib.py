@@ -16,7 +16,14 @@ type PathOrBytes = str | BinaryIO
 class Orientation(Enum):
     HORIZONTAL = auto()
     VERTICAL = auto()
-    DEFAULT = HORIZONTAL
+
+
+class Alignment(Enum):
+    TOP = auto()
+    BOTTOM = auto()
+    LEFT = auto()
+    RIGHT = auto()
+    CENTER = auto()
 
 
 class FilterType(Enum):
@@ -28,6 +35,14 @@ class FilterType(Enum):
     BOX = auto()
     SWIRL = auto()
     DEFAULT = SILHOUETTE
+
+
+def _offset(alignment: Alignment, container: int, item: int) -> int:
+    if alignment in (Alignment.BOTTOM, Alignment.RIGHT):
+        return container - item
+    if alignment is Alignment.CENTER:
+        return (container - item) // 2
+    return 0
 
 
 def get_dominant_color(image: PathOrBytes, normalize: bool = False) -> RGB:
@@ -80,8 +95,14 @@ def pad_image(image: PathOrBytes) -> BytesIO:
     return buffer
 
 
-def merge_images(image1: PathOrBytes, image2: PathOrBytes, orientation: Orientation = Orientation.DEFAULT,
-                 pixel_gap: int = 2, crop_bbox: bool = True) -> BytesIO:
+def merge_images(
+        image1: PathOrBytes,
+        image2: PathOrBytes,
+        orientation: Orientation = Orientation.HORIZONTAL,
+        pixel_gap: int = 2,
+        crop_bbox: bool = True,
+        alignment: Alignment = Alignment.BOTTOM,
+) -> BytesIO:
     image1 = normalize_image(image1, crop_bbox=crop_bbox)
     image2 = normalize_image(image2, crop_bbox=crop_bbox)
 
@@ -90,14 +111,16 @@ def merge_images(image1: PathOrBytes, image2: PathOrBytes, orientation: Orientat
 
     if orientation is Orientation.HORIZONTAL:
         size = (image1.width + image2.width + pixel_gap, max(image1.height, image2.height))
-        offset = (image1.width + pixel_gap, 0)
+        pos1 = (0, _offset(alignment, size[1], image1.height))
+        pos2 = (image1.width + pixel_gap, _offset(alignment, size[1], image2.height))
     else:
         size = (max(image1.width, image2.width), image1.height + image2.height + pixel_gap)
-        offset = (0, image1.height + pixel_gap)
+        pos1 = (_offset(alignment, size[0], image1.width), 0)
+        pos2 = (_offset(alignment, size[0], image2.width), image1.height + pixel_gap)
 
     merged = Image.new("RGBA", size)
-    merged.paste(image1, (0, 0))
-    merged.paste(image2, offset)
+    merged.paste(image1, pos1)
+    merged.paste(image2, pos2)
 
     buffer = BytesIO()
     merged.save(buffer, "PNG")
