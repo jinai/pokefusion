@@ -18,7 +18,7 @@ class ColorFormatter(logging.Formatter):
     RESET = "\x1b[0m"
     TIME_COLOR = "\x1b[30;1m"
     NAME_COLOR = "\x1b[35m"
-    FMT = f"{TIME_COLOR}%(asctime)s.%(msecs)03d{RESET} %(levelname_color)s%(levelname)-8s{RESET} {NAME_COLOR}%(name)s{RESET} %(message)s"
+    FMT = f"{TIME_COLOR}%(asctime)s.%(msecs)03d{RESET} %(levelname_color)s%(levelname)s{RESET} {NAME_COLOR}%(name)s{RESET} %(message)s"
 
     def __init__(self):
         super().__init__()
@@ -40,7 +40,7 @@ def setup_logging(env: Environment):
 
     file_handler = TimedRotatingFileHandler(filename=os.path.join("logs", f"pokefusion.{env}.log"), when="midnight",
                                             encoding="utf-8")
-    fmt = "[%(asctime)s.%(msecs)03d] [%(levelname)-8s] %(name)s: %(message)s"
+    fmt = "%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s"
     datefmt = "%Y-%m-%d %H:%M:%S"
     formatter = logging.Formatter(fmt=fmt, datefmt=datefmt)
     file_handler.setFormatter(formatter)
