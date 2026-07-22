@@ -111,8 +111,8 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
 
         title = "Sprite Pack Update"
         description = (
-            "The latest sprite pack was imported:"
-            ""
+            "📌 75 Pokémon were added (from 501 to 576)\n\n"
+            "The latest sprite pack was imported:\n"
             "```asciidoc\n"
             "Sprite pack :: 126_May_2026\n"
             "Timestamp   :: 2026-07-23 00:58:00\n"
@@ -121,7 +121,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
         )
         if free_rerolls > 0:
             plural = "s" if free_rerolls > 1 else ""
-            description += f"⚠️ All Totems had to be reset️. To compensate, everyone got **+{free_rerolls} free reroll{plural}**! Check how many you have with `{ctx.prefix}fru`"
+            description += f"⚠️ All Totems have been reset️. As compensation, everyone received **+{free_rerolls} free reroll{plural}**! Check how many you have with `{ctx.prefix}fru`"
         avatar = EmbedAttachment(AssetManager.get_avatar_path(self.bot.config.env), "avatar.png",
                                  AttachmentType.THUMBNAIL)
         preview, files = embed_factory(title=title, description=description, attachments=(avatar,),
@@ -135,6 +135,11 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
             embed.set_footer(text=f"{ctx.author} replied no.")
         else:
             embed.set_footer(text=f"{ctx.author} replied yes.")
+
+            if free_rerolls > 0:
+                User.add_free_rerolls_to_all(free_rerolls)
+                self.bot.totem_service.reroll_all_totems()
+
             for channel_id in NOTIF_CHANNELS:
                 channel = self.bot.get_channel(channel_id)
                 if channel:
