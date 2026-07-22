@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 ZIP_FUSION_PATTERN = re.compile(r"CustomBattlers/\d+\.\d+\.png")
 ZIP_EGG_PATTERN = re.compile(r"Other/Eggs/(?!000)\d+.png")
 SPRITE_PATTERN = re.compile(r"\d+\.\d+\.png")
+EGG_PATTERN = re.compile(r"\d+\.png")
 
 
 def import_autogen_sprites() -> None:
@@ -122,6 +123,8 @@ def save_diff() -> None:
     autogen_folder_new = os.path.join("pokefusion", "scripts", "output", "fusions", "autogen")
     custom_folder_old = os.path.join("pokefusion", "assets", "fusions", "custom")
     custom_folder_new = os.path.join("pokefusion", "scripts", "output", "fusions", "custom")
+    eggs_folder_old = os.path.join("pokefusion", "assets", "eggs")
+    eggs_folder_new = os.path.join("pokefusion", "scripts", "output", "eggs")
 
     base_output = os.path.join("pokefusion", "scripts", "output")
     custom_fusions_output = os.path.join(base_output, "custom_fusions.json")
@@ -129,15 +132,21 @@ def save_diff() -> None:
     autogen_diff_removed_output = os.path.join(base_output, "autogen_diff_removed.json")
     custom_diff_added_output = os.path.join(base_output, "custom_diff_added.json")
     custom_diff_removed_output = os.path.join(base_output, "custom_diff_removed.json")
+    eggs_diff_added_output = os.path.join(base_output, "eggs_diff_added.json")
+    eggs_diff_removed_output = os.path.join(base_output, "eggs_diff_removed.json")
 
     autogen_old = get_fusions(autogen_folder_old)
     autogen_new = get_fusions(autogen_folder_new)
     custom_old = get_fusions(custom_folder_old)
     custom_new = get_fusions(custom_folder_new)
+    eggs_old = get_eggs(eggs_folder_old)
+    eggs_new = get_eggs(eggs_folder_new)
     autogen_diff_added = get_fusions_diff(autogen_old, autogen_new)
     autogen_diff_removed = get_fusions_diff(autogen_new, autogen_old)
     custom_diff_added = get_fusions_diff(custom_old, custom_new)
     custom_diff_removed = get_fusions_diff(custom_new, custom_old)
+    eggs_diff_added = get_eggs_diff(eggs_old, eggs_new)
+    eggs_diff_removed = get_eggs_diff(eggs_new, eggs_old)
 
     autogen_diff_added_count = 0
     autogen_diff_removed_count = 0
@@ -162,10 +171,14 @@ def save_diff() -> None:
         json.dump(custom_diff_added, f)
     with open(custom_diff_removed_output, "w", encoding="utf-8") as f:
         json.dump(custom_diff_removed, f)
+    with open(eggs_diff_added_output, "w", encoding="utf-8") as f:
+        json.dump(eggs_diff_added, f)
+    with open(eggs_diff_removed_output, "w", encoding="utf-8") as f:
+        json.dump(eggs_diff_removed, f)
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(
-        f"Saved diffs for +{autogen_diff_added_count}/-{autogen_diff_removed_count} autogen and +{custom_diff_added_count}/-{custom_diff_removed_count} custom fusions in {elapsed_time:.2f} seconds")
+        f"Saved diffs for +{autogen_diff_added_count}/-{autogen_diff_removed_count} autogen fusions, +{custom_diff_added_count}/-{custom_diff_removed_count} custom fusions and +{len(eggs_diff_added)}/-{len(eggs_diff_removed)} eggs in {elapsed_time:.2f} seconds")
 
 
 def move_to_assets():
@@ -213,8 +226,9 @@ def move_to_assets():
 
 def get_fusions(folder: str) -> dict[int, list[int]]:
     fusions = defaultdict(list)
+
     for root, directories, filenames in os.walk(folder):
-        for filename in sorted(regex_filter(filenames, SPRITE_PATTERN)):
+        for filename in regex_filter(filenames, SPRITE_PATTERN):
             head, body = os.path.splitext(filename)[0].split(".", 1)
             fusions[int(head)].append(int(body))
 
@@ -232,4 +246,33 @@ def get_fusions_diff(old: dict[int, list[int]], new: dict[int, list[int]]) -> di
         else:
             diff[head] = new[head][:]
 
+    return diff
+
+
+def get_eggs(folder: str) -> list[int]:
+    eggs = []
+
+    for root, directories, filenames in os.walk(folder):
+        for filename in regex_filter(filenames, EGG_PATTERN):
+            egg = os.path.splitext(filename)[0]
+            eggs.append(int(egg))
+
+    return sorted(eggs)
+
+
+def get_eggs_diff(old: list[int], new: list[int]) -> list[int]:
+    i = j = 0
+    diff = []
+
+    while i < len(old) and j < len(new):
+        if old[i] < new[j]:
+            i += 1
+        elif old[i] > new[j]:
+            diff.append(new[j])
+            j += 1
+        else:
+            i += 1
+            j += 1
+
+    diff.extend(new[j:])
     return diff
