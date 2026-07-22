@@ -1,15 +1,13 @@
 import base64
 import io
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 import unidecode
 
-type JsonDict = dict[str, Any]
 
-
-class TwoWayDict(dict):
-    def __init__(self, seq=None, **kwargs):
+class TwoWayDict[K, V](dict[K, V]):
+    def __init__(self, seq: Mapping[K, V] | None = None, **kwargs):
         if seq is None:
             super().__init__(**kwargs)
         else:
@@ -17,7 +15,7 @@ class TwoWayDict(dict):
             for k, v in seq.items(): dict.__setitem__(self, v, k)
         for k, v in kwargs.items(): dict.__setitem__(self, v, k)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: K, value: V) -> None:
         if key in self:
             del self[key]
         if value in self:
@@ -25,11 +23,11 @@ class TwoWayDict(dict):
         dict.__setitem__(self, key, value)
         dict.__setitem__(self, value, key)
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: K | V) -> None:
         dict.__delitem__(self, self[key])
         dict.__delitem__(self, key)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return dict.__len__(self) // 2
 
 

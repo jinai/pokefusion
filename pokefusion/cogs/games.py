@@ -1,5 +1,4 @@
 import logging
-import os
 import random
 from collections import defaultdict
 
@@ -36,11 +35,11 @@ def remove_forms(name: str) -> str:
 
 
 def load_pokemon_names() -> dict[Language, list[str]]:
-    data = {}
-    for path in ConfigManager.get_pokedex():
-        lang = Language(os.path.splitext(filename := os.path.basename(path))[0].split("_")[-1])  # pokedex_{lang}.json
-        raw = ConfigManager.read_json(filename)
-        data[lang] = [normalize(value) for key, value in raw.items() if int(key) < 899]
+    dex = ConfigManager.read_json("pokedex.json")
+    data = {
+        lang: [normalize(value) for key, value in names.items() if int(key) < 899]
+        for lang, names in dex.items() if lang in Language
+    }
     return data
 
 
@@ -56,10 +55,8 @@ class Games(commands.Cog):
 
     def cog_load(self) -> None:
         self._pokemon_names = load_pokemon_names()
-        logger.info(f"Loaded {len(self._pokemon_names[Language.DEFAULT])} Pokémon names")
-
-    def cog_unload(self) -> None:
-        self._pokemon_names = {}
+        num_langs, num_entries = len(self._pokemon_names), len(self._pokemon_names[Language.DEFAULT])
+        logger.info(f"Loaded {num_entries} Pokémon names in {num_langs} languages")
 
     @commands.Cog.listener()
     async def on_message(self, message: Message) -> None:

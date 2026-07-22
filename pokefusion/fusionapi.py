@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import random
-from os.path import basename, splitext
 from typing import Self
 
 from fuzzywuzzy import fuzz, process
@@ -11,7 +10,6 @@ from . import utils
 from .assetmanager import AssetManager
 from .configmanager import ConfigManager
 from .enums import Language
-from .utils import TwoWayDict, normalize
 
 temp = ConfigManager.read_json("custom_diff_added.json")
 CUSTOM_DIFF_ADDED: dict[int, list[int]] = {int(key): value for key, value in temp.items()}
@@ -121,13 +119,8 @@ class BaseClient:
     MIN_ID = None
     MAX_ID = None
 
-    def __init__(self, config_files: list[str]):
-        self.data: dict[Language, dict[str, str]] = {}
-        for path in config_files:
-            lang = Language(splitext(filename := basename(path))[0].split("_")[-1])  # conf_{lang}.json
-            raw = ConfigManager.read_json(filename)
-            normalized = {key: normalize(value) for key, value in raw.items()}
-            self.data[lang] = TwoWayDict(normalized)
+    def __init__(self, pokedex: dict[str, dict[str, str]]):
+        self.pokedex = pokedex
 
     @classmethod
     def get_random_id(cls):
@@ -138,26 +131,26 @@ class BaseClient:
 
         # Example: client.lookup("122")
         if query.isdigit():
-            if query in self.data[lang]:
-                return result.succeed(int(query), self.data[lang][query])
+            if query in self.pokedex[lang]:
+                return result.succeed(int(query), self.pokedex[lang][query])
             else:
                 return result.fail(query)
 
         # Example: client.lookup("?")
         elif query in BaseClient.RANDOM_QUERIES:
             rand = self.get_random_id()
-            return result.succeed(rand, self.data[lang][str(rand)])
+            return result.succeed(rand, self.pokedex[lang][str(rand)])
 
         # Example: client.lookup("mr. mime")
         else:
             query = utils.normalize(query)
-            if query in self.data[lang]:
-                return result.succeed(int(self.data[lang][query]), query)
+            if query in self.pokedex[lang]:
+                return result.succeed(int(self.pokedex[lang][query]), query)
             else:
                 return result.fail(query)
 
     def get_species(self, lang: Language = Language.DEFAULT) -> list[str]:
-        return [k for k in self.data[lang] if not k.isdigit()]
+        return [k for k in self.pokedex[lang] if not k.isdigit()]
 
 
 class FusionClient(BaseClient):
@@ -166,7 +159,7 @@ class FusionClient(BaseClient):
     PREVIOUS_MAX_ID = 501  # TODO: update when adding sprites
 
     def __init__(self):
-        super().__init__(ConfigManager.get_infinitedex())
+        super().__init__(ConfigManager.get_lookup_infinitedex())
 
     def fusion(self, head: str = "?", body: str = "?", lang: Language = Language.DEFAULT,
                custom_only: bool = False) -> FusionResult:
@@ -201,7 +194,7 @@ class SpriteClient(BaseClient):
     MAX_ID = 898
 
     def __init__(self):
-        super().__init__(ConfigManager.get_pokedex())
+        super().__init__(ConfigManager.get_lookup_pokedex())
 
     def get_sprite(self, query: str, lang: Language = Language.DEFAULT) -> Sprite:
         return Sprite(self.lookup(query, lang))
