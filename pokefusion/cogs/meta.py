@@ -4,8 +4,8 @@ from discord import Permissions
 from discord.ext import commands
 from discord.utils import oauth_url
 
-from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.bot.context import Context
+from pokefusion.bot.pokefusion import PokeFusion
 from .cogutils import base_embed
 
 
@@ -42,9 +42,9 @@ class Meta(commands.Cog):
     async def version(self, ctx: Context):
         embed, _ = base_embed(ctx, description=(
             "```asciidoc\n"
-            "Sprite pack :: 125_April_2026\n"
-            "Timestamp   :: 2026-06-01 21:20:00\n"
-            "Changes     :: +986/-55 custom fusions\n"
+            "Sprite pack :: 126_May_2026\n"
+            "Timestamp   :: 2026-07-23 00:58:00\n"
+            "Changes     :: +80775 autogen fusions, +18325/-109 custom fusions and +30 eggs\n"
             "```"
         ))
         await ctx.send(embed=embed)

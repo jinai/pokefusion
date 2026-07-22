@@ -155,7 +155,7 @@ class BaseClient:
 
 class FusionClient(BaseClient):
     MIN_ID = 1
-    MAX_ID = 501
+    MAX_ID = 576
     PREVIOUS_MAX_ID = 501  # TODO: update when adding sprites
 
     def __init__(self):

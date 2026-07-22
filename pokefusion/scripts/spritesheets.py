@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from pokefusion.fusionapi import FusionClient
 
-SPRITESHEET_ROWS = 51
+SPRITESHEET_ROWS = 58
 SPRITESHEET_COLUMNS = 10
 SPRITE_WIDTH = 96
 SPRITE_HEIGHT = 96

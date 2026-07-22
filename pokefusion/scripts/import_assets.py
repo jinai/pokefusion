@@ -32,7 +32,7 @@ def import_autogen_sprites() -> None:
 
     tempdir = tempfile.TemporaryDirectory(prefix="pokefusion_")
     commands = [
-        f"git clone -n --depth=1 --filter=tree:0 -b releases --single-branch https://github.com/infinitefusion/infinitefusion-e18.git \"{tempdir.name}\"",
+        f"git clone -n --depth=1 --filter=tree:0 -b develop-6.6 --single-branch https://github.com/infinitefusion/infinitefusion-e18.git \"{tempdir.name}\"",
         f"git sparse-checkout set --no-cone /{git_folder.as_posix()}",
         "git checkout",
     ]
