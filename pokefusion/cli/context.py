@@ -2,21 +2,21 @@ import typer
 
 from pokefusion.configmanager import BotConfig, ConfigManager
 from pokefusion.db.migrations import MigrationService
-from pokefusion.enums import Environment
 from pokefusion.log import setup_logging
 
 
 class Context:
-    def __init__(self, env: Environment, *, require_confirmation: bool = False, action: str | None = None, ):
+    def __init__(self, *, require_confirmation: bool = False, action: str | None = None):
+        self.config: BotConfig = ConfigManager.get_bot_config()
+        setup_logging()
+
         if require_confirmation:
-            typer.confirm(f"[{env}] {action or 'This operation'} - continue?", abort=True)
-        self.env = env
-        setup_logging(env)
-        self.config: BotConfig = ConfigManager.get_bot_config(env)
+            typer.confirm(f"[{self.config.env.upper()}] {action or 'This operation'} - continue?", abort=True)
+
         self._migration_service = None
 
     @property
     def migration_service(self):
         if self._migration_service is None:
-            self._migration_service = MigrationService(self.env)
+            self._migration_service = MigrationService()
         return self._migration_service

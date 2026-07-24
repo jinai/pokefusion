@@ -1,14 +1,12 @@
 from discord import Intents
 
 from pokefusion.bot.pokefusion import PokeFusion
-from pokefusion.cli import env_option
 from pokefusion.cli.context import Context
 from pokefusion.db.database import database, init_db
-from pokefusion.enums import Environment
 
 
-def run_bot(env: Environment = env_option) -> None:
-    ctx = Context(env)
+def run_bot() -> None:
+    ctx = Context()
     init_db(ctx.config.dbconf)
     intents = Intents.default()
     intents.members = False

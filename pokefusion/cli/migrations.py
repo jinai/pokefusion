@@ -4,10 +4,8 @@ from typing import Annotated
 
 import typer
 
-from pokefusion.cli import env_option
 from pokefusion.cli.context import Context
 from pokefusion.db.migrations import ForceRequiredError, MigrationError
-from pokefusion.enums import Environment
 
 logger = logging.getLogger(__name__)
 migrations_app = typer.Typer(no_args_is_help=True)
@@ -37,29 +35,28 @@ def handle_migration_errors(func):
 @migrations_app.command(name="new")
 @handle_migration_errors
 def create_migration(name: str) -> None:
-    ctx = Context(Environment.DEV)
+    ctx = Context()
     ctx.migration_service.create(name)
 
 
 @migrations_app.command(name="apply")
 @handle_migration_errors
-def apply_migrations(name: Annotated[str, typer.Option()] = None, env: Environment = env_option) -> None:
-    ctx = Context(env, require_confirmation=True, action="Apply pending migrations (make a backup first!)")
+def apply_migrations(name: Annotated[str, typer.Option()] = None) -> None:
+    ctx = Context(require_confirmation=True, action="Apply pending migrations (make a backup first!)")
     ctx.migration_service.apply(name)
 
 
 @migrations_app.command(name="rollback")
 @handle_migration_errors
-def rollback_migration(count: Annotated[int, typer.Argument(callback=count_callback)] = 1,
-                       env: Environment = env_option) -> None:
-    ctx = Context(env, require_confirmation=True,
+def rollback_migration(count: Annotated[int, typer.Argument(callback=count_callback)] = 1) -> None:
+    ctx = Context(require_confirmation=True,
                   action=f"Rollback {count} migration{'s' if count > 1 else ''} (make a backup first!)")
     ctx.migration_service.rollback(count)
 
 
 @migrations_app.command(name="list")
-def list_migrations(env: Environment = env_option) -> None:
-    ctx = Context(env)
+def list_migrations() -> None:
+    ctx = Context()
     done, diff = ctx.migration_service.list()
 
     logger.info("List of migrations:")
@@ -72,10 +69,13 @@ def list_migrations(env: Environment = env_option) -> None:
 
 @migrations_app.command(name="remove")
 @handle_migration_errors
-def remove_migration(name: str,
-                     force: Annotated[
-                         bool, typer.Option("--force", "-f", help="Rollback and remove even if applied.")] = False,
-                     env: Environment = env_option) -> None:
-    ctx = Context(env, require_confirmation=True, action=f"Remove '{name}' (make a backup first!)")
+def remove_migration(
+        name: str,
+        force: Annotated[
+            bool,
+            typer.Option("--force", "-f", help="Rollback and remove even if applied.")
+        ] = False
+) -> None:
+    ctx = Context(require_confirmation=True, action=f"Remove '{name}' (make a backup first!)")
     ctx.migration_service.remove(name, force)
     logger.info(f"Removed migration '{name}' from disk")

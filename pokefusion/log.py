@@ -4,8 +4,6 @@ import platform
 import time
 from logging.handlers import TimedRotatingFileHandler
 
-from pokefusion.enums import Environment
-
 
 class ColorFormatter(logging.Formatter):
     LEVEL_COLOURS = {
@@ -29,7 +27,7 @@ class ColorFormatter(logging.Formatter):
         return self._formatter.format(record)
 
 
-def setup_logging(env: Environment):
+def setup_logging():
     if platform.system() == "Linux":
         os.environ["TZ"] = "CET"
         time.tzset()
@@ -38,7 +36,7 @@ def setup_logging(env: Environment):
     root = logging.getLogger()
     root.setLevel(logging.INFO)
 
-    file_handler = TimedRotatingFileHandler(filename=os.path.join("logs", f"pokefusion.{env}.log"), when="midnight",
+    file_handler = TimedRotatingFileHandler(filename=os.path.join("logs", f"pokefusion.log"), when="midnight",
                                             encoding="utf-8")
     fmt = "%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s"
     datefmt = "%Y-%m-%d %H:%M:%S"

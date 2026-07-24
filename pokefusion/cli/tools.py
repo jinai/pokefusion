@@ -4,8 +4,6 @@ import time
 
 import typer
 
-from pokefusion.cli.context import Context
-from pokefusion.enums import Environment
 from pokefusion.scripts.clean_assets import clean_assets_folder, clean_output_folder, restore_git_files
 from pokefusion.scripts.import_assets import import_autogen_sprites, import_custom_sprites, import_egg_sprites, \
     move_to_assets, save_diff
@@ -16,11 +14,6 @@ import_app = typer.Typer(no_args_is_help=True)
 cleanup_app = typer.Typer(no_args_is_help=True)
 tools_app.add_typer(import_app, name="import")
 tools_app.add_typer(cleanup_app, name="cleanup")
-
-
-@tools_app.callback()
-def tools_callback() -> None:
-    Context(Environment.PROD)
 
 
 @import_app.command("all")

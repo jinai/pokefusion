@@ -16,6 +16,9 @@ type Dex = dict[str, TwoWayDict[str, str]]
 
 class ConfigManager:
     CONFIG_DIR = os.path.join("pokefusion", "config")
+    CONFIG_FILE = "config.json"
+    POKEDEX_FILE = "pokedex.json"
+    INFINITEDEX_FILE = "infinitedex.json"
 
     @classmethod
     @cache
@@ -31,11 +34,11 @@ class ConfigManager:
 
     @classmethod
     def get_lookup_pokedex(cls) -> Dex:
-        return cls._load_lookup_dex("pokedex.json")
+        return cls._load_lookup_dex(cls.POKEDEX_FILE)
 
     @classmethod
     def get_lookup_infinitedex(cls) -> Dex:
-        return cls._load_lookup_dex("infinitedex.json")
+        return cls._load_lookup_dex(cls.INFINITEDEX_FILE)
 
     @classmethod
     @cache
@@ -44,8 +47,8 @@ class ConfigManager:
             return json.load(f)
 
     @classmethod
-    def get_bot_config(cls, env: Environment) -> BotConfig:
-        return BotConfig.from_dict(cls.read_json(f"config.{env}.json"), env)
+    def get_bot_config(cls) -> BotConfig:
+        return BotConfig.from_dict(cls.read_json(cls.CONFIG_FILE))
 
 
 @dataclass
@@ -61,18 +64,18 @@ class BotConfig:
     main_color: str
 
     @classmethod
-    def from_dict(cls, obj: JsonDict, env: Environment) -> Self:
-        _owner_id = int(obj.get("owner_id"))
-        _default_prefix = str(obj.get("default_prefix"))
-        _token = str(obj.get("token"))
-        _init_cogs = obj.get("init_cogs")
-        _database = DatabaseConfig.from_dict(obj.get("database"))
-        _maintenance = obj.get("maintenance")
-        _block_dms = obj.get("block_dms")
-        _main_color = obj.get("main_color")
-
-        return cls(env, _owner_id, _default_prefix, _token, _init_cogs, _database, _maintenance, _block_dms,
-                   _main_color)
+    def from_dict(cls, cfg: JsonDict) -> Self:
+        return cls(
+            env=cfg["environment"],
+            owner_id=cfg["owner_id"],
+            default_prefix=cfg["default_prefix"],
+            token=cfg["token"],
+            init_cogs=cfg["init_cogs"],
+            dbconf=DatabaseConfig.from_dict(cfg["database"]),
+            maintenance=cfg["maintenance"],
+            block_dms=cfg["block_dms"],
+            main_color=cfg["main_color"]
+        )
 
 
 @dataclass
@@ -81,7 +84,8 @@ class DatabaseConfig:
     pragmas: JsonDict
 
     @classmethod
-    def from_dict(cls, obj: JsonDict) -> Self:
-        _path = os.path.abspath(obj.get("path"))
-        _pragmas = obj.get("pragmas")
-        return cls(_path, _pragmas)
+    def from_dict(cls, cfg: JsonDict) -> Self:
+        return cls(
+            path=os.path.abspath(cfg["path"]),
+            pragmas=cfg.get("pragmas", {})
+        )

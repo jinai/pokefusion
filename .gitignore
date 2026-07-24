@@ -1,6 +1,5 @@
 .idea/
 __pycache__/
 logs/
-pokefusion/config/config.*.json
-!pokefusion/config/config.example.json
+pokefusion/config/config.json
 todo.md
