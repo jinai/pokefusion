@@ -13,10 +13,10 @@ class Context:
         if require_confirmation:
             typer.confirm(f"[{self.config.env.upper()}] {action or 'This operation'} - continue?", abort=True)
 
-        self._migration_service = None
+        self._migration_service: MigrationService | None = None
 
     @property
     def migration_service(self):
         if self._migration_service is None:
-            self._migration_service = MigrationService()
+            self._migration_service = MigrationService(self.config.database)
         return self._migration_service

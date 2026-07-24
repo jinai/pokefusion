@@ -4,7 +4,7 @@ from pathlib import Path
 from peewee import SqliteDatabase
 from peewee_migrate import Router
 
-from pokefusion.configmanager import ConfigManager
+from pokefusion.configmanager import DatabaseConfig
 from pokefusion.db import models
 from pokefusion.db.models import BaseModel
 
@@ -31,9 +31,8 @@ def _resolve_migrations_dir() -> str:
 
 
 class MigrationService:
-    def __init__(self):
-        self._dbconf = ConfigManager.get_bot_config().dbconf
-        self._database = SqliteDatabase(self._dbconf.path, pragmas=self._dbconf.pragmas)
+    def __init__(self, config: DatabaseConfig):
+        self._database = SqliteDatabase(config.path, pragmas=config.pragmas)
         self._auto_module = _resolve_auto_module()
         self._migrations_dir = _resolve_migrations_dir()
         self._router = Router(self._database, migrate_dir=self._migrations_dir, ignore=BaseModel._meta.name,

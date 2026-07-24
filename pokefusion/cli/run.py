@@ -7,7 +7,7 @@ from pokefusion.db.database import database, init_db
 
 def run_bot() -> None:
     ctx = Context()
-    init_db(ctx.config.dbconf)
+    init_db(ctx.config.database)
     intents = Intents.default()
     intents.members = False
     intents.presences = False

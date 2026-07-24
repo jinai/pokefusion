@@ -58,7 +58,7 @@ class BotConfig:
     default_prefix: str
     token: str
     init_cogs: list[str]
-    dbconf: DatabaseConfig
+    database: DatabaseConfig
     maintenance: bool
     block_dms: bool
     main_color: str
@@ -71,7 +71,7 @@ class BotConfig:
             default_prefix=cfg["default_prefix"],
             token=cfg["token"],
             init_cogs=cfg["init_cogs"],
-            dbconf=DatabaseConfig.from_dict(cfg["database"]),
+            database=DatabaseConfig.from_dict(cfg["database"]),
             maintenance=cfg["maintenance"],
             block_dms=cfg["block_dms"],
             main_color=cfg["main_color"]

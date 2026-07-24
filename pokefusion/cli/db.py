@@ -13,5 +13,5 @@ db_app = typer.Typer(no_args_is_help=True)
 def init_db() -> None:
     ctx = Context(require_confirmation=True, action="Initialize database (drop tables)")
     logger.info(f"Initializing database")
-    database.init_db(ctx.config.dbconf)
+    database.init_db(ctx.config.database)
     schema.create_schema(drop_tables=True)
