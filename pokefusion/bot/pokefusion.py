@@ -57,7 +57,7 @@ class PokeFusion(commands.Bot):
         self.before_invoke(self.log_command)
         self.add_check(self.check_maintenance, call_once=True)
         self.add_check(self.check_block_dms)
-        if self.config.env is not Environment.PROD:
+        if self.config.environment is not Environment.PROD:
             self.on_command_error = self.debug_error
 
     def patch_invoke_hooks(self) -> None:
@@ -116,7 +116,7 @@ class PokeFusion(commands.Bot):
                 self._main_color = Color.from_str(self.config.main_color)
             except ValueError:
                 try:
-                    self._main_color = AssetManager.get_asset_color(AssetManager.get_avatar_path(self.config.env))
+                    self._main_color = AssetManager.get_asset_color(AssetManager.get_avatar_path(self.config.environment))
                 except OSError:
                     self._main_color = Color.light_grey()
         return self._main_color

@@ -40,7 +40,7 @@ class Scheduler(commands.Cog):
             logger.info("Rerolling all totems...")
             self.bot.totem_service.reroll_all_totems()
             logger.info(f"Reroll done!")
-            avatar = EmbedAttachment(AssetManager.get_avatar_path(self.bot.config.env), "avatar.png",
+            avatar = EmbedAttachment(AssetManager.get_avatar_path(self.bot.config.environment), "avatar.png",
                                      AttachmentType.THUMBNAIL)
             for channel_id in NOTIF_CHANNELS:
                 channel = self.bot.get_channel(channel_id)

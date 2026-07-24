@@ -122,7 +122,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
         if free_rerolls > 0:
             plural = "s" if free_rerolls > 1 else ""
             description += f"⚠️ All Totems have been reset️. As compensation, everyone received **+{free_rerolls} free reroll{plural}**! Check how many you have with `{ctx.prefix}fru`"
-        avatar = EmbedAttachment(AssetManager.get_avatar_path(self.bot.config.env), "avatar.png",
+        avatar = EmbedAttachment(AssetManager.get_avatar_path(self.bot.config.environment), "avatar.png",
                                  AttachmentType.THUMBNAIL)
         preview, files = embed_factory(title=title, description=description, attachments=(avatar,),
                                        color=ctx.bot.main_color)

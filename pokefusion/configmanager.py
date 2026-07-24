@@ -53,7 +53,7 @@ class ConfigManager:
 
 @dataclass
 class BotConfig:
-    env: Environment
+    environment: Environment
     owner_id: int
     default_prefix: str
     token: str
@@ -66,7 +66,7 @@ class BotConfig:
     @classmethod
     def from_dict(cls, cfg: JsonDict) -> Self:
         return cls(
-            env=cfg["environment"],
+            environment=cfg["environment"],
             owner_id=cfg["owner_id"],
             default_prefix=cfg["default_prefix"],
             token=cfg["token"],

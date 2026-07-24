@@ -11,7 +11,7 @@ class Context:
         setup_logging()
 
         if require_confirmation:
-            typer.confirm(f"[{self.config.env.upper()}] {action or 'This operation'} - continue?", abort=True)
+            typer.confirm(f"[{self.config.environment.upper()}] {action or 'This operation'} - continue?", abort=True)
 
         self._migration_service: MigrationService | None = None
 

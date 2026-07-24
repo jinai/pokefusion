@@ -22,7 +22,7 @@ def run_bot() -> None:
     discord.VoiceClient.warn_nacl = False
     discord.VoiceClient.warn_dave = False
 
-    logger.info(f"Starting bot (Environment: {ctx.config.env.upper()})")
+    logger.info(f"Starting bot (Environment: {ctx.config.environment.upper()})")
     bot = PokeFusion(case_insensitive=True, intents=intents, config=ctx.config)
 
     try:
