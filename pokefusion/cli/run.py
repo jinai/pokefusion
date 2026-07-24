@@ -1,8 +1,13 @@
+import logging
+
+import discord
 from discord import Intents
 
 from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.cli.context import Context
 from pokefusion.db.database import database, init_db
+
+logger = logging.getLogger(__name__)
 
 
 def run_bot() -> None:
@@ -12,6 +17,12 @@ def run_bot() -> None:
     intents.members = False
     intents.presences = False
     intents.message_content = True
+
+    # Voice support is not needed
+    discord.VoiceClient.warn_nacl = False
+    discord.VoiceClient.warn_dave = False
+
+    logger.info(f"Starting bot (Environment: {ctx.config.env.upper()})")
     bot = PokeFusion(case_insensitive=True, intents=intents, config=ctx.config)
 
     try:
