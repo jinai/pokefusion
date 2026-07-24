@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from dataclasses import dataclass
+from datetime import time
 from functools import cache
 from typing import Any, Self
 
@@ -59,6 +61,7 @@ class BotConfig:
     token: str
     init_cogs: list[str]
     database: DatabaseConfig
+    logging: LoggingConfig
     maintenance: bool
     block_dms: bool
     main_color: str
@@ -72,6 +75,7 @@ class BotConfig:
             token=cfg["token"],
             init_cogs=cfg["init_cogs"],
             database=DatabaseConfig.from_dict(cfg["database"]),
+            logging=LoggingConfig.from_dict(cfg["logging"]),
             maintenance=cfg["maintenance"],
             block_dms=cfg["block_dms"],
             main_color=cfg["main_color"]
@@ -88,4 +92,87 @@ class DatabaseConfig:
         return cls(
             path=os.path.abspath(cfg["path"]),
             pragmas=cfg.get("pragmas", {})
+        )
+
+
+@dataclass
+class LoggingConfig:
+    path: str
+    encoding: str
+    errors: str
+    level: int
+    timezone: str
+    date_format: str
+    file_format: str
+    console_format: str
+    rotation: LoggingRotationConfig
+    colors: LoggingColorConfig
+
+    @classmethod
+    def from_dict(cls, cfg: JsonDict) -> Self:
+        level_name = cfg["level"]
+        level = getattr(logging, level_name)
+
+        if not isinstance(level, int):
+            raise ValueError(f"Invalid logging level: {level_name!r}")
+
+        return cls(
+            path=os.path.abspath(cfg["path"]),
+            encoding=cfg["encoding"],
+            errors=cfg["errors"],
+            level=level,
+            timezone=cfg["timezone"],
+            date_format=cfg["date_format"],
+            file_format=cfg["file_format"],
+            console_format=cfg["console_format"],
+            rotation=LoggingRotationConfig.from_dict(cfg["rotation"]),
+            colors=LoggingColorConfig.from_dict(cfg["colors"]),
+        )
+
+
+@dataclass
+class LoggingRotationConfig:
+    when: str
+    interval: int
+    backup_count: int
+    delay: bool
+    utc: bool
+    at_time: time | None
+
+    @classmethod
+    def from_dict(cls, cfg: JsonDict) -> Self:
+        at_time = cfg["at_time"]
+
+        return cls(
+            when=cfg["when"],
+            interval=cfg["interval"],
+            backup_count=cfg["backup_count"],
+            delay=cfg["delay"],
+            utc=cfg["utc"],
+            at_time=time.fromisoformat(str(at_time)) if at_time is not None else None
+        )
+
+
+@dataclass
+class LoggingColorConfig:
+    debug: str
+    info: str
+    warning: str
+    error: str
+    critical: str
+    time: str
+    name: str
+    reset: str
+
+    @classmethod
+    def from_dict(cls, cfg: JsonDict) -> Self:
+        return cls(
+            debug=cfg["debug"],
+            info=cfg["info"],
+            warning=cfg["warning"],
+            error=cfg["error"],
+            critical=cfg["critical"],
+            time=cfg["time"],
+            name=cfg["name"],
+            reset=cfg["reset"]
         )

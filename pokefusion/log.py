@@ -1,51 +1,94 @@
 import logging
 import os
-import platform
-import time
+from datetime import datetime
+from logging import LogRecord
 from logging.handlers import TimedRotatingFileHandler
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+from pokefusion.configmanager import LoggingColorConfig, LoggingConfig
 
 
-class ColorFormatter(logging.Formatter):
-    LEVEL_COLOURS = {
-        logging.DEBUG: "\x1b[40;1m",
-        logging.INFO: "\x1b[34;1m",
-        logging.WARNING: "\x1b[33;1m",
-        logging.ERROR: "\x1b[31m",
-        logging.CRITICAL: "\x1b[41m",
-    }
-    RESET = "\x1b[0m"
-    TIME_COLOR = "\x1b[30;1m"
-    NAME_COLOR = "\x1b[35m"
-    FMT = f"{TIME_COLOR}%(asctime)s.%(msecs)03d{RESET} %(levelname_color)s%(levelname)s{RESET} {NAME_COLOR}%(name)s{RESET} %(message)s"
+class TimezoneFormatter(logging.Formatter):
+    def __init__(self, fmt: str, datefmt: str, timezone: str | None, ) -> None:
+        super().__init__(fmt=fmt, datefmt=datefmt)
 
-    def __init__(self):
-        super().__init__()
-        self._formatter = logging.Formatter(fmt=self.FMT, datefmt="%Y-%m-%d %H:%M:%S")
+        if timezone is None:
+            self.timezone = None
+            return
 
-    def format(self, record):
-        record.levelname_color = self.LEVEL_COLOURS.get(record.levelno, self.RESET)
-        return self._formatter.format(record)
+        try:
+            self.timezone = ZoneInfo(timezone)
+        except ZoneInfoNotFoundError as error:
+            raise ValueError(f"Unknown logging timezone: {timezone!r}") from error
+
+    def formatTime(self, record: LogRecord, datefmt: str | None = None, ) -> str:
+        timestamp = datetime.fromtimestamp(record.created, tz=self.timezone)
+
+        if datefmt is not None:
+            return timestamp.strftime(datefmt)
+
+        return timestamp.isoformat(timespec="seconds")
 
 
-def setup_logging():
-    if platform.system() == "Linux":
-        os.environ["TZ"] = "CET"
-        time.tzset()
+class ColorFormatter(TimezoneFormatter):
+    def __init__(self, fmt: str, datefmt: str, timezone: str | None, colors: LoggingColorConfig) -> None:
+        super().__init__(fmt=fmt, datefmt=datefmt, timezone=timezone)
+        self.colors = colors
+        self.level_colors = {
+            logging.DEBUG: colors.debug,
+            logging.INFO: colors.info,
+            logging.WARNING: colors.warning,
+            logging.ERROR: colors.error,
+            logging.CRITICAL: colors.critical
+        }
 
-    os.makedirs("logs", exist_ok=True)
+    def format(self, record: LogRecord) -> str:
+        record.time_color = self.colors.time
+        record.level_color = self.level_colors.get(record.levelno, self.colors.reset)
+        record.name_color = self.colors.name
+        record.reset = self.colors.reset
+        return super().format(record)
+
+
+def setup_logging(config: LoggingConfig):
+    log_directory = os.path.dirname(config.path)
+
+    if log_directory:
+        os.makedirs(log_directory, exist_ok=True)
+
     root = logging.getLogger()
-    root.setLevel(logging.INFO)
+    root.setLevel(config.level)
 
-    file_handler = TimedRotatingFileHandler(filename=os.path.join("logs", f"pokefusion.log"), when="midnight",
-                                            encoding="utf-8")
-    fmt = "%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s"
-    datefmt = "%Y-%m-%d %H:%M:%S"
-    formatter = logging.Formatter(fmt=fmt, datefmt=datefmt)
-    file_handler.setFormatter(formatter)
+    file_handler = TimedRotatingFileHandler(
+        filename=config.path,
+        encoding=config.encoding,
+        errors=config.errors,
+        when=config.rotation.when,
+        interval=config.rotation.interval,
+        backupCount=config.rotation.backup_count,
+        delay=config.rotation.delay,
+        utc=config.rotation.utc,
+        atTime=config.rotation.at_time,
+    )
+    file_handler.setLevel(config.level)
+    file_handler.setFormatter(
+        TimezoneFormatter(
+            fmt=config.file_format,
+            datefmt=config.date_format,
+            timezone=config.timezone,
+        )
+    )
 
     stream_handler = logging.StreamHandler()
-    formatter = ColorFormatter()
-    stream_handler.setFormatter(formatter)
+    stream_handler.setLevel(config.level)
+    stream_handler.setFormatter(
+        ColorFormatter(
+            fmt=config.console_format,
+            datefmt=config.date_format,
+            timezone=config.timezone,
+            colors=config.colors
+        )
+    )
 
     root.addHandler(file_handler)
     root.addHandler(stream_handler)

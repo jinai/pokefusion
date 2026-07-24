@@ -22,6 +22,34 @@
             "foreign_keys": 1
         }
     },
+    "logging": {
+        "path": "logs/pokefusion.log",
+        "encoding": "utf-8",
+        "errors": "strict",
+        "level": "INFO",
+        "timezone": "UTC",
+        "date_format": "%Y-%m-%d %H:%M:%S",
+        "file_format": "%(asctime)s.%(msecs)03d %(levelname)s %(name)s: %(message)s",
+        "console_format": "%(time_color)s%(asctime)s.%(msecs)03d%(reset)s %(level_color)s%(levelname)s%(reset)s %(name_color)s%(name)s%(reset)s %(message)s",
+        "rotation": {
+            "when": "midnight",
+            "interval": 1,
+            "backup_count": 0,
+            "delay": false,
+            "utc": true,
+            "at_time": null
+        },
+        "colors": {
+            "debug": "\u001b[40;1m",
+            "info": "\u001b[34;1m",
+            "warning": "\u001b[33;1m",
+            "error": "\u001b[31m",
+            "critical": "\u001b[41m",
+            "time": "\u001b[30;1m",
+            "name": "\u001b[35m",
+            "reset": "\u001b[0m"
+        }
+    },
     "maintenance": false,
     "block_dms": true,
     "main_color": "#FFFFFF"
