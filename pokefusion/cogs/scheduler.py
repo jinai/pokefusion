@@ -1,5 +1,5 @@
 import logging
-from datetime import date, time
+from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
 from discord.ext import commands, tasks
@@ -36,18 +36,20 @@ class Scheduler(commands.Cog):
 
     @tasks.loop(time=RERALL_TIME)
     async def rerall_task(self) -> None:
-        if WeekDay(date.today().isoweekday()) is RERALL_DAY:
-            logger.info("Rerolling all totems...")
-            self.bot.totem_service.reroll_all_totems()
-            logger.info(f"Reroll done!")
-            avatar = EmbedAttachment(AssetManager.get_avatar_path(self.bot.config.environment), "avatar.png",
-                                     AttachmentType.THUMBNAIL)
-            for channel_id in NOTIF_CHANNELS:
-                channel = self.bot.get_channel(channel_id)
-                if channel:
-                    embed, files = embed_factory(title="Rerall", description="All Totems have been reset!",
-                                                 attachments=(avatar,), color=self.bot.main_color)
-                    await channel.send(embed=embed, files=files)
+        if WeekDay(datetime.now(TZ).isoweekday()) is not RERALL_DAY:
+            return
+
+        logger.info("Rerolling all totems...")
+        self.bot.totem_service.reroll_all_totems()
+        logger.info(f"Reroll done!")
+        avatar = EmbedAttachment(AssetManager.get_avatar_path(self.bot.config.environment), "avatar.png",
+                                 AttachmentType.THUMBNAIL)
+        for channel_id in NOTIF_CHANNELS:
+            channel = self.bot.get_channel(channel_id)
+            if channel:
+                embed, files = embed_factory(title="Rerall", description="All Totems have been reset!",
+                                             attachments=(avatar,), color=self.bot.main_color)
+                await channel.send(embed=embed, files=files)
 
 
 async def setup(bot: PokeFusion) -> None:
