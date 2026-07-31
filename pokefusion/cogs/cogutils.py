@@ -137,7 +137,7 @@ def guess_filter_embed(ctx: Context, filters: list[FilterType], sprite: Sprite, 
 def description_embed(ctx: Context, description: str, title: str = "Guess the Pokémon!") -> tuple[Embed, list[File]]:
     attachment = EmbedAttachment(os.path.join(AssetManager.MISC_DIR, "Substitute.png"), "Substitute.png",
                                  AttachmentType.THUMBNAIL)
-    color = AssetManager.get_asset_color(attachment.fp)
+    color = Color.from_rgb(*imagelib.get_dominant_color(attachment.fp, normalize=True))
     return base_embed(ctx, title=title, description=description, color=color, attachments=(attachment,),
                       footer=EmbedFooter("Type <Pokémon>"))
 
@@ -171,7 +171,7 @@ def christmas_embed(ctx: Context, color: Color, upload_attachment: bool = True) 
 async def guess_prompt(ctx: Context, description: str, delete: bool = False) -> Reply:
     attachment = EmbedAttachment(os.path.join(AssetManager.MISC_DIR, "Unknown.png"), "Unknown.png",
                                  AttachmentType.THUMBNAIL)
-    color = AssetManager.get_asset_color(attachment.fp)
+    color = Color.from_rgb(*imagelib.get_dominant_color(attachment.fp, normalize=True))
     footer = EmbedFooter("Type yes or no.")
     embed, files = base_embed(ctx, description=description, color=color, footer=footer, attachments=(attachment,))
     prompt = await ctx.send(embed=embed, files=files)

@@ -12,11 +12,12 @@ from discord.ext.commands import CommandError
 
 from pokefusion import cogs
 from pokefusion.assetmanager import AssetManager
-from pokefusion.configmanager import BotConfig
 from pokefusion.bot.context import Context
+from pokefusion.configmanager import BotConfig
 from pokefusion.db.models import Server, Settings
 from pokefusion.enums import Environment
 from pokefusion.fusionapi import FusionClient, SpriteClient
+from pokefusion.imagelib import get_dominant_color
 from pokefusion.services.totem import TotemService
 
 logger = logging.getLogger(__name__)
@@ -116,8 +117,10 @@ class PokeFusion(commands.Bot):
                 self._main_color = Color.from_str(self.config.main_color)
             except ValueError:
                 try:
-                    self._main_color = AssetManager.get_asset_color(AssetManager.get_avatar_path(self.config.environment))
-                except OSError:
+                    rgb = get_dominant_color(AssetManager.get_avatar_path(self.config.environment), normalize=True)
+                    self._main_color = Color.from_rgb(*rgb)
+                except OSError as e:
+                    logger.error(f"Couldn't find {self.config.environment} avatar: {e}")
                     self._main_color = Color.light_grey()
         return self._main_color
 

@@ -108,7 +108,7 @@ class FusionResult:
         if os.path.isfile(path):
             return path
         else:
-            return AssetManager.get_default_egg_path()
+            return AssetManager.DEFAULT_EGG_PATH
 
     def __repr__(self) -> str:
         return f"<FusionResult head={self.head}, body={self.body}, head_query={self.head_query}, body_query={self.body_query}>"

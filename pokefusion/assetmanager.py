@@ -1,14 +1,12 @@
 import os
 
-from discord import Color
-
-from . import imagelib
 from .enums import Environment
 
 
 class AssetManager:
     ASSETS_DIR = os.path.join("pokefusion", "assets")
     EGGS_DIR = os.path.join(ASSETS_DIR, "eggs")
+    DEFAULT_EGG_PATH = os.path.join(EGGS_DIR, "000.png")
     FUSIONS_DIR = os.path.join(ASSETS_DIR, "fusions")
     FUSIONS_AUTOGEN_DIR = os.path.join(FUSIONS_DIR, "autogen")
     FUSIONS_CUSTOM_DIR = os.path.join(FUSIONS_DIR, "custom")
@@ -21,12 +19,3 @@ class AssetManager:
     @classmethod
     def get_avatar_path(cls, env: Environment) -> str:
         return os.path.join(cls.AVATARS_DIR, f"avatar.{env}.png")
-
-    @classmethod
-    def get_default_egg_path(cls) -> str:
-        return os.path.join(cls.EGGS_DIR, "000.png")
-
-    @staticmethod
-    def get_asset_color(path: str) -> Color:
-        rgb = imagelib.get_dominant_color(path, normalize=True)
-        return Color.from_rgb(*rgb)
