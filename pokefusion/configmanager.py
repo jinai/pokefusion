@@ -69,8 +69,8 @@ class BotConfig:
     @classmethod
     def from_dict(cls, cfg: JsonDict) -> Self:
         return cls(
-            environment=cfg["environment"],
-            owner_id=cfg["owner_id"],
+            environment=Environment(cfg["environment"]),
+            owner_id=int(cfg["owner_id"]),
             default_prefix=cfg["default_prefix"],
             token=cfg["token"],
             init_cogs=cfg["init_cogs"],
@@ -110,7 +110,7 @@ class LoggingConfig:
 
     @classmethod
     def from_dict(cls, cfg: JsonDict) -> Self:
-        level_name = cfg["level"]
+        level_name = cfg["level"].upper()
         level = getattr(logging, level_name)
 
         if not isinstance(level, int):
