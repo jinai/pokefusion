@@ -221,7 +221,7 @@ def move_to_assets():
         shutil.move(custom_diff_added_output, custom_diff_added_assets)
 
     elapsed_time = time.perf_counter() - start_time
-    logger.info(f"Moved sprites to assets in {elapsed_time:.2f} seconds")
+    logger.info(f"Moved files to assets folder in {elapsed_time:.2f} seconds")
 
 
 def get_fusions(folder: str) -> dict[int, list[int]]:

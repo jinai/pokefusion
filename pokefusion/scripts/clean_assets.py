@@ -28,7 +28,7 @@ def restore_git_files() -> None:
 
 def clean_output_folder() -> None:
     folder = os.path.abspath(os.path.join("pokefusion", "scripts", "output"))
-    logger.info(f"About to clean: {folder}")
+    logger.info(f"Cleaning '{folder}'")
     if os.path.exists(folder):
         fast_delete(folder)
 
@@ -40,6 +40,6 @@ def clean_assets_folder() -> None:
     ]
 
     for folder in folders:
-        logger.info(f"About to clean: {folder}")
+        logger.info(f"Cleaning '{folder}'")
         if os.path.exists(folder):
             fast_delete(folder)
