@@ -111,12 +111,11 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
 
         title = "Sprite Pack Update"
         description = (
-            "📌 75 Pokémon were added (from 501 to 576)\n\n"
             "The latest sprite pack was imported:\n"
             "```asciidoc\n"
-            "Sprite pack :: 126_May_2026\n"
-            "Timestamp   :: 2026-07-23 00:58:00\n"
-            "Changes     :: +80775 autogen fusions, +18325/-109 custom fusions and +30 eggs\n"
+            "Sprite pack :: 127_June_2026\n"
+            "Timestamp   :: 2026-08-02 15:36:00\n"
+            "Changes     :: +2900/-7 custom fusions and +2 eggs\n"
             "```\n"
         )
         if free_rerolls > 0:
