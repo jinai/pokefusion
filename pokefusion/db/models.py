@@ -40,7 +40,7 @@ class Settings(BaseModel):
 
     @classmethod
     def set_maintenance(cls, new_state: bool) -> int:
-        return cls.update(maintenance=new_state, updated_at=datetime.now).where(cls.id == cls.SETTINGS_ID).execute()
+        return cls.update(maintenance=new_state, updated_at=datetime.now()).where(cls.id == cls.SETTINGS_ID).execute()
 
 
 class Server(BaseModel):
