@@ -9,11 +9,10 @@ from functools import cache
 from typing import Any, Self
 
 from .enums import Environment, Language
+from .types import Dex
 from .utils import TwoWayDict, normalize
 
 type JsonDict = dict[str, Any]
-type RawDex = dict[str, dict[str, str]]
-type Dex = dict[str, TwoWayDict[str, str]]
 
 
 class ConfigManager:

@@ -10,6 +10,7 @@ from . import utils
 from .assetmanager import AssetManager
 from .configmanager import ConfigManager
 from .enums import Language
+from .types import Dex
 
 temp = ConfigManager.read_json("custom_diff_added.json")
 CUSTOM_DIFF_ADDED: dict[int, list[int]] = {int(key): value for key, value in temp.items()}
@@ -119,7 +120,7 @@ class BaseClient:
     MIN_ID = None
     MAX_ID = None
 
-    def __init__(self, pokedex: dict[str, dict[str, str]]):
+    def __init__(self, pokedex: Dex):
         self.pokedex = pokedex
 
     @classmethod
