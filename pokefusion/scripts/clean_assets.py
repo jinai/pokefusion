@@ -17,15 +17,6 @@ def fast_delete(path: str) -> None:
         shutil.rmtree(path)
 
 
-def restore_git_files() -> None:
-    commands = [
-        "git reset --mixed HEAD",
-        "git checkout-index -a"
-    ]
-    for command in commands:
-        subprocess.run(command, shell=True)
-
-
 def clean_output_folder() -> None:
     folder = os.path.abspath(os.path.join("pokefusion", "scripts", "output"))
     logger.info(f"Cleaning '{folder}'")

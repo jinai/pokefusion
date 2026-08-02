@@ -4,7 +4,6 @@ import logging
 import os
 import re
 import shutil
-import subprocess
 import tempfile
 import time
 import zipfile
@@ -15,6 +14,7 @@ from tqdm import tqdm
 
 from pokefusion.fusionapi import FusionClient
 from . import spritesheets
+from .git import run_git
 from .utils import make_backup, regex_filter
 
 logger = logging.getLogger(__name__)
@@ -59,12 +59,29 @@ def import_autogen_sprites() -> None:
     tempdir = tempfile.TemporaryDirectory(prefix="pokefusion_")
 
     commands = [
-        f"git clone -n --depth=1 --filter=tree:0 -b develop-6.6 --single-branch https://github.com/infinitefusion/infinitefusion-e18.git \"{tempdir.name}\"",
-        f"git sparse-checkout set --no-cone /{git_folder.as_posix()}",
-        "git checkout",
+        [
+            "clone",
+            "-n",
+            "--depth=1",
+            "--filter=tree:0",
+            "-b",
+            "develop-6.6",
+            "--single-branch",
+            "https://github.com/infinitefusion/infinitefusion-e18.git",
+            "."
+        ],
+        [
+            "sparse-checkout",
+            "set",
+            "--no-cone",
+            f"/{git_folder.as_posix()}"
+        ],
+        ["checkout"],
     ]
-    for command in commands:
-        subprocess.run(command, shell=True, cwd=tempdir.name)
+
+    for arguments in commands:
+        run_git(arguments, cwd=tempdir.name)
+
     input_dir = os.path.join(tempdir.name, git_folder)
     sheet_count = len(next(os.walk(input_dir))[2])
 
