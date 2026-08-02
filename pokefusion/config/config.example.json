@@ -1,19 +1,19 @@
 {
     "environment": "prod",
     "owner_id": "your_discord_id",
-    "default_prefix": "_",
     "token": "your_bot_token",
+    "default_prefix": "!",
     "init_cogs": [
+        "admin",
+        "birthday",
+        "christmas",
         "events",
-        "scheduler",
-        "meta",
-        "misc",
         "fusion",
         "games",
-        "admin",
+        "meta",
+        "misc",
         "owner",
-        "birthday",
-        "christmas"
+        "scheduler"
     ],
     "database": {
         "path": "data/pokefusion.sqlite",
