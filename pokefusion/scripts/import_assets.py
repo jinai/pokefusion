@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 import os
@@ -23,14 +24,40 @@ ZIP_EGG_PATTERN = re.compile(r"Other/Eggs/(?!000)\d+.png")
 SPRITE_PATTERN = re.compile(r"\d+\.\d+\.png")
 EGG_PATTERN = re.compile(r"\d+\.png")
 
+INPUT_DIR = os.path.join("pokefusion", "scripts", "input")
+OUTPUT_DIR = os.path.join("pokefusion", "scripts", "output")
+
+
+def get_pack_path(pack_name: str) -> str:
+    path = Path(pack_name)
+
+    if path.suffix.casefold() != ".zip":
+        path = path.with_name(path.name + ".zip")
+
+    if not path.is_absolute():
+        path = Path(INPUT_DIR) / path
+
+    return str(path.resolve())
+
+
+def is_valid_pack(pack_path: str) -> bool:
+    if zipfile.is_zipfile(pack_path):
+        with zipfile.ZipFile(pack_path) as zf:
+            with contextlib.suppress(KeyError):
+                zf.getinfo("CustomBattlers/")
+                return True
+
+    return False
+
 
 def import_autogen_sprites() -> None:
     start_time = time.perf_counter()
 
-    output_dir = os.path.join("pokefusion", "scripts", "output", "fusions", "autogen")
+    output_dir = os.path.join(OUTPUT_DIR, "fusions", "autogen")
     git_folder = Path("Graphics", "Battlers", "spritesheets_autogen")
 
     tempdir = tempfile.TemporaryDirectory(prefix="pokefusion_")
+
     commands = [
         f"git clone -n --depth=1 --filter=tree:0 -b develop-6.6 --single-branch https://github.com/infinitefusion/infinitefusion-e18.git \"{tempdir.name}\"",
         f"git sparse-checkout set --no-cone /{git_folder.as_posix()}",
@@ -40,15 +67,19 @@ def import_autogen_sprites() -> None:
         subprocess.run(command, shell=True, cwd=tempdir.name)
     input_dir = os.path.join(tempdir.name, git_folder)
     sheet_count = len(next(os.walk(input_dir))[2])
+
     elapsed_time = time.perf_counter() - start_time
     logger.info(f"Downloaded {sheet_count} autogen spritesheets in {elapsed_time:.2f} seconds")
+
     if sheet_count > FusionClient.MAX_ID:
         logger.warning(
             f"Found more than {FusionClient.MAX_ID} autogen spritesheets! Check if new autogen sprites were released, and adapt MAX_ID accordingly")
 
     start_time = time.perf_counter()
+
     spritesheets.process_dir(input_dir, output_dir)
     tempdir.cleanup()
+
     sprite_count = sum(len(filenames) for _, _, filenames in os.walk(output_dir))
 
     elapsed_time = time.perf_counter() - start_time
@@ -59,27 +90,34 @@ def import_autogen_sprites() -> None:
 def import_custom_sprites(pack_name: str) -> None:
     start_time = time.perf_counter()
 
-    input_file = os.path.join("pokefusion", "scripts", "input", pack_name)
-    if not zipfile.is_zipfile(input_file):
-        logger.error(f"Invalid ZIP: {input_file}")
+    pack_path = get_pack_path(pack_name)
+    if not is_valid_pack(pack_path):
+        logger.error(f"Invalid Pack: '{pack_path}'")
         return
 
-    output_dir = os.path.join("pokefusion", "scripts", "output", "fusions", "custom")
+    output_dir = os.path.join(OUTPUT_DIR, "fusions", "custom")
+
     sprite_count = 0
     file_count = 0
     existing_folders = set()
-    with zipfile.ZipFile(input_file, "r") as zipf:
-        desc = f"Importing sprites from ZIP file"
+
+    with zipfile.ZipFile(pack_path, "r") as zipf:
+        desc = "Importing sprites from ZIP file"
+
         for filename in regex_filter(tqdm(zipf.namelist(), desc=desc), ZIP_FUSION_PATTERN):
             file_count += 1
             head, body = map(int, os.path.splitext(os.path.basename(filename))[0].split(".", 1))
+
             if head > FusionClient.MAX_ID or body > FusionClient.MAX_ID:
                 continue
+
             sprite_count += 1
             sprite_output_dir = os.path.join(output_dir, str(head))
+
             if head not in existing_folders:
                 os.makedirs(sprite_output_dir, exist_ok=True)
                 existing_folders.add(head)
+
             with open(os.path.join(sprite_output_dir, f"{head}.{body}.png"), "wb") as sprite_file:
                 sprite_file.write(zipf.read(filename))
 
@@ -91,22 +129,27 @@ def import_custom_sprites(pack_name: str) -> None:
 def import_egg_sprites(pack_name: str) -> None:
     start_time = time.perf_counter()
 
-    input_file = os.path.join("pokefusion", "scripts", "input", pack_name)
-    if not zipfile.is_zipfile(input_file):
-        logger.error(f"Invalid ZIP: {input_file}")
+    pack_path = get_pack_path(pack_name)
+    if not is_valid_pack(pack_path):
+        logger.error(f"Invalid Pack: '{pack_path}'")
         return
 
-    output_dir = os.path.join("pokefusion", "scripts", "output", "eggs")
+    output_dir = os.path.join(OUTPUT_DIR, "eggs")
     os.makedirs(output_dir, exist_ok=True)
+
     egg_count = 0
     file_count = 0
-    with zipfile.ZipFile(input_file, "r") as zipf:
-        desc = f"Importing egg sprites from ZIP file"
+
+    with zipfile.ZipFile(pack_path, "r") as zipf:
+        desc = "Importing egg sprites from ZIP file"
+
         for filename in regex_filter(tqdm(zipf.namelist(), desc=desc), ZIP_EGG_PATTERN):
             file_count += 1
             dex_id = int(os.path.splitext(os.path.basename(filename))[0])
+
             if dex_id < 1 or dex_id > FusionClient.MAX_ID:
                 continue
+
             egg_count += 1
             with open(os.path.join(output_dir, f"{dex_id}.png"), "wb") as egg_file:
                 egg_file.write(zipf.read(filename))
@@ -120,20 +163,19 @@ def save_diff() -> None:
     start_time = time.perf_counter()
 
     autogen_folder_old = os.path.join("pokefusion", "assets", "fusions", "autogen")
-    autogen_folder_new = os.path.join("pokefusion", "scripts", "output", "fusions", "autogen")
+    autogen_folder_new = os.path.join(OUTPUT_DIR, "fusions", "autogen")
     custom_folder_old = os.path.join("pokefusion", "assets", "fusions", "custom")
-    custom_folder_new = os.path.join("pokefusion", "scripts", "output", "fusions", "custom")
+    custom_folder_new = os.path.join(OUTPUT_DIR, "fusions", "custom")
     eggs_folder_old = os.path.join("pokefusion", "assets", "eggs")
-    eggs_folder_new = os.path.join("pokefusion", "scripts", "output", "eggs")
+    eggs_folder_new = os.path.join(OUTPUT_DIR, "eggs")
 
-    base_output = os.path.join("pokefusion", "scripts", "output")
-    custom_fusions_output = os.path.join(base_output, "custom_fusions.json")
-    autogen_diff_added_output = os.path.join(base_output, "autogen_diff_added.json")
-    autogen_diff_removed_output = os.path.join(base_output, "autogen_diff_removed.json")
-    custom_diff_added_output = os.path.join(base_output, "custom_diff_added.json")
-    custom_diff_removed_output = os.path.join(base_output, "custom_diff_removed.json")
-    eggs_diff_added_output = os.path.join(base_output, "eggs_diff_added.json")
-    eggs_diff_removed_output = os.path.join(base_output, "eggs_diff_removed.json")
+    custom_fusions_output = os.path.join(OUTPUT_DIR, "custom_fusions.json")
+    autogen_diff_added_output = os.path.join(OUTPUT_DIR, "autogen_diff_added.json")
+    autogen_diff_removed_output = os.path.join(OUTPUT_DIR, "autogen_diff_removed.json")
+    custom_diff_added_output = os.path.join(OUTPUT_DIR, "custom_diff_added.json")
+    custom_diff_removed_output = os.path.join(OUTPUT_DIR, "custom_diff_removed.json")
+    eggs_diff_added_output = os.path.join(OUTPUT_DIR, "eggs_diff_added.json")
+    eggs_diff_removed_output = os.path.join(OUTPUT_DIR, "eggs_diff_removed.json")
 
     autogen_old = get_fusions(autogen_folder_old)
     autogen_new = get_fusions(autogen_folder_new)
@@ -184,12 +226,11 @@ def save_diff() -> None:
 def move_to_assets():
     start_time = time.perf_counter()
 
-    base_output = os.path.join("pokefusion", "scripts", "output")
-    autogen_output = os.path.join(base_output, "fusions", "autogen")
-    custom_output = os.path.join(base_output, "fusions", "custom")
-    eggs_output = os.path.join(base_output, "eggs")
-    custom_fusions_output = os.path.join(base_output, "custom_fusions.json")
-    custom_diff_added_output = os.path.join(base_output, "custom_diff_added.json")
+    autogen_output = os.path.join(OUTPUT_DIR, "fusions", "autogen")
+    custom_output = os.path.join(OUTPUT_DIR, "fusions", "custom")
+    eggs_output = os.path.join(OUTPUT_DIR, "eggs")
+    custom_fusions_output = os.path.join(OUTPUT_DIR, "custom_fusions.json")
+    custom_diff_added_output = os.path.join(OUTPUT_DIR, "custom_diff_added.json")
 
     base_assets = os.path.join("pokefusion", "assets")
     base_assets_fusions = os.path.join(base_assets, "fusions")
@@ -208,15 +249,20 @@ def move_to_assets():
 
     if move_autogen:
         shutil.move(autogen_output, base_assets_fusions)
+
     if move_custom:
         shutil.move(custom_output, base_assets_fusions)
+
     if move_eggs:
         shutil.move(eggs_output, base_assets)
+
     if move_config:
         if os.path.exists(custom_fusions_assets):
             make_backup(custom_fusions_assets)
+
         if os.path.exists(custom_diff_added_assets):
             make_backup(custom_diff_added_assets)
+
         shutil.move(custom_fusions_output, custom_fusions_assets)
         shutil.move(custom_diff_added_output, custom_diff_added_assets)
 

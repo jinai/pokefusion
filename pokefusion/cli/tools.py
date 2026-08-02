@@ -5,9 +5,9 @@ import time
 import typer
 
 from pokefusion.scripts.clean_assets import clean_assets_folder, clean_output_folder, restore_git_files
-from pokefusion.scripts.import_assets import import_autogen_sprites, import_custom_sprites, import_egg_sprites, \
-    move_to_assets, save_diff
 from pokefusion.cli.context import Context
+from pokefusion.scripts.import_assets import get_pack_path, import_autogen_sprites, import_custom_sprites, \
+    import_egg_sprites, is_valid_pack, move_to_assets, save_diff
 
 logger = logging.getLogger(__name__)
 tools_app = typer.Typer(no_args_is_help=True)
@@ -24,12 +24,17 @@ def tools_callback() -> None:
 
 @import_app.command("all")
 def import_all(pack_name: str) -> None:
+    pack_path = get_pack_path(pack_name)
+    if not is_valid_pack(pack_path):
+        logger.error(f"Invalid Pack: '{pack_path}'")
+        return
+
     logger.info("Importing all assets")
     start_time = time.perf_counter()
     _cleanup_output()
     _import_autogen()
-    _import_custom(pack_name)
-    _import_eggs(pack_name)
+    _import_custom(pack_path)
+    _import_eggs(pack_path)
     _save_diff()
     _cleanup_assets()
     _import_to_assets()
