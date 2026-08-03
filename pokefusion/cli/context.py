@@ -1,3 +1,5 @@
+from functools import cached_property
+
 import typer
 
 from pokefusion.configmanager import BotConfig, ConfigManager
@@ -13,10 +15,6 @@ class Context:
         if require_confirmation:
             typer.confirm(f"[{self.config.environment.upper()}] {action or 'This operation'} - continue?", abort=True)
 
-        self._migration_service: MigrationService | None = None
-
-    @property
-    def migration_service(self):
-        if self._migration_service is None:
-            self._migration_service = MigrationService(self.config.database)
-        return self._migration_service
+    @cached_property
+    def migration_service(self) -> MigrationService:
+        return MigrationService(self.config.database)
