@@ -12,7 +12,22 @@ logger = logging.getLogger(__name__)
 
 def run_bot() -> None:
     ctx = Context()
+
+    done, pending = ctx.migration_service.list()
+    if pending:
+        logger.warning("Cannot start the bot because database migrations are pending:")
+
+        for migration in done:
+            logger.warning(f"- [x] {migration}")
+
+        for migration in pending:
+            logger.warning(f"- [ ] {migration}")
+
+        logger.warning(f"Run 'uv run main.py migrations apply' first")
+        return
+
     connect_database(ctx.config.database)
+
     intents = Intents.default()
     intents.members = False
     intents.presences = False
