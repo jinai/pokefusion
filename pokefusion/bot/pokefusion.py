@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import traceback
 from collections.abc import Awaitable, Callable, Sequence
 from datetime import datetime
 from typing import Any
@@ -15,7 +14,6 @@ from pokefusion.assetmanager import AssetManager
 from pokefusion.bot.context import Context
 from pokefusion.configmanager import BotConfig
 from pokefusion.db.models import Server, Settings
-from pokefusion.enums import Environment
 from pokefusion.fusionapi import FusionClient, SpriteClient
 from pokefusion.imagelib import get_dominant_color
 from pokefusion.services.totem import TotemService
@@ -58,8 +56,6 @@ class PokeFusion(commands.Bot):
         self.before_invoke(self.log_command)
         self.add_check(self.check_maintenance, call_once=True)
         self.add_check(self.check_block_dms)
-        if self.config.environment is not Environment.PROD:
-            self.on_command_error = self.debug_error
 
     def patch_invoke_hooks(self) -> None:
         async def pre_invoke_caller(ctx: Context) -> None:
@@ -131,11 +127,6 @@ class PokeFusion(commands.Bot):
         for cog in self.init_cogs:
             logger.info(f"Loading cog: {cog}")
             await self.load_extension(f"{PokeFusion.COGS_MODULE_PREFIX}.{cog}")
-
-    # noinspection PyMethodMayBeStatic
-    async def debug_error(self, ctx: Context, exception: CommandError, /) -> None:
-        if exc := traceback.format_exc():
-            await ctx.safe_send(f"```py\n{exc}\n```")
 
     @staticmethod
     async def log_command(ctx: Context) -> None:

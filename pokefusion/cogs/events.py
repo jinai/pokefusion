@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 from discord import Guild
 from discord.ext import commands
@@ -7,6 +8,7 @@ from discord.ext.commands import CommandError
 from pokefusion.bot.context import Context
 from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.db.models import Server
+from pokefusion.enums import Environment
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,10 @@ class Events(commands.Cog):
 
         original = getattr(error, "original", error)
         logger.error(log, exc_info=original)
+
+        if self.bot.config.environment is not Environment.PROD:
+            formatted = "".join(traceback.format_exception(error)).rstrip()
+            await ctx.safe_send(f"```py\n{formatted}\n```")
 
 
 async def setup(bot: PokeFusion) -> None:
