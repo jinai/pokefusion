@@ -85,7 +85,8 @@ class MigrationService:
             self.rollback(count=1)
 
         file_path = Path(self._router.migrate_dir) / f"{name}.py"
-        if not file_path.exists():
-            raise MigrationError(f"Migration file '{file_path}' is missing from disk.")
 
-        file_path.unlink()
+        try:
+            file_path.unlink()
+        except OSError as e:
+            raise MigrationError(f"Could not remove migration '{name}': {e}") from e
