@@ -8,12 +8,13 @@ from typing import Any
 from discord import Color, Interaction, Message, User
 from discord.ext import commands
 from discord.ext.commands import CommandError
+from peewee import DatabaseError
 
 from pokefusion import cogs
 from pokefusion.assetmanager import AssetManager
 from pokefusion.bot.context import Context
 from pokefusion.configmanager import BotConfig
-from pokefusion.db.models import Server, Settings
+from pokefusion.db.models import Server, Settings, User
 from pokefusion.fusionapi import FusionClient, SpriteClient
 from pokefusion.imagelib import get_dominant_color
 from pokefusion.services.totem import TotemService
@@ -54,6 +55,7 @@ class PokeFusion(commands.Bot):
         self.before_invoke: Callable[Callable[[Context], Awaitable[Any]], None] = lambda _: None
         self.patch_invoke_hooks()
         self.before_invoke(self.log_command)
+        self.before_invoke(self.create_user)
         self.add_check(self.check_maintenance, call_once=True)
         self.add_check(self.check_block_dms)
 
@@ -131,3 +133,10 @@ class PokeFusion(commands.Bot):
     @staticmethod
     async def log_command(ctx: Context) -> None:
         logger.info(f"{ctx.message.content} in #{ctx.channel} ({ctx.guild}) by {ctx.author}")
+
+    @staticmethod
+    async def create_user(ctx: Context) -> None:
+        try:
+            User.get_or_create(discord_id=ctx.author.id, defaults={"name": ctx.author.name})
+        except DatabaseError as e:
+            raise CommandError(f"Failed to create user: {ctx.author.name} ({ctx.author.id})") from e
