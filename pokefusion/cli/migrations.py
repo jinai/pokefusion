@@ -41,7 +41,7 @@ def create_migration(name: str) -> None:
 
 @migrations_app.command(name="apply")
 @handle_migration_errors
-def apply_migrations(name: Annotated[str, typer.Option()] = None) -> None:
+def apply_migrations(name: Annotated[str | None, typer.Argument()] = None) -> None:
     ctx = Context(require_confirmation=True, action="Apply pending migrations (make a backup first!)")
     ctx.migration_service.apply(name)
 
