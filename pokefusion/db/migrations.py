@@ -45,6 +45,13 @@ class MigrationService:
             raise MigrationError(str(e)) from e
 
     def apply(self, name: str | None = None) -> list[str]:
+        if name is not None:
+            if name in self._router.done:
+                raise MigrationError(f"Migration '{name}' is already applied.")
+
+            if name not in self._router.todo:
+                raise MigrationError(f"Migration '{name}' does not exist on disk.")
+
         try:
             return self._router.run(name)
         except Exception as e:
