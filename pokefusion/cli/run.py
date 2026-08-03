@@ -5,14 +5,14 @@ from discord import Intents
 
 from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.cli.context import Context
-from pokefusion.db.database import database, init_db
+from pokefusion.db.database import connect_database, database
 
 logger = logging.getLogger(__name__)
 
 
 def run_bot() -> None:
     ctx = Context()
-    init_db(ctx.config.database)
+    connect_database(ctx.config.database)
     intents = Intents.default()
     intents.members = False
     intents.presences = False
