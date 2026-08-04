@@ -19,17 +19,46 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
+        logger.info("Syncing database with Discord guilds")
+
+        current_discord_ids = tuple(guild.id for guild in self.bot.guilds)
+
+        available_servers = [
+            (guild.id, guild.name)
+            for guild in self.bot.guilds
+            if not guild.unavailable
+        ]
+
+        upserted, deactivated = Server.sync_all(
+            available_servers,
+            current_discord_ids,
+            self.bot.default_prefix
+        )
+
+        logger.info(
+            f"Synced server records (upserted: {upserted}, deactivated: {deactivated})"
+        )
         logger.info(f"Bot is ready, authenticated as {self.bot.user} (ID: {self.bot.user.id})")
 
     @commands.Cog.listener()
+    async def on_guild_available(self, guild: Guild) -> None:
+        if not self.bot.is_ready():
+            return
+
+        upserted = Server.upsert(guild.id, guild.name, self.bot.default_prefix)
+
+        if upserted:
+            logger.info(f"Upserted available server {guild.name} (Guild ID: {guild.id})")
+
+    @commands.Cog.listener()
     async def on_guild_join(self, guild: Guild) -> None:
-        rowid = Server.add(guild.id, guild.name, self.bot.default_prefix)
-        logger.info(f"Joined {guild.name} (Guild ID: {guild.id}, Row ID: {rowid})")
+        Server.upsert(guild.id, guild.name, self.bot.default_prefix)
+        logger.info(f"Joined '{guild.name}' (Guild ID: {guild.id})")
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: Guild) -> None:
-        rowid = Server.remove(guild.id)
-        logger.info(f"Left {guild.name} (Guild ID: {guild.id}, Row ID: {rowid})")
+        Server.deactivate(guild.id)
+        logger.info(f"Left '{guild.name}' (Guild ID: {guild.id})")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: Context, error: CommandError):

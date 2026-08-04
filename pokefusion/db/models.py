@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Iterable
 
-from peewee import BooleanField, CharField, DateTimeField, IntegerField, Model
+from peewee import BooleanField, CharField, DateTimeField, EXCLUDED, IntegerField, Model
 
 from pokefusion.db.database import database
 from pokefusion.enums import Language
@@ -56,19 +56,83 @@ class Server(BaseModel):
         table_name = "servers"
 
     @classmethod
-    def add(cls, discord_id: int, name: str, prefix: str) -> int:
+    def upsert(cls, discord_id: int, name: str, prefix: str) -> int:
         now = datetime.now()
-        q = (cls
-             .insert(discord_id=discord_id, name=name, prefix=prefix, joined_at=now)
-             .on_conflict(conflict_target=[cls.discord_id],
-                          update={cls.active: True,
-                                  cls.name: name,
-                                  cls.updated_at: datetime.now()}))
-        return q.execute()
+        incoming_name = EXCLUDED.name
+
+        # Only update if the server was inactive or if the name changed
+        needs_update = (~cls.active) | (cls.name != EXCLUDED.name)
+
+        query = (
+            cls.insert(
+                discord_id=discord_id,
+                name=name, prefix=prefix,
+                joined_at=now,
+                updated_at=now,
+                active=True
+            )
+            .on_conflict(
+                conflict_target=[cls.discord_id],
+                update={
+                    cls.active: True,
+                    cls.name: incoming_name,
+                    cls.updated_at: now
+                },
+                where=needs_update
+            )
+            .as_rowcount()
+        )
+
+        return query.execute()
 
     @classmethod
-    def remove(cls, discord_id: int) -> int:
-        return cls.update(active=False, updated_at=datetime.now()).where(cls.discord_id == discord_id).execute()
+    def deactivate(cls, discord_id: int) -> int:
+        query = (
+            cls.update(
+                active=False,
+                updated_at=datetime.now()
+            )
+            .where(
+                (cls.discord_id == discord_id)
+                & cls.active
+            )
+        )
+
+        return query.execute()
+
+    @classmethod
+    def deactivate_missing(cls, current_discord_ids: tuple[int, ...]) -> int:
+        query = cls.update(
+            active=False,
+            updated_at=datetime.now()
+        )
+
+        if current_discord_ids:
+            # noinspection argument-list
+            condition = cls.active & cls.discord_id.not_in(current_discord_ids)
+        else:
+            condition = cls.active
+
+        return query.where(condition).execute()
+
+    @classmethod
+    def sync_all(
+            cls,
+            available_servers: Iterable[tuple[int, str]],
+            current_discord_ids: tuple[int, ...],
+            default_prefix: str
+    ) -> tuple[int, int]:
+        db = cls._meta.database
+
+        with db.atomic():
+            upserted = sum(
+                cls.upsert(discord_id, name, default_prefix)
+                for discord_id, name in available_servers
+            )
+
+            deactivated = cls.deactivate_missing(current_discord_ids)
+
+        return upserted, deactivated
 
 
 class User(BaseModel):
