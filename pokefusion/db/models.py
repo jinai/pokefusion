@@ -40,7 +40,15 @@ class Settings(BaseModel):
 
     @classmethod
     def set_maintenance(cls, new_state: bool) -> int:
-        return cls.update(maintenance=new_state, updated_at=datetime.now()).where(cls.id == cls.SETTINGS_ID).execute()
+        query = (
+            cls.update(
+                maintenance=new_state,
+                updated_at=datetime.now()
+            )
+            .where(cls.id == cls.SETTINGS_ID)
+        )
+
+        return query.execute()
 
 
 class Server(BaseModel):
@@ -148,14 +156,24 @@ class User(BaseModel):
 
     @classmethod
     def add_free_rerolls(cls, discord_id: int, amount: int) -> int:
-        q = (cls
-             .update(free_rerolls=cls.free_rerolls + amount, updated_at=datetime.now())
-             .where(cls.discord_id == discord_id))
-        return q.execute()
+        query = (
+            cls.update(
+                free_rerolls=cls.free_rerolls + amount,
+                updated_at=datetime.now()
+            )
+            .where(cls.discord_id == discord_id)
+        )
+
+        return query.execute()
 
     @classmethod
     def add_free_rerolls_to_all(cls, amount: int) -> int:
-        return cls.update(free_rerolls=cls.free_rerolls + amount, updated_at=datetime.now()).execute()
+        query = cls.update(
+            free_rerolls=cls.free_rerolls + amount,
+            updated_at=datetime.now()
+        )
+
+        return query.execute()
 
 
 class Blacklist(BaseModel):
