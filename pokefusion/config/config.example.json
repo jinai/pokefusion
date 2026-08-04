@@ -3,17 +3,16 @@
     "owner_id": "your_discord_id",
     "token": "your_bot_token",
     "default_prefix": "!",
-    "init_cogs": [
-        "admin",
-        "birthday",
-        "christmas",
-        "events",
-        "fusion",
-        "games",
-        "meta",
-        "misc",
-        "owner",
-        "scheduler"
+    "extensions": [
+        "pokefusion.cogs.admin",
+        "pokefusion.cogs.birthday",
+        "pokefusion.cogs.christmas",
+        "pokefusion.cogs.fusion",
+        "pokefusion.cogs.games",
+        "pokefusion.cogs.meta",
+        "pokefusion.cogs.misc",
+        "pokefusion.cogs.owner",
+        "pokefusion.cogs.scheduler"
     ],
     "database": {
         "path": "data/pokefusion.sqlite",

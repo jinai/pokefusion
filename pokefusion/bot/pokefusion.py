@@ -10,7 +10,6 @@ from discord.ext import commands
 from discord.ext.commands import CommandError
 from peewee import DatabaseError
 
-from pokefusion import cogs
 from pokefusion.assetmanager import AssetManager
 from pokefusion.bot.context import Context
 from pokefusion.configmanager import BotConfig
@@ -35,7 +34,9 @@ def get_prefix(bot: PokeFusion, message: Message) -> Sequence[str]:
 
 
 class PokeFusion(commands.Bot):
-    COGS_MODULE_PREFIX = cogs.__name__
+    CORE_EXTENSIONS: tuple[str, ...] = (
+        "pokefusion.cogs.events",
+    )
 
     def __init__(self, config: BotConfig, **kwargs):
         super().__init__(command_prefix=get_prefix, **kwargs)
@@ -43,7 +44,6 @@ class PokeFusion(commands.Bot):
         self.boot_time: datetime = datetime.now()
         self.owner_id: int = config.owner_id
         self.default_prefix = config.default_prefix
-        self.init_cogs = config.init_cogs
         self.block_dms = config.block_dms
         self.fusion_client: FusionClient = FusionClient()
         self.sprite_client: SpriteClient = SpriteClient()
@@ -126,9 +126,16 @@ class PokeFusion(commands.Bot):
         return await super().get_context(origin, cls=cls)
 
     async def setup_hook(self) -> None:
-        for cog in self.init_cogs:
-            logger.info(f"Loading cog: {cog}")
-            await self.load_extension(f"{PokeFusion.COGS_MODULE_PREFIX}.{cog}")
+        for extension in self.CORE_EXTENSIONS:
+            logger.info(f"Loading core extension '{extension}'")
+            await self.load_extension(extension)
+
+        for extension in self.config.extensions:
+            if extension in self.CORE_EXTENSIONS:
+                continue
+
+            logger.info(f"Loading extension '{extension}'")
+            await self.load_extension(extension)
 
     @staticmethod
     async def log_command(ctx: Context) -> None:

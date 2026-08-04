@@ -58,7 +58,7 @@ class BotConfig:
     owner_id: int
     default_prefix: str
     token: str
-    init_cogs: list[str]
+    extensions: list[str]
     database: DatabaseConfig
     logging: LoggingConfig
     maintenance: bool
@@ -72,7 +72,7 @@ class BotConfig:
             owner_id=int(cfg["owner_id"]),
             default_prefix=cfg["default_prefix"],
             token=cfg["token"],
-            init_cogs=cfg["init_cogs"],
+            extensions=cfg["extensions"],
             database=DatabaseConfig.from_dict(cfg["database"]),
             logging=LoggingConfig.from_dict(cfg["logging"]),
             maintenance=cfg["maintenance"],
