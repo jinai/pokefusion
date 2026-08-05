@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Awaitable, Callable, Sequence
 from datetime import datetime
+from functools import cached_property
 from typing import Any
 
 from discord import Color, Interaction, Message, User
@@ -48,7 +49,6 @@ class PokeFusion(commands.Bot):
         self.fusion_client: FusionClient = FusionClient()
         self.sprite_client: SpriteClient = SpriteClient()
         self.totem_service = TotemService(self.fusion_client)
-        self._main_color: Color | None = None
         self._before_invokes: list[Callable[[Context], Awaitable[Any]]] = []
         self._after_invokes: list[Callable[[Context], Awaitable[Any]]] = []
         self.after_invoke: Callable[Callable[[Context], Awaitable[Any]], None] = lambda _: None
@@ -108,19 +108,19 @@ class PokeFusion(commands.Bot):
         delta = datetime.now() - self.boot_time
         return delta.total_seconds()
 
-    @property
+    @cached_property
     def main_color(self) -> Color:
-        if self._main_color is None:
-            try:
-                self._main_color = Color.from_str(self.config.main_color)
-            except ValueError:
-                try:
-                    rgb = get_dominant_color(AssetManager.get_avatar_path(self.config.environment), normalize=True)
-                    self._main_color = Color.from_rgb(*rgb)
-                except OSError as e:
-                    logger.error(f"Couldn't find {self.config.environment} avatar: {e}")
-                    self._main_color = Color.light_grey()
-        return self._main_color
+        try:
+            return Color.from_str(self.config.main_color)
+        except ValueError:
+            logger.warning(f"Invalid main color {self.config.main_color!r}, deriving it from the avatar")
+
+        try:
+            rgb = get_dominant_color(AssetManager.get_avatar_path(self.config.environment), normalize=True)
+            return Color.from_rgb(*rgb)
+        except OSError as e:
+            logger.error(f"Couldn't load the {self.config.environment} avatar: {e}")
+            return Color.light_grey()
 
     async def get_context(self, origin: Message | Interaction, /, *, cls=Context) -> Context:
         return await super().get_context(origin, cls=cls)
