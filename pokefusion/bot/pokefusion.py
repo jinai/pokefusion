@@ -3,18 +3,17 @@ from __future__ import annotations
 import logging
 from collections.abc import Awaitable, Callable, Sequence
 from datetime import datetime
-from functools import cached_property
+from io import BytesIO
 from typing import Any
 
-from discord import Color, Interaction, Message, User
+from discord import Color, HTTPException, Interaction, Message, User
 from discord.ext import commands
 from discord.ext.commands import CommandError
 from peewee import DatabaseError
 
-from pokefusion.assetmanager import AssetManager
 from pokefusion.bot.context import Context
 from pokefusion.configmanager import BotConfig
-from pokefusion.db.models import Server, Settings, User
+from pokefusion.db.models import Server, Settings, User as DatabaseUser
 from pokefusion.fusionapi import FusionClient, SpriteClient
 from pokefusion.imagelib import get_dominant_color
 from pokefusion.services.totem import TotemService
@@ -42,6 +41,7 @@ class PokeFusion(commands.Bot):
     def __init__(self, config: BotConfig, **kwargs):
         super().__init__(command_prefix=get_prefix, **kwargs)
         self.config = config
+        self.main_color: Color = Color.light_grey()
         self.boot_time: datetime = datetime.now()
         self.owner_id: int = config.owner_id
         self.default_prefix = config.default_prefix
@@ -108,24 +108,35 @@ class PokeFusion(commands.Bot):
         delta = datetime.now() - self.boot_time
         return delta.total_seconds()
 
-    @cached_property
-    def main_color(self) -> Color:
-        try:
-            return Color.from_str(self.config.main_color)
-        except ValueError:
-            logger.warning(f"Invalid main color {self.config.main_color!r}, deriving it from the avatar")
+    async def _resolve_main_color(self) -> Color:
+        fallback_color = self.main_color
+
+        if configured_color := self.config.main_color:
+            try:
+                return Color.from_str(configured_color)
+            except ValueError:
+                logger.warning(f"Invalid main color {self.config.main_color!r}, deriving it from the bot avatar")
+
+        if self.user is None:
+            logger.error(f"Couldn't derive the main color: bot user is unavailable")
+            return fallback_color
 
         try:
-            rgb = get_dominant_color(AssetManager.get_avatar_path(self.config.environment), normalize=True)
+            avatar = self.user.display_avatar.with_format("png")
+            avatar_data = await avatar.read()
+            rgb = get_dominant_color(BytesIO(avatar_data), normalize=True)
             return Color.from_rgb(*rgb)
-        except OSError as e:
-            logger.error(f"Couldn't load the {self.config.environment} avatar: {e}")
-            return Color.light_grey()
+        except (HTTPException, OSError) as e:
+            logger.error(f"Couldn't derive the main color from the bot avatar: {e}")
+            return fallback_color
 
     async def get_context(self, origin: Message | Interaction, /, *, cls=Context) -> Context:
         return await super().get_context(origin, cls=cls)
 
     async def setup_hook(self) -> None:
+        self.main_color = await self._resolve_main_color()
+        logger.info(f"Set main color to: {self.main_color}")
+
         for extension in self.CORE_EXTENSIONS:
             logger.info(f"Loading core extension '{extension}'")
             await self.load_extension(extension)
@@ -144,6 +155,6 @@ class PokeFusion(commands.Bot):
     @staticmethod
     async def create_user(ctx: Context) -> None:
         try:
-            User.get_or_create(discord_id=ctx.author.id, defaults={"name": ctx.author.name})
+            DatabaseUser.get_or_create(discord_id=ctx.author.id, defaults={"name": ctx.author.name})
         except DatabaseError as e:
             raise CommandError(f"Failed to create user: {ctx.author.name} ({ctx.author.id})") from e
