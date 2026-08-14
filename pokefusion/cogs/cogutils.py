@@ -179,7 +179,7 @@ def description_embed(ctx: Context, description: str, title: str = "Guess the Po
         description=description,
         color=color,
         thumbnail=thumbnail,
-        footer="Type <Pokémon>"
+        footer_text="Type <Pokémon>"
     )
 
     return embed, files
