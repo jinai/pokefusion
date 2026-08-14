@@ -2,9 +2,8 @@ import logging
 import shlex
 import subprocess
 from collections.abc import Sequence
-from os import PathLike
 
-type StrPath = str | PathLike[str]
+from pokefusion.types import StrPath
 
 logger = logging.getLogger(__name__)
 

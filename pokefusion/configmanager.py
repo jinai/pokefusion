@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import time
 from functools import cache
 from typing import Any, Self
@@ -52,18 +52,18 @@ class ConfigManager:
         return BotConfig.from_dict(cls.read_json(cls.CONFIG_FILE))
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class BotConfig:
     environment: Environment
     owner_id: int
     default_prefix: str
-    token: str
-    extensions: list[str]
+    token: str = field(repr=False)
+    extensions: tuple[str, ...]
     database: DatabaseConfig
     logging: LoggingConfig
     maintenance: bool
     block_dms: bool
-    main_color: str
+    main_color: str | None = None
 
     @classmethod
     def from_dict(cls, cfg: JsonDict) -> Self:
@@ -72,16 +72,16 @@ class BotConfig:
             owner_id=int(cfg["owner_id"]),
             default_prefix=cfg["default_prefix"],
             token=cfg["token"],
-            extensions=cfg["extensions"],
+            extensions=tuple(cfg.get("extensions", ())),
             database=DatabaseConfig.from_dict(cfg["database"]),
             logging=LoggingConfig.from_dict(cfg["logging"]),
             maintenance=cfg["maintenance"],
             block_dms=cfg["block_dms"],
-            main_color=cfg["main_color"]
+            main_color=cfg.get("main_color")
         )
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class DatabaseConfig:
     path: str
     pragmas: JsonDict
@@ -94,7 +94,7 @@ class DatabaseConfig:
         )
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class LoggingConfig:
     path: str
     encoding: str
@@ -129,7 +129,7 @@ class LoggingConfig:
         )
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class LoggingRotationConfig:
     when: str
     interval: int
@@ -152,7 +152,7 @@ class LoggingRotationConfig:
         )
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class LoggingColorConfig:
     debug: str
     info: str

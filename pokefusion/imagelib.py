@@ -1,16 +1,18 @@
 from enum import Enum, auto
 from io import BytesIO
-from typing import BinaryIO
+from typing import IO
 
 import numpy as np
 from PIL import Image, ImageFile, ImageFilter
 from skimage.transform import swirl
 
+from pokefusion.types import StrPath
+
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 type RGB = tuple[int, int, int]
 type RGBA = tuple[int, int, int, int]
-type PathOrBytes = str | BinaryIO
+type PathOrBytes = StrPath | IO[bytes]
 
 
 class Orientation(Enum):

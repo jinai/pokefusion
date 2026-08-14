@@ -10,13 +10,12 @@ from discord.ext import commands
 from discord.ext.commands import CommandError, NotOwner
 
 from pokefusion import utils
-from pokefusion.assetmanager import AssetManager
 from pokefusion.bot.context import Context, Reply
 from pokefusion.bot.converters import ModuleConverter
 from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.db import models
 from pokefusion.db.models import Settings, User
-from .cogutils import AttachmentType, EmbedAttachment, embed_factory
+from .cogutils import embed_factory
 from .scheduler import NOTIF_CHANNELS
 
 logger = logging.getLogger(__name__)
@@ -104,10 +103,10 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.command(aliases=["spu"])
     async def sprite_pack_update(self, ctx: Context, free_rerolls: int = 0) -> None:
         warning = "The following embed will be sent to **all** notification subscribers, are you sure?"
-        embed = Embed(description=warning, color=ctx.bot.main_color)
-        embed.set_footer(text="Type yes or no.")
-        prompt = await ctx.send(embed=embed)
-        embed.set_footer(text=f"{ctx.author} replied yes.")
+        warning_embed = Embed(description=warning, color=ctx.bot.main_color)
+        warning_embed.set_footer(text="Type yes or no.")
+
+        prompt = await ctx.send(embed=warning_embed)
 
         title = "Sprite Pack Update"
         description = (
@@ -118,34 +117,50 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
             "Changes     :: +2900/-7 custom fusions and +2 eggs\n"
             "```\n"
         )
+
         if free_rerolls > 0:
             plural = "s" if free_rerolls > 1 else ""
             description += f"⚠️ All Totems have been reset️. As compensation, everyone received **+{free_rerolls} free reroll{plural}**! Check how many you have with `{ctx.prefix}fru`"
-        avatar = EmbedAttachment(AssetManager.get_avatar_path(self.bot.config.environment), "avatar.png",
-                                 AttachmentType.THUMBNAIL)
-        preview, files = embed_factory(title=title, description=description, attachments=(avatar,),
-                                       color=ctx.bot.main_color)
+
+        preview, files = embed_factory(
+            title=title,
+            description=description,
+            color=ctx.bot.main_color,
+            thumbnail=self.bot.user.display_avatar.url
+        )
+
         await ctx.send(embed=preview, files=files)
 
         reply = await ctx.prompt(timeout=20)
-        if reply == Reply.NoReply:
-            embed.set_footer(text=f"{ctx.author} didn't reply.")
-        elif reply == Reply.No:
-            embed.set_footer(text=f"{ctx.author} replied no.")
-        else:
-            embed.set_footer(text=f"{ctx.author} replied yes.")
 
-            if free_rerolls > 0:
-                User.add_free_rerolls_to_all(free_rerolls)
-                self.bot.totem_service.reroll_all_totems()
+        match reply:
+            case Reply.NoReply:
+                warning_embed.set_footer(text=f"{ctx.author} didn't reply.")
 
-            for channel_id in NOTIF_CHANNELS:
-                channel = self.bot.get_channel(channel_id)
-                if channel:
-                    embed, files = embed_factory(title=title, description=description, attachments=(avatar,),
-                                                 color=ctx.bot.main_color)
-                    await channel.send(embed=embed, files=files)
-        await prompt.edit(embed=embed)
+            case Reply.No:
+                warning_embed.set_footer(text=f"{ctx.author} replied no.")
+
+            case Reply.Yes:
+                warning_embed.set_footer(text=f"{ctx.author} replied yes.")
+
+                if free_rerolls > 0:
+                    User.add_free_rerolls_to_all(free_rerolls)
+                    self.bot.totem_service.reroll_all_totems()
+
+                for channel_id in NOTIF_CHANNELS:
+                    channel = self.bot.get_channel(channel_id)
+
+                    if channel:
+                        notif_embed, files = embed_factory(
+                            title=title,
+                            description=description,
+                            color=ctx.bot.main_color,
+                            thumbnail=self.bot.user.display_avatar.url
+                        )
+
+                        await channel.send(embed=notif_embed, files=files)
+
+        await prompt.edit(embed=warning_embed)
 
     @commands.command()
     async def say(self, ctx: Context, *, message: str) -> None:

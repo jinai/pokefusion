@@ -1,7 +1,5 @@
 import os
 
-from .enums import Environment
-
 
 class AssetManager:
     ASSETS_DIR = os.path.join("pokefusion", "assets")
@@ -15,7 +13,3 @@ class AssetManager:
     SPRITES_BASE_DIR = os.path.join(SPRITES_DIR, "base")
     SPRITES_SHINY_DIR = os.path.join(SPRITES_DIR, "shiny")
     AVATARS_DIR = os.path.join(ASSETS_DIR, "avatars")
-
-    @classmethod
-    def get_avatar_path(cls, env: Environment) -> str:
-        return os.path.join(cls.AVATARS_DIR, f"avatar.{env}.png")

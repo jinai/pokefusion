@@ -1,8 +1,11 @@
+import logging
 from datetime import datetime
 
 from pokefusion.db.database import database
 from pokefusion.db.models import Totem
 from pokefusion.fusionapi import FusionClient, FusionResult
+
+logger = logging.getLogger(__name__)
 
 
 class TotemService:
@@ -31,6 +34,8 @@ class TotemService:
             # Todo: bulk update
             for (discord_id,) in Totem.get_all_ids():
                 self.reroll_totem(discord_id)
+
+        logger.info("Rerolled all totems")
 
     def _generate_totem(self):
         fusion = self.fusion_service.totem()

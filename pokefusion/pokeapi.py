@@ -10,7 +10,7 @@ def get_names(base_name) -> tuple[str, ...]:
     return base_name, base_name.lower(), base_name.upper(), base_name.title(), base_name.capitalize()
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class PokeApiResult:
     dex_id: int
     name_fr: str = ""
