@@ -65,7 +65,7 @@ class Events(commands.Cog):
         log = f"{error.__class__.__name__}: {error} (message: {ctx.message.content})"
 
         if ctx.command is not None:
-            log = f"[{ctx.prefix}{ctx.command.qualified_name}] {log}"
+            log = f"[{ctx.canonical_command}] {log}"
 
         original = getattr(error, "original", error)
         logger.error(log, exc_info=original)

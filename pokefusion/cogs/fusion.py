@@ -1,4 +1,4 @@
-from discord import Color, Embed, Member
+from discord import Member
 from discord.ext import commands
 
 from pokefusion.bot.context import Context, Reply
@@ -6,7 +6,13 @@ from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.db.database import database
 from pokefusion.db.models import User
 from pokefusion.fusionapi import FusionClient, FusionResult
-from .cogutils import fusion_embed, guess_prompt
+from .cogutils import confirm_prompt, fusion_embed, unknown_prompt
+
+POKEDEX_DETAILS = (
+    "[List of available Pokémon]"
+    "(https://infinitefusion.fandom.com/wiki/Pokédex) "
+    f"(up to #{FusionClient.MAX_ID})"
+)
 
 
 class Fusion(commands.Cog):
@@ -23,35 +29,35 @@ class Fusion(commands.Cog):
     @commands.command(aliases=["f"])
     async def fusion(self, ctx: Context, head: str = "?", body: str = "?"):
         result = self.client.fusion(head, body, ctx.lang)
+
         if result.succeeded:
             await self._send_embed(ctx, result, title="Fusion")
-        else:
-            head_guess = result.head.guess if result.head.failed else head
-            body_guess = result.body.guess if result.body.failed else body
+            return
 
-            cmd = f"{ctx.prefix}{ctx.invoked_with} {head_guess} {body_guess}"
-            desc = f"Did you mean: `{cmd}`\n\n[List of available Pokémon](https://infinitefusion.fandom.com/wiki/Pokédex) (up to #{FusionClient.MAX_ID})"
-            reply = await guess_prompt(ctx, desc)
+        head_guess = result.head.guess if result.head.failed else head
+        body_guess = result.body.guess if result.body.failed else body
 
-            if reply == Reply.Yes:
-                # noinspection PyTypeChecker
-                await ctx.invoke(self.fusion, head=head_guess, body=body_guess)
+        reply = await unknown_prompt(ctx, head_guess, body_guess, details=POKEDEX_DETAILS)
+
+        if reply is Reply.Yes:
+            # noinspection PyTypeChecker
+            await ctx.invoke(self.fusion, head=head_guess, body=body_guess)
 
     @commands.command(aliases=["fc"])
     async def fusion_custom(self, ctx: Context, head: str = "?"):
         result = self.client.fusion(head, "?", ctx.lang, custom_only=True)
+
         if result.succeeded:
             await self._send_embed(ctx, result, title="Fusion")
-        else:
-            head_guess = result.head.guess if result.head.failed else head
+            return
 
-            cmd = f"{ctx.prefix}{ctx.invoked_with} {head_guess}"
-            desc = f"Did you mean: `{cmd}`\n\n[List of available Pokémon](https://infinitefusion.fandom.com/wiki/Pokédex) (up to #{FusionClient.MAX_ID})"
-            reply = await guess_prompt(ctx, desc)
+        head_guess = result.head.guess if result.head.failed else head
 
-            if reply == Reply.Yes:
-                # noinspection PyTypeChecker
-                await ctx.invoke(self.fusion_custom, head=head_guess)
+        reply = await unknown_prompt(ctx, head_guess, details=POKEDEX_DETAILS)
+
+        if reply is Reply.Yes:
+            # noinspection PyTypeChecker
+            await ctx.invoke(self.fusion_custom, head=head_guess)
 
     @commands.command(aliases=["s"])
     async def swap(self, ctx: Context):
@@ -68,7 +74,7 @@ class Fusion(commands.Cog):
             await ctx.invoke(self.fusion, head=result.head_query, body=result.body_query)
 
     @commands.command(aliases=["t"])
-    async def totem(self, ctx: Context, user: Member = None):
+    async def totem(self, ctx: Context, user: Member | None = None):
         user = user or ctx.author
         result = self.bot.totem_service.get_or_create(user.id)
         await self._send_embed(ctx, result, title=f"Totem - {user.display_name}")
@@ -80,35 +86,30 @@ class Fusion(commands.Cog):
 
         if user_db.free_rerolls < 1:
             await ctx.send("You don't have enough free rerolls.")
-        else:
-            desc = f"Reroll your totem?"
-            embed = Embed(description=desc, color=Color.light_grey())
-            embed.set_footer(text="Type yes or no.")
-            prompt = await ctx.send(embed=embed)
-            reply = await ctx.prompt(timeout=10, delete_reply=True)
+            return
 
-            if reply == Reply.NoReply:
-                embed.set_footer(text=f"{user} didn't reply.")
-            elif reply == Reply.No:
-                embed.set_footer(text=f"{user} replied no.")
-            else:
-                embed.set_footer(text=f"{user} replied yes.")
-                with database.atomic():
-                    self.bot.totem_service.reroll_totem(user.id)
-                    User.add_free_rerolls(user.id, -1)
-                # noinspection PyTypeChecker
-                await ctx.invoke(self.totem)
+        desc = f"Reroll your totem?"
 
-            await prompt.edit(embed=embed, delete_after=10)
+        reply = await confirm_prompt(ctx, desc)
+
+        if reply is Reply.Yes:
+            with database.atomic():
+                self.bot.totem_service.reroll_totem(user.id)
+                User.add_free_rerolls(user.id, -1)
+
+            # noinspection PyTypeChecker
+            await ctx.invoke(self.totem)
 
     @commands.command()
-    async def fru(self, ctx: Context, user: Member = None):
+    async def fru(self, ctx: Context, user: Member | None = None):
         user = user or ctx.author
         user_db = User.get_or_create(discord_id=ctx.author.id, defaults={"name": ctx.author.name})[0]
+
         if ctx.author.id == user.id:
-            msg = f"You have {user_db.free_rerolls} free reroll(s). Type `{ctx.prefix}fr` to use it."
+            msg = f"You have {user_db.free_rerolls} free reroll(s). Type `{ctx.clean_prefix}fr` to use it."
         else:
             msg = f"{user.display_name} has {user_db.free_rerolls} free rerolls."
+
         await ctx.send(msg)
 
 

@@ -5,7 +5,7 @@ import traceback
 from contextlib import redirect_stdout
 from typing import Annotated
 
-from discord import Color, Embed, Member
+from discord import Member
 from discord.ext import commands
 from discord.ext.commands import CommandError, NotOwner
 
@@ -15,7 +15,7 @@ from pokefusion.bot.converters import ModuleConverter
 from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.db import models
 from pokefusion.db.models import Settings, User
-from .cogutils import embed_factory
+from .cogutils import confirm_prompt, embed_factory
 from .scheduler import NOTIF_CHANNELS
 
 logger = logging.getLogger(__name__)
@@ -43,71 +43,40 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
             await ctx.send(f"Maintenance mode is now {['off', 'on'][new_state]}.")
 
     @commands.command(aliases=["rr"])
-    async def reroll(self, ctx: Context, target: Member = None):
+    async def reroll(self, ctx: Context, target: Member | None = None):
         target = target or ctx.author
-        desc = f"Reroll {target.display_name}'s totem?"
-        embed = Embed(description=desc, color=Color.light_grey())
-        embed.set_footer(text="Type yes or no.")
-        prompt = await ctx.send(embed=embed)
-        reply = await ctx.prompt(timeout=10, delete_reply=True)
+        description = f"Reroll {target.display_name}'s totem?"
 
-        if reply == Reply.NoReply:
-            embed.set_footer(text=f"{ctx.author} didn't reply.")
-        elif reply == Reply.No:
-            embed.set_footer(text=f"{ctx.author} replied no.")
-        else:
-            embed.set_footer(text=f"{ctx.author} replied yes.")
+        reply = await confirm_prompt(ctx, description)
+
+        if reply is Reply.Yes:
             self.bot.totem_service.reroll_totem(target.id)
-
-        await prompt.edit(embed=embed)
 
     @commands.command(aliases=["rrg", "rr_global", "rerall"])
     async def reroll_global(self, ctx: Context):
-        desc = f"Reroll **all** totems for **every** server?"
-        embed = Embed(description=desc, color=Color.light_grey())
-        embed.set_footer(text="Type yes or no.")
-        prompt = await ctx.send(embed=embed)
-        reply = await ctx.prompt(timeout=10, delete_reply=True)
+        description = f"Reroll **all** totems for **every** server?"
 
-        if reply == Reply.NoReply:
-            embed.set_footer(text=f"{ctx.author} didn't reply.")
-        elif reply == Reply.No:
-            embed.set_footer(text=f"{ctx.author} replied no.")
-        else:
-            embed.set_footer(text=f"{ctx.author} replied yes.")
+        reply = await confirm_prompt(ctx, description)
+
+        if reply is Reply.Yes:
             self.bot.totem_service.reroll_all_totems()
 
-        await prompt.edit(embed=embed)
-
     @commands.command(aliases=["give_fr"])
-    async def give_freererolls(self, ctx: Context, amount: int = 1, target: Member = None):
-        desc = f"Give free reroll(s) to **everyone**?" if target is None else f"Give free reroll(s) to **{target.display_name}**?"
-        embed = Embed(description=desc, color=Color.light_grey())
-        embed.set_footer(text="Type yes or no.")
-        prompt = await ctx.send(embed=embed)
-        reply = await ctx.prompt(timeout=10, delete_reply=True)
+    async def give_freererolls(self, ctx: Context, amount: int = 1, target: Member | None = None):
+        recipient = "everyone" if target is None else target.display_name
+        rerolls = "reroll" if amount == 1 else "rerolls"
+        description = f"Give **{amount} free {rerolls}** to **{recipient}**?"
 
-        if reply == Reply.NoReply:
-            embed.set_footer(text=f"{ctx.author} didn't reply.")
-        elif reply == Reply.No:
-            embed.set_footer(text=f"{ctx.author} replied no.")
-        else:
-            embed.set_footer(text=f"{ctx.author} replied yes.")
+        reply = await confirm_prompt(ctx, description)
+
+        if reply is Reply.Yes:
             if target is None:
                 User.add_free_rerolls_to_all(amount)
             else:
                 User.add_free_rerolls(target.id, amount)
 
-        await prompt.edit(embed=embed)
-
     @commands.command(aliases=["spu"])
     async def sprite_pack_update(self, ctx: Context, free_rerolls: int = 0) -> None:
-        warning = "The following embed will be sent to **all** notification subscribers, are you sure?"
-        warning_embed = Embed(description=warning, color=ctx.bot.main_color)
-        warning_embed.set_footer(text="Type yes or no.")
-
-        prompt = await ctx.send(embed=warning_embed)
-
         title = "Sprite Pack Update"
         description = (
             "The latest sprite pack was imported:\n"
@@ -119,48 +88,41 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
         )
 
         if free_rerolls > 0:
-            plural = "s" if free_rerolls > 1 else ""
-            description += f"⚠️ All Totems have been reset️. As compensation, everyone received **+{free_rerolls} free reroll{plural}**! Check how many you have with `{ctx.prefix}fru`"
+            rerolls = "reroll" if free_rerolls == 1 else "rerolls"
+            description += (
+                f"⚠️ All Totems have been reset️. As compensation, everyone received "
+                f"**+{free_rerolls} free {rerolls}**! Check how many you have with `{ctx.clean_prefix}fru`"
+            )
 
         preview, files = embed_factory(
             title=title,
             description=description,
             color=ctx.bot.main_color,
-            thumbnail=self.bot.user.display_avatar.url
+            thumbnail=ctx.me.display_avatar.url
         )
 
         await ctx.send(embed=preview, files=files)
 
-        reply = await ctx.prompt(timeout=20)
+        warning = "Send the previewed embed to **all** notification subscribers?"
+        reply = await confirm_prompt(ctx, warning, color=ctx.bot.main_color)
 
-        match reply:
-            case Reply.NoReply:
-                warning_embed.set_footer(text=f"{ctx.author} didn't reply.")
+        if reply is Reply.Yes:
+            if free_rerolls > 0:
+                User.add_free_rerolls_to_all(free_rerolls)
+                self.bot.totem_service.reroll_all_totems()
 
-            case Reply.No:
-                warning_embed.set_footer(text=f"{ctx.author} replied no.")
+            for channel_id in NOTIF_CHANNELS:
+                channel = self.bot.get_channel(channel_id)
 
-            case Reply.Yes:
-                warning_embed.set_footer(text=f"{ctx.author} replied yes.")
+                if channel:
+                    embed, files = embed_factory(
+                        title=title,
+                        description=description,
+                        color=ctx.bot.main_color,
+                        thumbnail=self.bot.user.display_avatar.url
+                    )
 
-                if free_rerolls > 0:
-                    User.add_free_rerolls_to_all(free_rerolls)
-                    self.bot.totem_service.reroll_all_totems()
-
-                for channel_id in NOTIF_CHANNELS:
-                    channel = self.bot.get_channel(channel_id)
-
-                    if channel:
-                        notif_embed, files = embed_factory(
-                            title=title,
-                            description=description,
-                            color=ctx.bot.main_color,
-                            thumbnail=self.bot.user.display_avatar.url
-                        )
-
-                        await channel.send(embed=notif_embed, files=files)
-
-        await prompt.edit(embed=warning_embed)
+                    await channel.send(embed=embed, files=files)
 
     @commands.command()
     async def say(self, ctx: Context, *, message: str) -> None:
