@@ -4,6 +4,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Generator, Iterable
 
+from pokefusion.types import StrPath
+
 
 def regex_filter(sequence: Iterable[str], pattern: re.Pattern[str]) -> Generator[str, None, None]:
     for elem in sequence:
@@ -11,7 +13,7 @@ def regex_filter(sequence: Iterable[str], pattern: re.Pattern[str]) -> Generator
             yield elem
 
 
-def make_backup(path):
+def make_backup(path: StrPath):
     src = Path(path)
     counter = 1
     date_suffix = datetime.now().strftime("_%Y%m%d")

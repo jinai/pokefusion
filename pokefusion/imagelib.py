@@ -8,11 +8,11 @@ from skimage.transform import swirl
 
 from pokefusion.types import StrPath
 
-ImageFile.LOAD_TRUNCATED_IMAGES = True
-
 type RGB = tuple[int, int, int]
 type RGBA = tuple[int, int, int, int]
-type PathOrBytes = StrPath | IO[bytes]
+type ImageIO = StrPath | IO[bytes]
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 class Orientation(Enum):
@@ -36,7 +36,6 @@ class FilterType(Enum):
     EDGE = auto()
     BOX = auto()
     SWIRL = auto()
-    DEFAULT = SILHOUETTE
 
 
 def _offset(alignment: Alignment, container: int, item: int) -> int:
@@ -47,7 +46,7 @@ def _offset(alignment: Alignment, container: int, item: int) -> int:
     return 0
 
 
-def get_dominant_color(image: PathOrBytes, normalize: bool = False) -> RGB:
+def get_dominant_color(image: ImageIO, normalize: bool = False) -> RGB:
     if normalize:
         image = normalize_image(image)
 
@@ -71,7 +70,7 @@ def get_dominant_color(image: PathOrBytes, normalize: bool = False) -> RGB:
     return r, g, b
 
 
-def zoom_image(image: PathOrBytes, factor: int = 2) -> BytesIO:
+def zoom_image(image: ImageIO, factor: int = 2) -> BytesIO:
     base = Image.open(image)
     zoomed = base.resize(tuple(int(factor * x) for x in base.size), resample=Image.Resampling.NEAREST)
 
@@ -82,7 +81,7 @@ def zoom_image(image: PathOrBytes, factor: int = 2) -> BytesIO:
     return buffer
 
 
-def pad_image(image: PathOrBytes) -> BytesIO:
+def pad_image(image: ImageIO) -> BytesIO:
     base = Image.open(image)
     old_width, old_height = base.size
     new_width, new_height = old_width + 100, old_height + 100
@@ -98,8 +97,8 @@ def pad_image(image: PathOrBytes) -> BytesIO:
 
 
 def merge_images(
-        image1: PathOrBytes,
-        image2: PathOrBytes,
+        image1: ImageIO,
+        image2: ImageIO,
         orientation: Orientation = Orientation.HORIZONTAL,
         pixel_gap: int = 2,
         crop_bbox: bool = True,
@@ -131,7 +130,7 @@ def merge_images(
     return buffer
 
 
-def normalize_image(image: PathOrBytes, crop_bbox: bool = True) -> BytesIO:
+def normalize_image(image: ImageIO, crop_bbox: bool = True) -> BytesIO:
     base = Image.open(image)
     if base.mode != "RGBA":
         base = base.convert("RGBA")
@@ -146,7 +145,7 @@ def normalize_image(image: PathOrBytes, crop_bbox: bool = True) -> BytesIO:
     return buffer
 
 
-def apply_filter(image: PathOrBytes, normalize: bool = True, filter_type: FilterType = FilterType.DEFAULT,
+def apply_filter(image: ImageIO, normalize: bool = True, filter_type: FilterType = FilterType.SILHOUETTE,
                  scale: int = 1) -> BytesIO:
     if normalize:
         image = normalize_image(image, crop_bbox=True if filter_type is FilterType.SWIRL else False)
@@ -258,9 +257,6 @@ def _filter_swirl(image: Image.Image) -> BytesIO:
     return buffer
 
 
-def save_to_file(path: str, image: BinaryIO) -> None:
-    with open(path, "wb") as f:
-        f.write(image.read())
 
 
 def to_numpy(im: Image.Image):

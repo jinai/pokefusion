@@ -1,21 +1,35 @@
 import logging
-import os
 import time
+from pathlib import Path
+from typing import Annotated
 
 import typer
 
 from pokefusion.cli.context import Context
 from pokefusion.scripts.clean_assets import clean_assets_folder, clean_output_folder
 from pokefusion.scripts.git import restore_deleted_files
-from pokefusion.scripts.import_assets import get_pack_path, import_autogen_sprites, import_custom_sprites, \
-    import_egg_sprites, is_valid_pack, move_to_assets, save_diff
+from pokefusion.scripts.import_assets import InvalidPackError, import_autogen_sprites, import_custom_sprites, \
+    import_egg_sprites, \
+    move_to_assets, resolve_pack, save_diff
 
 logger = logging.getLogger(__name__)
+
 tools_app = typer.Typer(no_args_is_help=True)
 import_app = typer.Typer(no_args_is_help=True)
 cleanup_app = typer.Typer(no_args_is_help=True)
+
 tools_app.add_typer(import_app, name="import")
 tools_app.add_typer(cleanup_app, name="cleanup")
+
+
+def validate_pack(pack: Path) -> Path:
+    try:
+        return resolve_pack(pack)
+    except InvalidPackError as error:
+        raise typer.BadParameter(str(error)) from error
+
+
+PackPath = Annotated[Path, typer.Argument(callback=validate_pack)]
 
 
 @tools_app.callback()
@@ -24,23 +38,21 @@ def tools_callback() -> None:
 
 
 @import_app.command("all")
-def import_all(pack_name: str) -> None:
-    pack_path = get_pack_path(pack_name)
-    if not is_valid_pack(pack_path):
-        logger.error(f"Invalid Pack: '{pack_path}'")
-        return
-
+def import_all(pack: PackPath) -> None:
     logger.info("Importing all assets")
     start_time = time.perf_counter()
+
     _cleanup_output()
     _import_autogen()
-    _import_custom(pack_path)
-    _import_eggs(pack_path)
+    _import_custom(pack)
+    _import_eggs(pack)
     _save_diff()
     _cleanup_assets()
     _import_to_assets()
+
     logger.info("Restoring tracked files deleted during cleanup")
     restore_deleted_files()
+
     elapsed_time = time.perf_counter() - start_time
     logger.info(f"Total runtime is {elapsed_time:.2f} seconds")
     logger.info("Don't forget to update fusionapi.PREVIOUS_MAX_ID if necessary")
@@ -52,13 +64,13 @@ def import_autogen() -> None:
 
 
 @import_app.command("custom")
-def import_custom(pack_name: str) -> None:
-    _import_custom(pack_name)
+def import_custom(pack: PackPath) -> None:
+    _import_custom(pack)
 
 
 @import_app.command("eggs")
-def import_eggs(pack_name: str) -> None:
-    _import_eggs(pack_name)
+def import_eggs(pack: PackPath) -> None:
+    _import_eggs(pack)
 
 
 @import_app.command("to_assets")
@@ -86,15 +98,14 @@ def _import_autogen() -> None:
     import_autogen_sprites()
 
 
-def _import_custom(pack_name: str) -> None:
-    logger.info(f"Importing custom sprites from '{pack_name}'")
-    import_custom_sprites(pack_name)
+def _import_custom(pack_path: Path) -> None:
+    logger.info(f"Importing custom sprites from '{pack_path}'")
+    import_custom_sprites(pack_path)
 
 
-def _import_eggs(pack_name: str) -> None:
-    logger.info(os.path.abspath("scripts"))
-    logger.info(f"Importing eggs from '{pack_name}'")
-    import_egg_sprites(pack_name)
+def _import_eggs(pack_path: Path) -> None:
+    logger.info(f"Importing eggs from '{pack_path}'")
+    import_egg_sprites(pack_path)
 
 
 def _import_to_assets() -> None:

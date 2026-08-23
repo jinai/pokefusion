@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import os
 import random
+from pathlib import Path
 from typing import Self
 
 from fuzzywuzzy import fuzz, process
 
 from . import utils
-from .assetmanager import AssetManager
+from .assetpaths import AssetPaths
 from .configmanager import ConfigManager
 from .enums import Language
 from .types import Dex
@@ -62,7 +62,7 @@ class FusionResult:
         self.head_query = head_query
         self.body_query = body_query
 
-    def swap(self) -> Self:
+    def swap(self) -> FusionResult:
         return FusionResult(head=self.body, body=self.head, head_query=self.body_query, body_query=self.head_query)
 
     @property
@@ -81,35 +81,35 @@ class FusionResult:
     @property
     def is_custom(self) -> bool:
         filename = f"{self.head.dex_id}.{self.body.dex_id}.png"
-        custom = os.path.join(AssetManager.FUSIONS_CUSTOM_DIR, str(self.head.dex_id), filename)
-        return os.path.isfile(custom)
+        custom = AssetPaths.FUSIONS_CUSTOM_DIR / str(self.head.dex_id) / filename
+        return custom.is_file()
 
     @property
-    def path(self) -> str | None:
+    def path(self) -> Path | None:
         if self.failed:
             return None
 
         filename = f"{self.head.dex_id}.{self.body.dex_id}.png"
-        autogen = os.path.join(AssetManager.FUSIONS_AUTOGEN_DIR, str(self.head.dex_id), filename)
-        custom = os.path.join(AssetManager.FUSIONS_CUSTOM_DIR, str(self.head.dex_id), filename)
+        autogen = AssetPaths.FUSIONS_AUTOGEN_DIR / str(self.head.dex_id) / filename
+        custom = AssetPaths.FUSIONS_CUSTOM_DIR / str(self.head.dex_id) / filename
 
-        if os.path.isfile(custom):
+        if custom.is_file():
             return custom
         else:
             return autogen
 
     @property
-    def egg_path(self) -> str | None:
+    def egg_path(self) -> Path | None:
         if self.failed:
             return None
 
         filename = f"{self.head.dex_id}.png"
-        path = os.path.join(AssetManager.EGGS_DIR, filename)
+        path = AssetPaths.EGGS_DIR / filename
 
-        if os.path.isfile(path):
+        if path.is_file():
             return path
         else:
-            return AssetManager.DEFAULT_EGG_PATH
+            return AssetPaths.DEFAULT_EGG_PATH
 
     def __repr__(self) -> str:
         return f"<FusionResult head={self.head}, body={self.body}, head_query={self.head_query}, body_query={self.body_query}>"
@@ -214,21 +214,21 @@ class Sprite:
         return not self.found
 
     @property
-    def path(self) -> str | None:
+    def path(self) -> Path | None:
         if self.not_found:
             return None
 
         filename = f"{self.lookup.dex_id}.png"
-        path = os.path.join(AssetManager.SPRITES_BASE_DIR, filename)
+        path = AssetPaths.SPRITES_BASE_DIR / filename
         return path
 
     @property
-    def path_shiny(self) -> str | None:
+    def shiny_path(self) -> Path | None:
         if self.not_found:
             return None
 
         filename = f"{self.lookup.dex_id}.png"
-        path = os.path.join(AssetManager.SPRITES_SHINY_DIR, filename)
+        path = AssetPaths.SPRITES_SHINY_DIR / filename
         return path
 
     def __repr__(self) -> str:

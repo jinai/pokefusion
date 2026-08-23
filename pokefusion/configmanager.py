@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from dataclasses import dataclass, field
 from datetime import time
 from functools import cache
+from pathlib import Path
 from typing import Any, Self
 
 from .enums import Environment, Language
@@ -16,10 +16,11 @@ type JsonDict = dict[str, Any]
 
 
 class ConfigManager:
-    CONFIG_DIR = os.path.join("pokefusion", "config")
+    CONFIG_DIR = Path("pokefusion", "config")
     CONFIG_FILE = "config.json"
     POKEDEX_FILE = "pokedex.json"
     INFINITEDEX_FILE = "infinitedex.json"
+    INFINITEDEX_BASE_FILE = "infinitedex_en.json"
 
     @classmethod
     @cache
@@ -44,7 +45,7 @@ class ConfigManager:
     @classmethod
     @cache
     def read_json(cls, filename: str) -> JsonDict:
-        with open(os.path.join(cls.CONFIG_DIR, filename), "r", encoding="utf-8") as f:
+        with open(cls.CONFIG_DIR / filename, "r", encoding="utf-8") as f:
             return json.load(f)
 
     @classmethod
@@ -83,20 +84,20 @@ class BotConfig:
 
 @dataclass(frozen=True, slots=True)
 class DatabaseConfig:
-    path: str
+    path: Path
     pragmas: JsonDict
 
     @classmethod
     def from_dict(cls, cfg: JsonDict) -> Self:
         return cls(
-            path=os.path.abspath(cfg["path"]),
+            path=Path(cfg["path"]).resolve(),
             pragmas=cfg.get("pragmas", {})
         )
 
 
 @dataclass(frozen=True, slots=True)
 class LoggingConfig:
-    path: str
+    path: Path
     encoding: str
     errors: str
     level: int
@@ -116,7 +117,7 @@ class LoggingConfig:
             raise ValueError(f"Invalid logging level: {level_name!r}")
 
         return cls(
-            path=os.path.abspath(cfg["path"]),
+            path=Path(cfg["path"]).resolve(),
             encoding=cfg["encoding"],
             errors=cfg["errors"],
             level=level,

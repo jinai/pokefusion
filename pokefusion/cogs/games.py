@@ -259,8 +259,7 @@ class Games(commands.Cog):
             words = utils.special_join([f"**{word[0]}**" for word in self.last_shuffles[ctx.channel]], ", ", " et ")
             await ctx.send(f"Pokémon names to find: {words}")
         else:
-            await ctx.send(
-                f"No Pokémon name to find, use `{ctx.prefix}shuffle new` to get one")
+            await ctx.send(f"No Pokémon name to find, use `{ctx.clean_prefix}shuffle new` to get one")
 
     @shuffle.command(name="new")
     async def shuffle_new(self, ctx: Context):

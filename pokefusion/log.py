@@ -1,5 +1,4 @@
 import logging
-import os
 from datetime import datetime
 from logging import LogRecord
 from logging.handlers import TimedRotatingFileHandler
@@ -51,10 +50,7 @@ class ColorFormatter(TimezoneFormatter):
 
 
 def setup_logging(config: LoggingConfig):
-    log_directory = os.path.dirname(config.path)
-
-    if log_directory:
-        os.makedirs(log_directory, exist_ok=True)
+    config.path.parent.mkdir(parents=True, exist_ok=True)
 
     root = logging.getLogger()
     root.setLevel(config.level)

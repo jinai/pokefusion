@@ -7,6 +7,7 @@ from pokefusion.scripts.generate_infinitedex import generate_infinitedex
 from pokefusion.scripts.generate_pokedex import generate_pokedex
 
 logger = logging.getLogger(__name__)
+
 dex_app = typer.Typer(no_args_is_help=True)
 
 

@@ -1,12 +1,14 @@
 import os
 from functools import partial
 from multiprocessing import Pool, cpu_count
+from pathlib import Path
 
 from PIL import Image
 from PIL.Image import Resampling
 from tqdm import tqdm
 
 from pokefusion.fusionapi import FusionClient
+from pokefusion.types import StrPath
 
 SPRITESHEET_ROWS = 58
 SPRITESHEET_COLUMNS = 10
@@ -15,12 +17,10 @@ SPRITE_HEIGHT = 96
 SPRITE_SCALE = 3
 MAX_WORKERS = 1
 
-type BoundingBox = tuple[int, int, int, int]
 
-
-def process_dir(input_dir: str, output_dir: str):
+def process_dir(input_dir: StrPath, output_dir: StrPath):
     spritesheets = [
-        os.path.join(input_dir, sheet)
+        Path(input_dir, sheet)
         for sheet in next(os.walk(input_dir))[2]
     ]
 
@@ -31,10 +31,16 @@ def process_dir(input_dir: str, output_dir: str):
         list(tqdm(pool.imap_unordered(func, spritesheets), total=len(spritesheets), desc=desc))  # force iter
 
 
-def split_spritesheet(path: str, output_dir: str):
+def split_spritesheet(path: StrPath, output_dir: StrPath):
     with Image.open(path) as sheet:
         if SPRITE_SCALE > 1:
-            sheet = sheet.resize((sheet.width * SPRITE_SCALE, sheet.height * SPRITE_SCALE), resample=Resampling.NEAREST)
+            sheet = sheet.resize(
+                size=(
+                    sheet.width * SPRITE_SCALE,
+                    sheet.height * SPRITE_SCALE
+                ),
+                resample=Resampling.NEAREST
+            )
 
         boxes = [
             (
@@ -47,11 +53,11 @@ def split_spritesheet(path: str, output_dir: str):
             for col in range(SPRITESHEET_COLUMNS)
         ]
 
-        sheet_name = os.path.splitext(os.path.basename(path))[0]
-        sheet_output_dir = os.path.join(output_dir, sheet_name)
+        sheet_name = Path(path).stem
+        sheet_output_dir = Path(output_dir, sheet_name)
         os.makedirs(sheet_output_dir, exist_ok=True)
 
         for index, box in enumerate(boxes[1:FusionClient.MAX_ID + 1]):
-            output_file = os.path.join(sheet_output_dir, f"{sheet_name}.{index + 1}.png")
+            output_file = sheet_output_dir / f"{sheet_name}.{index + 1}.png"
             sprite = sheet.crop(box)
             sprite.save(output_file)

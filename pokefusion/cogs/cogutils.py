@@ -1,12 +1,11 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 from discord import Color, Embed, File
 
 from pokefusion import imagelib
-from pokefusion.assetmanager import AssetManager
+from pokefusion.assetpaths import AssetPaths
 from pokefusion.bot.context import Context, Reply
 from pokefusion.fusionapi import FusionResult, Sprite
 from pokefusion.imagelib import FilterType
@@ -171,7 +170,7 @@ def guess_filter_embed(
 
 
 def description_embed(ctx: Context, description: str, title: str = "Guess the Pokémon!") -> tuple[Embed, list[File]]:
-    thumbnail = Path(AssetManager.MISC_DIR) / "Substitute.png"
+    thumbnail = AssetPaths.MISC_DIR / "Substitute.png"
     color = Color.from_rgb(*imagelib.get_dominant_color(thumbnail, normalize=True))
 
     embed, files = base_embed(
@@ -191,7 +190,7 @@ def birthday_embed(ctx: Context, color: Color) -> tuple[Embed, list[File]]:
         ctx,
         title="Birthday event",
         color=color,
-        thumbnail=Path(AssetManager.MISC_DIR) / "Substitute.png",
+        thumbnail=AssetPaths.MISC_DIR / "Substitute.png",
         description=f"Use `{ctx.clean_prefix}bday` for free rerolls during your birthday!",
         footer_text=f"Happy birthday {ctx.author.display_name}!"
     )
@@ -204,7 +203,7 @@ def christmas_embed(ctx: Context, color: Color) -> tuple[Embed, list[File]]:
         ctx,
         title="Christmas event",
         color=color,
-        thumbnail=Path(AssetManager.MISC_DIR) / "ChristmasPresent.png",
+        thumbnail=AssetPaths.MISC_DIR / "ChristmasPresent.png",
         description=f"Use `{ctx.clean_prefix}kdo` for free rerolls until January 1!",
         footer_text="Happy Holidays!"
     )
@@ -262,7 +261,7 @@ async def unknown_prompt(ctx: Context, *arguments: str, details: str | None = No
     if details is not None:
         description += f"\n\n{details}"
 
-    thumbnail = Path(AssetManager.MISC_DIR) / "Unknown.png"
+    thumbnail = AssetPaths.MISC_DIR / "Unknown.png"
     color = Color.from_rgb(*imagelib.get_dominant_color(thumbnail, normalize=True))
 
     reply = await confirm_prompt(

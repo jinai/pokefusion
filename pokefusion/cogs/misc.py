@@ -18,7 +18,7 @@ class Misc(commands.Cog):
 
         if sprite.found:
             filename = f"sprites_{sprite.lookup.dex_id:03}_{sprite.lookup.species}.png"
-            sprites = imagelib.merge_images(sprite.path, sprite.path_shiny, pixel_gap=5)
+            sprites = imagelib.merge_images(sprite.path, sprite.shiny_path, pixel_gap=5)
             file = discord.File(fp=sprites, filename=filename)
 
             await ctx.send(file=file)

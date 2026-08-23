@@ -8,10 +8,11 @@ from pokefusion.cli.context import Context
 from pokefusion.db.migrations import ForceRequiredError, MigrationError
 
 logger = logging.getLogger(__name__)
+
 migrations_app = typer.Typer(no_args_is_help=True)
 
 
-def count_callback(value: int) -> int:
+def validate_count(value: int) -> int:
     if value <= 0:
         raise typer.BadParameter("Must be a positive integer.")
     return value
@@ -22,12 +23,12 @@ def handle_migration_errors(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except ForceRequiredError as e:
-            logger.error(f"Migration '{e.name}' is applied, use --force to rollback and remove.")
-            raise typer.Abort()
-        except MigrationError as e:
-            logger.error(e)
-            raise typer.Abort()
+        except ForceRequiredError as error:
+            logger.error(f"Migration '{error.name}' is applied. Use --force to rollback and remove.")
+            raise typer.Abort() from error
+        except MigrationError as error:
+            logger.error(error)
+            raise typer.Abort() from error
 
     return wrapper
 
@@ -53,7 +54,7 @@ def apply_migrations(name: Annotated[str | None, typer.Argument()] = None) -> No
 
 @migrations_app.command(name="rollback")
 @handle_migration_errors
-def rollback_migration(count: Annotated[int, typer.Argument(callback=count_callback)] = 1) -> None:
+def rollback_migration(count: Annotated[int, typer.Argument(callback=validate_count)] = 1) -> None:
     ctx = Context(require_confirmation=True,
                   action=f"Rollback {count} migration{'s' if count > 1 else ''} (make a backup first!)")
     ctx.migration_service.rollback(count)

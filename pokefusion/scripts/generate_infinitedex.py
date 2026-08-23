@@ -1,8 +1,8 @@
 import json
 import logging
-import os
 
 from pokefusion.configmanager import ConfigManager
+from pokefusion.types import RawDex
 
 logger = logging.getLogger(__name__)
 
@@ -32,11 +32,11 @@ OVERRIDES = {
 }
 
 
-def build_reverse_english_index(pokedex):
+def build_reverse_english_index(pokedex: RawDex) -> dict[str, str]:
     return {name: species_id for species_id, name in pokedex["en"].items()}
 
 
-def resolve_species(name, reverse_en):
+def resolve_species(name: str, reverse_en: dict[str, str]) -> tuple[str, str] | tuple[None, None]:
     if name in reverse_en:
         return reverse_en[name], ""
 
@@ -48,7 +48,7 @@ def resolve_species(name, reverse_en):
     return None, None
 
 
-def build_infinitedex(pokedex, infinitedex_en):
+def build_infinitedex(pokedex: RawDex, infinitedex_en: dict[str, str]) -> tuple[RawDex, list[tuple[str, str]]]:
     reverse_en = build_reverse_english_index(pokedex)
     languages = sorted(pokedex.keys())
 
@@ -73,10 +73,10 @@ def build_infinitedex(pokedex, infinitedex_en):
     return infinitedex, unmatched
 
 
-def generate_infinitedex():
-    pokedex = ConfigManager.read_json("pokedex.json")
-    infinitedex_en = ConfigManager.read_json("infinitedex_en.json")
-    out_file = os.path.join(ConfigManager.CONFIG_DIR, "infinitedex.json")
+def generate_infinitedex() -> None:
+    pokedex = ConfigManager.read_json(ConfigManager.POKEDEX_FILE)
+    infinitedex_en = ConfigManager.read_json(ConfigManager.INFINITEDEX_BASE_FILE)
+    out_file = ConfigManager.CONFIG_DIR / ConfigManager.INFINITEDEX_FILE
 
     infinitedex, unmatched = build_infinitedex(pokedex, infinitedex_en)
 

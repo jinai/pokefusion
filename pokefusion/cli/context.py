@@ -13,7 +13,10 @@ class Context:
         setup_logging(self.config.logging)
 
         if require_confirmation:
-            typer.confirm(f"[{self.config.environment.upper()}] {action or 'This operation'} - continue?", abort=True)
+            typer.confirm(
+                f"[{self.config.environment.upper()}] {action or 'This operation'} - continue?",
+                abort=True
+            )
 
     @cached_property
     def migration_service(self) -> MigrationService:

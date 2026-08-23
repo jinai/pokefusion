@@ -2,11 +2,12 @@ import csv
 import io
 import json
 import logging
-import os
 import urllib.request
 from collections import defaultdict
 
 from pokefusion.configmanager import ConfigManager
+
+type CsvRow = dict[str, str | None]
 
 logger = logging.getLogger(__name__)
 
@@ -22,13 +23,13 @@ CHARACTER_REPLACEMENTS = {
 }
 
 
-def fetch_csv(url):
+def fetch_csv(url: str) -> list[CsvRow]:
     with urllib.request.urlopen(url, timeout=5) as response:
         raw = response.read().decode("utf-8")
         return list(csv.DictReader(io.StringIO(raw)))
 
 
-def clean_name(name):
+def clean_name(name: str) -> str:
     for old, new in CHARACTER_REPLACEMENTS.items():
         name = name.replace(old, new)
     return name
@@ -48,7 +49,7 @@ def build_pokedex(species_names_rows, language_map):
 
 
 def generate_pokedex():
-    out_file = os.path.join(ConfigManager.CONFIG_DIR, "pokedex.json")
+    out_file = ConfigManager.CONFIG_DIR / ConfigManager.POKEDEX_FILE
 
     logger.info(f"Fetching languages")
     languages_rows = fetch_csv(LANGUAGES_URL)
