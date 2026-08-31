@@ -120,14 +120,16 @@ class BaseClient:
     MIN_ID = None
     MAX_ID = None
 
-    def __init__(self, pokedex: Dex):
+    def __init__(self, pokedex: Dex, default_language: Language):
         self.pokedex = pokedex
+        self.default_language = default_language
 
     @classmethod
     def get_random_id(cls):
         return random.randint(cls.MIN_ID, cls.MAX_ID)
 
-    def lookup(self, query: str, lang: Language = Language.DEFAULT) -> LookupResult:
+    def lookup(self, query: str, lang: Language | None = None) -> LookupResult:
+        lang = lang or self.default_language
         result = LookupResult(self, lang)
 
         # Example: client.lookup("122")
@@ -150,7 +152,8 @@ class BaseClient:
             else:
                 return result.fail(query)
 
-    def get_species(self, lang: Language = Language.DEFAULT) -> list[str]:
+    def get_species(self, lang: Language | None = None) -> list[str]:
+        lang = lang or self.default_language
         return [k for k in self.pokedex[lang] if not k.isdigit()]
 
 
@@ -159,10 +162,10 @@ class FusionClient(BaseClient):
     MAX_ID = 576
     PREVIOUS_MAX_ID = 576  # TODO: update when adding sprites
 
-    def __init__(self):
-        super().__init__(ConfigManager.get_lookup_infinitedex())
+    def __init__(self, default_language: Language):
+        super().__init__(ConfigManager.get_lookup_infinitedex(), default_language)
 
-    def fusion(self, head: str = "?", body: str = "?", lang: Language = Language.DEFAULT,
+    def fusion(self, head: str = "?", body: str = "?", lang: Language | None = None,
                custom_only: bool = False) -> FusionResult:
         head_result = self.lookup(head, lang)
 
@@ -172,14 +175,14 @@ class FusionClient(BaseClient):
         body_result = self.lookup(body, lang)
         return FusionResult(head_result, body_result, head, body)
 
-    def totem(self, seed: int | None = None, lang: Language = Language.DEFAULT) -> FusionResult:
+    def totem(self, seed: int | None = None, lang: Language | None = None) -> FusionResult:
         rand = random.Random(seed)
         head = rand.randint(FusionClient.MIN_ID, FusionClient.MAX_ID)
         body = rand.choice(FusionClient.get_custom_fusions(head=head))  # Only custom fusions for Totems
         return self.fusion(head=str(head), body=str(body), lang=lang)
 
     @staticmethod
-    def get_custom_fusions(head: int = None, body: int = None) -> list[int]:
+    def get_custom_fusions(head: int | None = None, body: int | None = None) -> list[int]:
         fusions: list[int] = []
         if head is not None and head in CUSTOM_FUSIONS:
             fusions = CUSTOM_FUSIONS[head]
@@ -194,10 +197,10 @@ class SpriteClient(BaseClient):
     MIN_ID = 1
     MAX_ID = 898
 
-    def __init__(self):
-        super().__init__(ConfigManager.get_lookup_pokedex())
+    def __init__(self, default_language: Language):
+        super().__init__(ConfigManager.get_lookup_pokedex(), default_language)
 
-    def get_sprite(self, query: str, lang: Language = Language.DEFAULT) -> Sprite:
+    def get_sprite(self, query: str, lang: Language | None = None) -> Sprite:
         return Sprite(self.lookup(query, lang))
 
 

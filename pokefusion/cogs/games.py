@@ -55,7 +55,7 @@ class Games(commands.Cog):
 
     def cog_load(self) -> None:
         self._pokemon_names = load_pokemon_names()
-        num_langs, num_entries = len(self._pokemon_names), len(self._pokemon_names[Language.DEFAULT])
+        num_langs, num_entries = len(self._pokemon_names), len(self._pokemon_names[self.bot.default_language])
         logger.info(f"Loaded {num_entries} Pokémon names in {num_langs} languages")
 
     @commands.Cog.listener()

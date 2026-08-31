@@ -45,9 +45,10 @@ class PokeFusion(commands.Bot):
         self.boot_time: datetime = datetime.now()
         self.owner_id: int = config.owner_id
         self.default_prefix = config.default_prefix
+        self.default_language = config.default_language
         self.block_dms = config.block_dms
-        self.fusion_client: FusionClient = FusionClient()
-        self.sprite_client: SpriteClient = SpriteClient()
+        self.fusion_client: FusionClient = FusionClient(self.default_language)
+        self.sprite_client: SpriteClient = SpriteClient(self.default_language)
         self.totem_service = TotemService(self.fusion_client)
         self._before_invokes: list[Callable[[Context], Awaitable[Any]]] = []
         self._after_invokes: list[Callable[[Context], Awaitable[Any]]] = []

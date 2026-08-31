@@ -32,7 +32,8 @@ class Events(commands.Cog):
         upserted, deactivated = Server.sync_all(
             available_servers,
             current_discord_ids,
-            self.bot.default_prefix
+            self.bot.default_prefix,
+            self.bot.default_language
         )
 
         logger.info(
@@ -45,14 +46,14 @@ class Events(commands.Cog):
         if not self.bot.is_ready():
             return
 
-        upserted = Server.upsert(guild.id, guild.name, self.bot.default_prefix)
+        upserted = Server.upsert(guild.id, guild.name, self.bot.default_prefix, self.bot.default_language)
 
         if upserted:
             logger.info(f"Upserted available server {guild.name} (Guild ID: {guild.id})")
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: Guild) -> None:
-        Server.upsert(guild.id, guild.name, self.bot.default_prefix)
+        Server.upsert(guild.id, guild.name, self.bot.default_prefix, self.bot.default_language)
         logger.info(f"Joined '{guild.name}' (Guild ID: {guild.id})")
 
     @commands.Cog.listener()

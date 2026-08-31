@@ -55,7 +55,7 @@ class Server(BaseModel):
     discord_id = IntegerField(unique=True)
     name = CharField()
     prefix = CharField(max_length=2)
-    lang = EnumField(choices=Language, default=Language.DEFAULT, max_length=2)
+    lang = EnumField(choices=Language, max_length=2)
     joined_at = DateTimeField(default=datetime.now)
     updated_at = DateTimeField(default=datetime.now)
     active = BooleanField(default=True)
@@ -64,7 +64,7 @@ class Server(BaseModel):
         table_name = "servers"
 
     @classmethod
-    def upsert(cls, discord_id: int, name: str, prefix: str) -> int:
+    def upsert(cls, discord_id: int, name: str, prefix: str, language: Language) -> int:
         now = datetime.now()
         incoming_name = EXCLUDED.name
 
@@ -74,7 +74,9 @@ class Server(BaseModel):
         query = (
             cls.insert(
                 discord_id=discord_id,
-                name=name, prefix=prefix,
+                name=name,
+                prefix=prefix,
+                lang=language,
                 joined_at=now,
                 updated_at=now,
                 active=True
@@ -128,13 +130,14 @@ class Server(BaseModel):
             cls,
             available_servers: Iterable[tuple[int, str]],
             current_discord_ids: tuple[int, ...],
-            default_prefix: str
+            default_prefix: str,
+            default_language: Language
     ) -> tuple[int, int]:
         db = cls._meta.database
 
         with db.atomic():
             upserted = sum(
-                cls.upsert(discord_id, name, default_prefix)
+                cls.upsert(discord_id, name, default_prefix, default_language)
                 for discord_id, name in available_servers
             )
 

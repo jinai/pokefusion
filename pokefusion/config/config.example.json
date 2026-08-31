@@ -3,6 +3,7 @@
     "owner_id": "your_discord_id",
     "token": "your_bot_token",
     "default_prefix": "!",
+    "default_language": "en",
     "extensions": [
         "pokefusion.cogs.admin",
         "pokefusion.cogs.birthday",

@@ -58,6 +58,7 @@ class BotConfig:
     environment: Environment
     owner_id: int
     default_prefix: str
+    default_language: Language
     token: str = field(repr=False)
     extensions: tuple[str, ...]
     database: DatabaseConfig
@@ -72,6 +73,7 @@ class BotConfig:
             environment=Environment(cfg["environment"]),
             owner_id=int(cfg["owner_id"]),
             default_prefix=cfg["default_prefix"],
+            default_language=Language(cfg["default_language"]),
             token=cfg["token"],
             extensions=tuple(cfg.get("extensions", ())),
             database=DatabaseConfig.from_dict(cfg["database"]),

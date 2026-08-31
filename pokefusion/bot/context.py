@@ -52,7 +52,8 @@ class Context(commands.Context):
     @property
     def lang(self) -> Language:
         if self.guild is None:
-            return Language.DEFAULT
+            return self.bot.default_language
+
         return Server.get(Server.discord_id == self.guild.id).lang
 
     async def tick(self, value: bool = True, /):

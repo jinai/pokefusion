@@ -11,4 +11,3 @@ class Language(StrEnum):
     FR = auto()
     EN = auto()
     DE = auto()
-    DEFAULT = FR
