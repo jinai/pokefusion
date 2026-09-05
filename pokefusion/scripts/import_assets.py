@@ -59,46 +59,52 @@ def import_autogen_sprites() -> None:
     output_dir = OUTPUT_DIR / "fusions" / "autogen"
     git_folder = Path("Graphics", "Battlers", "spritesheets_autogen")
 
-    tempdir = tempfile.TemporaryDirectory(prefix="pokefusion_")
+    with tempfile.TemporaryDirectory(prefix="pokefusion_") as tempdir:
+        commands = [
+            [
+                "clone",
+                "-n",
+                "--depth=1",
+                "--filter=tree:0",
+                "-b",
+                "develop-6.6",
+                "--single-branch",
+                "https://github.com/infinitefusion/infinitefusion-e18.git",
+                tempdir,
+            ],
+            [
+                "-C",
+                tempdir,
+                "sparse-checkout",
+                "set",
+                "--no-cone",
+                f"/{git_folder.as_posix()}",
+            ],
+            [
+                "-C",
+                tempdir,
+                "checkout",
+            ],
+        ]
 
-    commands = [
-        [
-            "clone",
-            "-n",
-            "--depth=1",
-            "--filter=tree:0",
-            "-b",
-            "develop-6.6",
-            "--single-branch",
-            "https://github.com/infinitefusion/infinitefusion-e18.git",
-            "."
-        ],
-        [
-            "sparse-checkout",
-            "set",
-            "--no-cone",
-            f"/{git_folder.as_posix()}"
-        ],
-        ["checkout"],
-    ]
+        for arguments in commands:
+            run_git(arguments)
 
-    for arguments in commands:
-        run_git(arguments, cwd=tempdir.name)
+        input_dir = Path(tempdir) / git_folder
+        sheet_count = len(next(os.walk(input_dir))[2])
 
-    input_dir = Path(tempdir.name, git_folder)
-    sheet_count = len(next(os.walk(input_dir))[2])
+        elapsed_time = time.perf_counter() - start_time
+        logger.info(f"Downloaded {sheet_count} autogen spritesheets in {elapsed_time:.2f} seconds")
 
-    elapsed_time = time.perf_counter() - start_time
-    logger.info(f"Downloaded {sheet_count} autogen spritesheets in {elapsed_time:.2f} seconds")
+        if sheet_count > FusionClient.MAX_ID:
+            logger.warning(
+                f"Found more than {FusionClient.MAX_ID} autogen spritesheets! "
+                "Check if new autogen sprites were released, and adapt MAX_ID accordingly"
+            )
 
-    if sheet_count > FusionClient.MAX_ID:
-        logger.warning(
-            f"Found more than {FusionClient.MAX_ID} autogen spritesheets! Check if new autogen sprites were released, and adapt MAX_ID accordingly")
+        start_time = time.perf_counter()
 
-    start_time = time.perf_counter()
-
-    spritesheets.process_dir(input_dir, output_dir)
-    tempdir.cleanup()
+        spritesheets.process_dir(input_dir, output_dir)
 
     sprite_count = sum(len(filenames) for _, _, filenames in os.walk(output_dir))
 
