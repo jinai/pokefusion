@@ -15,6 +15,7 @@ from tqdm import tqdm
 from pokefusion.assetpaths import AssetPaths
 from pokefusion.configmanager import ConfigManager
 from pokefusion.fusionapi import FusionClient
+from pokefusion.imagelib import save_resized_image
 from pokefusion.types import StrPath
 from . import spritesheets
 from .git import run_git
@@ -139,8 +140,9 @@ def import_custom_sprites(pack_path: Path) -> None:
                 sprite_output_dir.mkdir(parents=True, exist_ok=True)
                 existing_folders.add(head)
 
-            with open(sprite_output_dir / f"{head}.{body}.png", "wb") as sprite_file:
-                sprite_file.write(zipf.read(filename))
+            sprite_output_path = sprite_output_dir / f"{head}.{body}.png"
+            with zipf.open(filename) as sprite_file:
+                save_resized_image(sprite_file, sprite_output_path, scale=2 / 3)
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(

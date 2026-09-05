@@ -70,15 +70,17 @@ def get_dominant_color(image: ImageIO, normalize: bool = False) -> RGB:
     return r, g, b
 
 
-def zoom_image(image: ImageIO, factor: int = 2) -> BytesIO:
-    base = Image.open(image)
-    zoomed = base.resize(tuple(int(factor * x) for x in base.size), resample=Image.Resampling.NEAREST)
-
-    buffer = BytesIO()
-    zoomed.save(buffer, "PNG")
-    buffer.seek(0)
-
-    return buffer
+def save_resized_image(
+        image: ImageIO,
+        output: ImageIO,
+        *,
+        scale: float,
+        resample: Image.Resampling = Image.Resampling.NEAREST,
+) -> None:
+    with Image.open(image) as base:
+        size = tuple(max(1, round(dimension * scale)) for dimension in base.size)
+        resized = base.resize(size, resample=resample)
+        resized.save(output, "PNG")
 
 
 def pad_image(image: ImageIO) -> BytesIO:
