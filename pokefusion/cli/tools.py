@@ -9,8 +9,7 @@ from pokefusion.cli.context import Context
 from pokefusion.scripts.clean_assets import clean_assets_folder, clean_output_folder
 from pokefusion.scripts.git import restore_deleted_files
 from pokefusion.scripts.import_assets import InvalidPackError, import_autogen_sprites, import_custom_sprites, \
-    import_egg_sprites, \
-    move_to_assets, resolve_pack, save_diff
+    import_egg_sprites, move_to_assets, resolve_pack, save_diff as _save_diff
 
 logger = logging.getLogger(__name__)
 
@@ -37,18 +36,24 @@ def tools_callback() -> None:
     Context()
 
 
+@tools_app.command("save_diff")
+def save_diff() -> None:
+    logger.info("Saving diff")
+    _save_diff()
+
+
 @import_app.command("all")
 def import_all(pack: PackPath) -> None:
     logger.info("Importing all assets")
     start_time = time.perf_counter()
 
-    _cleanup_output()
-    _import_autogen()
-    _import_custom(pack)
-    _import_eggs(pack)
-    _save_diff()
-    _cleanup_assets()
-    _import_to_assets()
+    cleanup_output()
+    import_autogen()
+    import_custom(pack)
+    import_eggs(pack)
+    save_diff()
+    cleanup_assets()
+    import_to_assets()
 
     logger.info("Restoring tracked files deleted during cleanup")
     restore_deleted_files()
@@ -60,65 +65,30 @@ def import_all(pack: PackPath) -> None:
 
 @import_app.command("autogen")
 def import_autogen() -> None:
-    _import_autogen()
-
-
-@import_app.command("custom")
-def import_custom(pack: PackPath) -> None:
-    _import_custom(pack)
-
-
-@import_app.command("eggs")
-def import_eggs(pack: PackPath) -> None:
-    _import_eggs(pack)
-
-
-@import_app.command("to_assets")
-def import_to_assets() -> None:
-    _import_to_assets()
-
-
-@tools_app.command("save_diff")
-def save_diff_cmd() -> None:
-    _save_diff()
-
-
-@cleanup_app.command("output")
-def cleanup_output_cmd() -> None:
-    _cleanup_output()
-
-
-@cleanup_app.command("assets")
-def cleanup_assets_cmd() -> None:
-    _cleanup_assets()
-
-
-def _import_autogen() -> None:
     logger.info("Importing autogen sprites from GitHub")
     import_autogen_sprites()
 
 
-def _import_custom(pack_path: Path) -> None:
-    logger.info(f"Importing custom sprites from '{pack_path}'")
-    import_custom_sprites(pack_path)
+@import_app.command("custom")
+def import_custom(pack: PackPath) -> None:
+    logger.info(f"Importing custom sprites from '{pack}'")
+    import_custom_sprites(pack)
 
 
-def _import_eggs(pack_path: Path) -> None:
-    logger.info(f"Importing eggs from '{pack_path}'")
-    import_egg_sprites(pack_path)
+@import_app.command("eggs")
+def import_eggs(pack: PackPath) -> None:
+    logger.info(f"Importing eggs from '{pack}'")
+    import_egg_sprites(pack)
 
 
-def _import_to_assets() -> None:
+@import_app.command("to_assets")
+def import_to_assets() -> None:
     logger.info("Moving files to assets folder")
     move_to_assets()
 
 
-def _save_diff() -> None:
-    logger.info("Saving diff")
-    save_diff()
-
-
-def _cleanup_output() -> None:
+@cleanup_app.command("output")
+def cleanup_output() -> None:
     logger.info("Cleaning up output folder")
     start_time = time.perf_counter()
 
@@ -128,7 +98,8 @@ def _cleanup_output() -> None:
     logger.info(f"Cleaned up output folder in {elapsed_time:.2f} seconds")
 
 
-def _cleanup_assets() -> None:
+@cleanup_app.command("assets")
+def cleanup_assets() -> None:
     logger.info("Cleaning up assets folder")
     start_time = time.perf_counter()
 
