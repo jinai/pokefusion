@@ -61,6 +61,7 @@ class BotConfig:
     default_language: Language
     token: str = field(repr=False)
     extensions: tuple[str, ...]
+    pokeapi_url: str
     database: DatabaseConfig
     logging: LoggingConfig
     maintenance: bool
@@ -76,6 +77,7 @@ class BotConfig:
             default_language=Language(cfg["default_language"]),
             token=cfg["token"],
             extensions=tuple(cfg.get("extensions", ())),
+            pokeapi_url=cfg["pokeapi_url"],
             database=DatabaseConfig.from_dict(cfg["database"]),
             logging=LoggingConfig.from_dict(cfg["logging"]),
             maintenance=cfg["maintenance"],

@@ -3,15 +3,6 @@ revision = 3
 requires-python = "==3.14.*"
 
 [[package]]
-name = "aiofiles"
-version = "25.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/41/c3/534eac40372d8ee36ef40df62ec129bee4fdb5ad9706e58a29be53b2c970/aiofiles-25.1.0.tar.gz", hash = "sha256:a8d728f0a29de45dc521f18f07297428d56992a742f0cd2701ba86e44d23d5b2", size = 46354, upload-time = "2025-10-09T20:51:04.358Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/bc/8a/340a1555ae33d7354dbca4faa54948d76d89a27ceef032c8c3bc661d003e/aiofiles-25.1.0-py3-none-any.whl", hash = "sha256:abe311e527c862958650f9438e859c1fa7568a141b22abcd015e120e86a85695", size = 14668, upload-time = "2025-10-09T20:51:03.174Z" },
-]
-
-[[package]]
 name = "aiohappyeyeballs"
 version = "2.7.1"
 source = { registry = "https://pypi.org/simple" }
@@ -76,19 +67,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/5e/19/08d41839658bdd44a0ed2480f3891705ecb487ce28c0dde62c9040c997e0/aiohttp-3.14.3-cp314-cp314t-win32.whl", hash = "sha256:b304db572b4368edd8dda8a2274f73156fe15558fca4a917cb8a09fc47af5963", size = 474180, upload-time = "2026-07-23T01:57:19.306Z" },
     { url = "https://files.pythonhosted.org/packages/99/5d/3cd6ef0a2b2851f7ab913b5b079334781bd50ff56a323e4454063377a080/aiohttp-3.14.3-cp314-cp314t-win_amd64.whl", hash = "sha256:b20032766aedf6261c7a566585a40867d092ac03a0d81592d5370ef9b054f99b", size = 500528, upload-time = "2026-07-23T01:57:21.762Z" },
     { url = "https://files.pythonhosted.org/packages/a4/37/cfd1ed540a4d318da025590d96b728e63713c09e9377950fc655dadeb856/aiohttp-3.14.3-cp314-cp314t-win_arm64.whl", hash = "sha256:2e1161602f45a54de2ce0905243a95f58cb42dcd378402f3697f5e0b21e9d2e7", size = 469280, upload-time = "2026-07-23T01:57:24.241Z" },
-]
-
-[[package]]
-name = "aiopokeapi"
-version = "0.1.13"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "aiofiles" },
-    { name = "aiohttp" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/3a/ed/f276c90be9230c69e6cdb6f43d848be03e7d1d759296f97104778fa2b61b/aiopokeapi-0.1.13.tar.gz", hash = "sha256:43d4eaca945cd2e5f0feed20146d3b924d4279c53dddf344a9b72c0e6dfb83f6", size = 12271043, upload-time = "2026-02-21T17:16:41.158Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/5a/4e/1545f4b394a2cc2b1cef344b33c2b62b73c1bad7690ecf99a5ec8b8f16cc/aiopokeapi-0.1.13-py3-none-any.whl", hash = "sha256:1cb08ccc9acb9b037d4a33981362b6c92a89958a3a184290ce6513f1813d5eb0", size = 60865, upload-time = "2026-02-21T17:16:39.958Z" },
 ]
 
 [[package]]
@@ -481,7 +459,7 @@ name = "pokefusion"
 version = "2.0.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "aiopokeapi" },
+    { name = "aiohttp" },
     { name = "discord-py" },
     { name = "fuzzywuzzy" },
     { name = "levenshtein" },
@@ -497,7 +475,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiopokeapi", specifier = ">=0.1.13" },
+    { name = "aiohttp", specifier = ">=3.14.3" },
     { name = "discord-py", specifier = ">=2.7.1" },
     { name = "fuzzywuzzy", specifier = ">=0.18.0" },
     { name = "levenshtein", specifier = ">=0.27.3" },

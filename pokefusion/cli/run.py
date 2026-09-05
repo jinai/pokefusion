@@ -38,7 +38,7 @@ def run_bot() -> None:
     discord.VoiceClient.warn_dave = False
 
     logger.info(f"Starting bot (Environment: {ctx.config.environment.upper()})")
-    bot = PokeFusion(case_insensitive=True, intents=intents, config=ctx.config)
+    bot = PokeFusion(config=ctx.config, intents=intents)
 
     try:
         bot.run(ctx.config.token, log_handler=None)

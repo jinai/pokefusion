@@ -15,6 +15,7 @@
         "pokefusion.cogs.owner",
         "pokefusion.cogs.scheduler"
     ],
+    "pokeapi_url": "https://pokeapi.co/api/v2/",
     "database": {
         "path": "data/pokefusion.sqlite",
         "pragmas": {

@@ -1,31 +1,81 @@
+import asyncio
 import random
-from dataclasses import dataclass, field
+import re
+from dataclasses import dataclass
+from typing import Any, TypedDict, cast
 
-import aiopoke
+import aiohttp
 
-from . import utils
+from pokefusion.enums import Language
+
+type LocalizedNames = dict[Language, str]
+type LocalizedDescriptions = dict[Language, tuple[str, ...]]
 
 
-def get_names(base_name) -> tuple[str, ...]:
-    return base_name, base_name.lower(), base_name.upper(), base_name.title(), base_name.capitalize()
+class Resource(TypedDict):
+    name: str
+    url: str
+
+
+class NameEntry(TypedDict):
+    name: str
+    language: Resource
+
+
+class FlavorTextEntry(TypedDict):
+    flavor_text: str
+    language: Resource
+
+
+class TypeSlot(TypedDict):
+    slot: int
+    type: Resource
+
+
+class PokemonResponse(TypedDict):
+    types: list[TypeSlot]
+
+
+class PokemonSpeciesResponse(TypedDict):
+    names: list[NameEntry]
+    flavor_text_entries: list[FlavorTextEntry]
+    generation: Resource
+
+
+class TypeResponse(TypedDict):
+    names: list[NameEntry]
 
 
 @dataclass(frozen=True, slots=True)
 class PokeApiResult:
     dex_id: int
-    name_fr: str = ""
-    name_en: str = ""
-    desc_fr: list[str] = field(default_factory=list)
-    desc_en: list[str] = field(default_factory=list)
-    type_1: str = ""
-    type_2: str = ""
-    generation: int = 0
+    names: LocalizedNames
+    descriptions: LocalizedDescriptions
+    types: tuple[LocalizedNames, ...]
+    generation: int
 
-    def get_random_desc(self):
-        desc = random.choice(self.desc_fr if self.desc_fr else self.desc_en)
-        desc = utils.replace_all(desc, {name: PokeApiClient.REDACTED_STRING for name in
-                                        get_names(self.name_fr if self.desc_fr else self.name_en)})
-        return desc
+    def get_name(self, lang: Language) -> str:
+        return self.names.get(lang, self.names[Language.EN])
+
+    def get_types(self, lang: Language) -> tuple[str, ...]:
+        return tuple(names.get(lang, names[Language.EN]) for names in self.types)
+
+    def get_random_description(self, lang: Language) -> str:
+        descriptions = self.descriptions.get(lang)
+
+        if not descriptions:
+            descriptions = self.descriptions[Language.EN]
+            lang = Language.EN
+
+        description = random.choice(descriptions)
+        name = self.get_name(lang)
+
+        return re.sub(
+            re.escape(name),
+            PokeApiClient.REDACTED_STRING,
+            description,
+            flags=re.IGNORECASE,
+        )
 
 
 class PokeApiClient:
@@ -33,40 +83,104 @@ class PokeApiClient:
     MAX_ID = 1025
     REDACTED_STRING = "███████"
 
-    @classmethod
-    async def get_random_pokemon(cls) -> PokeApiResult:
-        dex_id: int = random.randint(cls.MIN_ID, cls.MAX_ID)
-        return await cls.get_pokemon(dex_id)
+    def __init__(self, base_url: str) -> None:
+        self.base_url = base_url.rstrip("/")
+        self._session: aiohttp.ClientSession | None = None
+        self._type_cache: dict[int, LocalizedNames] = {}
+
+    async def start(self) -> None:
+        if self._session is not None:
+            raise RuntimeError("PokéAPI client is already started")
+
+        self._session = aiohttp.ClientSession()
+
+    async def close(self) -> None:
+        if self._session is not None:
+            await self._session.close()
+            self._session = None
+
+    async def get_random_pokemon(self) -> PokeApiResult:
+        dex_id = random.randint(self.MIN_ID, self.MAX_ID)
+        return await self.get_pokemon(dex_id)
+
+    async def get_pokemon(self, dex_id: int) -> PokeApiResult:
+        species_data, pokemon_data = await asyncio.gather(
+            self._get_json(f"pokemon-species/{dex_id}/"),
+            self._get_json(f"pokemon/{dex_id}/"),
+        )
+
+        species = cast(PokemonSpeciesResponse, species_data)
+        pokemon = cast(PokemonResponse, pokemon_data)
+
+        type_ids = [
+            self._parse_resource_id(slot["type"]["url"])
+            for slot in sorted(pokemon["types"], key=lambda slot: slot["slot"])
+        ]
+
+        types = await asyncio.gather(*(self._get_type_names(type_id) for type_id in type_ids))
+
+        return PokeApiResult(
+            dex_id=dex_id,
+            names=self._parse_names(species["names"]),
+            descriptions=self._parse_descriptions(species["flavor_text_entries"]),
+            types=tuple(types),
+            generation=self._parse_resource_id(species["generation"]["url"]),
+        )
+
+    async def _get_json(self, path: str) -> dict[str, Any]:
+        if self._session is None:
+            raise RuntimeError("PokéAPI client is not started")
+
+        url = f"{self.base_url}/{path.lstrip('/')}"
+
+        async with self._session.get(url) as response:
+            response.raise_for_status()
+            return await response.json()
+
+    async def _get_type_names(self, type_id: int) -> LocalizedNames:
+        if type_id not in self._type_cache:
+            data = cast(TypeResponse, await self._get_json(f"type/{type_id}/"))
+            self._type_cache[type_id] = self._parse_names(data["names"])
+
+        return self._type_cache[type_id]
 
     @staticmethod
-    async def get_pokemon(dex_id: int) -> PokeApiResult:
-        async with aiopoke.AiopokeClient() as client:
-            species = await client.get_pokemon_species(dex_id)
-            pokemon = await client.get_pokemon(dex_id)
+    def _parse_names(entries: list[NameEntry]) -> LocalizedNames:
+        names: LocalizedNames = {}
 
-        generation = (await species.generation.fetch()).id
-        type_1 = await pokemon.types[0].type.fetch()
-        type_2 = await pokemon.types[1].type.fetch() if len(pokemon.types) > 1 else None
-        name_fr, name_en = "", ""
-        desc_fr, desc_en = [], []
-        type_1_name, type_2_name = "", ""
-        for name in species.names:
-            if name.language.name == "fr":
-                name_fr = name.name
-            elif name.language.name == "en":
-                name_en = name.name
-        for desc in species.flavor_text_entries:
-            if desc.language.name == "fr":
-                desc_fr.append(desc.flavor_text)
-            elif desc.language.name == "en":
-                desc_en.append(desc.flavor_text)
-        for name in type_1.names:
-            if name.language.name == "fr":
-                type_1_name = name.name
-        if type_2 is not None:
-            for name in type_2.names:
-                if name.language.name == "fr":
-                    type_2_name = name.name
+        for entry in entries:
+            try:
+                lang = Language(entry["language"]["name"])
+            except ValueError:
+                continue
 
-        pkmn = PokeApiResult(dex_id, name_fr, name_en, desc_fr, desc_en, type_1_name, type_2_name, generation)
-        return pkmn
+            names[lang] = entry["name"]
+
+        return names
+
+    @staticmethod
+    def _parse_descriptions(entries: list[FlavorTextEntry]) -> LocalizedDescriptions:
+        descriptions: dict[Language, list[str]] = {}
+
+        for entry in entries:
+            try:
+                lang = Language(entry["language"]["name"])
+            except ValueError:
+                continue
+
+            text = re.sub(
+                r"\s+",
+                " ",
+                entry["flavor_text"],
+            ).strip()
+
+            descriptions.setdefault(lang, []).append(text)
+
+        return {
+            lang: tuple(values)
+            for lang, values in descriptions.items()
+        }
+
+    @staticmethod
+    def _parse_resource_id(url: str) -> int:
+        return int(url.rstrip("/").rsplit("/", 1)[1])

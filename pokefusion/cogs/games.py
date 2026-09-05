@@ -48,6 +48,7 @@ class Games(commands.Cog):
         self.bot = bot
         self.fusion_client = bot.fusion_client
         self.sprite_client = bot.sprite_client
+        self.pokeapi_client = bot.pokeapi_client
         self.last_answers: dict[TextChannel, Sprite | FusionResult | PokeApiResult] = {}
         self.hints_counter: defaultdict[TextChannel, int] = defaultdict(int)
         self.last_shuffles: defaultdict[TextChannel, list[tuple[str, str]]] = defaultdict(list)
@@ -83,8 +84,8 @@ class Games(commands.Cog):
                 compare = lambda x, y: set([remove_forms(p) for p in x.split(" ")]).issuperset(set([p for p in
                                                                                                     f"{remove_forms(normalize(y.head.species))} {remove_forms(normalize(y.body.species))}".split(
                                                                                                         " ")]))
-            else:  # PokeApiResult
-                compare = lambda x, y: normalize(y.name_fr) in x
+            elif isinstance(answer, PokeApiResult):
+                compare = lambda x, y: normalize(y.get_name(ctx.lang)) in x
 
             if compare(message_content, answer):
                 del self.last_answers[channel]
@@ -194,9 +195,9 @@ class Games(commands.Cog):
 
     @guess.command(name="description", aliases=["desc"])
     async def guess_description(self, ctx: Context) -> None:
-        result = await PokeApiClient.get_random_pokemon()
+        result = await self.pokeapi_client.get_random_pokemon()
         self.last_answers[ctx.channel] = result
-        embed, files = description_embed(ctx, result.get_random_desc())
+        embed, files = description_embed(ctx, result.get_random_description(ctx.lang))
         await ctx.send(embed=embed, files=files)
 
     @commands.command(aliases=["h"])
@@ -209,17 +210,15 @@ class Games(commands.Cog):
             elif isinstance(answer, FusionResult):
                 head, body = answer.head, answer.body
                 message = f"Hint: `{head.species[:hint_num + 1]}    {body.species[:hint_num + 1]}`"
-            else:  # PokeApiResult
+            elif isinstance(answer, PokeApiResult):
+                types = answer.get_types(ctx.lang)
+
                 if hint_num == 0:
-                    message = f"Hint: `{answer.generation}G`"
-                elif hint_num == 1:
-                    if not answer.type_2:
-                        message = f"Hint: `{answer.type_1}`"
-                    else:
-                        message = f"Hint: `{answer.type_1} {PokeApiClient.REDACTED_STRING}`"
+                    message = f"Hint: `Gen {answer.generation}`"
+                elif hint_num == 1 and len(types) > 1:
+                    message = f"Hint: `{types[0]} {PokeApiClient.REDACTED_STRING}`"
                 else:
-                    types = f"{answer.type_1} {answer.type_2}".strip()
-                    message = f"Hint: `{types}`"
+                    message = f"Hint: `{' '.join(types)}`"
 
             self.hints_counter[ctx.channel] += 1
             await ctx.send(message)
@@ -240,18 +239,19 @@ class Games(commands.Cog):
     async def reveal_answer(self, ctx: Context) -> None:
         if ctx.channel in self.last_answers:
             answer = self.last_answers[ctx.channel]
+
             if isinstance(answer, Sprite):
-                message = f"The answer was: **{answer.lookup.species}**"
+                solution = answer.lookup.species
             elif isinstance(answer, FusionResult):
                 head, body = answer.head, answer.body
-                message = f"The answer was: **{head.species} {body.species}**"
-            else:  # PokeApiResult
-                message = f"The answer was: **{answer.name_fr}**"
+                solution = f"{head.species} {body.species}"
+            elif isinstance(answer, PokeApiResult):
+                solution = answer.get_name(ctx.lang)
 
             del self.last_answers[ctx.channel]
             self.hints_counter.pop(ctx.channel, None)
 
-            await ctx.send(message)
+            await ctx.send(f"The answer was: **{solution}**")
 
     @commands.group(invoke_without_command=True)
     async def shuffle(self, ctx: Context):

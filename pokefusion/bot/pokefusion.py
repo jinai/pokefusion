@@ -6,7 +6,7 @@ from datetime import datetime
 from io import BytesIO
 from typing import Any
 
-from discord import Color, HTTPException, Interaction, Message, User
+from discord import Color, HTTPException, Intents, Interaction, Message, User
 from discord.ext import commands
 from discord.ext.commands import CommandError
 from peewee import DatabaseError
@@ -16,6 +16,7 @@ from pokefusion.configmanager import BotConfig
 from pokefusion.db.models import Server, Settings, User as DatabaseUser
 from pokefusion.fusionapi import FusionClient, SpriteClient
 from pokefusion.imagelib import get_dominant_color
+from pokefusion.pokeapi import PokeApiClient
 from pokefusion.services.totem import TotemService
 
 logger = logging.getLogger(__name__)
@@ -38,25 +39,43 @@ class PokeFusion(commands.Bot):
         "pokefusion.cogs.events",
     )
 
-    def __init__(self, config: BotConfig, **kwargs):
-        super().__init__(command_prefix=get_prefix, **kwargs)
+    def __init__(self, config: BotConfig, *, intents: Intents):
+        super().__init__(
+            command_prefix=get_prefix,
+            intents=intents,
+            case_insensitive=True,
+            owner_id=config.owner_id,
+        )
+
+        # Configuration
         self.config = config
-        self.main_color: Color = Color.light_grey()
-        self.boot_time: datetime = datetime.now()
-        self.owner_id: int = config.owner_id
         self.default_prefix = config.default_prefix
         self.default_language = config.default_language
         self.block_dms = config.block_dms
-        self.fusion_client: FusionClient = FusionClient(self.default_language)
-        self.sprite_client: SpriteClient = SpriteClient(self.default_language)
+
+        # Runtime state
+        self.main_color: Color = Color.light_grey()
+        self.boot_time: datetime = datetime.now()
+
+        # Clients and services
+        self.fusion_client = FusionClient(self.default_language)
+        self.sprite_client = SpriteClient(self.default_language)
+        self.pokeapi_client = PokeApiClient(self.config.pokeapi_url)
         self.totem_service = TotemService(self.fusion_client)
+
+        # Invoke hooks
         self._before_invokes: list[Callable[[Context], Awaitable[Any]]] = []
         self._after_invokes: list[Callable[[Context], Awaitable[Any]]] = []
-        self.after_invoke: Callable[Callable[[Context], Awaitable[Any]], None] = lambda _: None
+
         self.before_invoke: Callable[Callable[[Context], Awaitable[Any]], None] = lambda _: None
+        self.after_invoke: Callable[Callable[[Context], Awaitable[Any]], None] = lambda _: None
+
         self.patch_invoke_hooks()
+
         self.before_invoke(self.log_command)
         self.before_invoke(self.create_user)
+
+        # Checks
         self.add_check(self.check_maintenance, call_once=True)
         self.add_check(self.check_block_dms)
 
@@ -135,6 +154,8 @@ class PokeFusion(commands.Bot):
         return await super().get_context(origin, cls=cls)
 
     async def setup_hook(self) -> None:
+        await self.pokeapi_client.start()
+
         self.main_color = await self._resolve_main_color()
         logger.info(f"Set main color to: {self.main_color}")
 
@@ -159,3 +180,7 @@ class PokeFusion(commands.Bot):
             DatabaseUser.get_or_create(discord_id=ctx.author.id, defaults={"name": ctx.author.name})
         except DatabaseError as e:
             raise CommandError(f"Failed to create user: {ctx.author.name} ({ctx.author.id})") from e
+
+    async def close(self) -> None:
+        await self.pokeapi_client.close()
+        await super().close()
