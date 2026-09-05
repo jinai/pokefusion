@@ -132,10 +132,12 @@ def merge_images(
 
 def normalize_image(image: ImageIO, crop_bbox: bool = True) -> BytesIO:
     base = Image.open(image)
+
     if base.mode != "RGBA":
         base = base.convert("RGBA")
-    premult = base.convert("RGBa")
+
     if crop_bbox:
+        premult = base.convert("RGBa")
         base = base.crop(premult.getbbox())
 
     buffer = BytesIO()
