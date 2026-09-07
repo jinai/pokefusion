@@ -1,0 +1,4 @@
+database = pokefusion.db.pwmigrate.database
+models = pokefusion.db.models
+directory = pokefusion/db/migrations
+table = schema_migrations

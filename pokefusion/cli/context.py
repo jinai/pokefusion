@@ -1,9 +1,6 @@
-from functools import cached_property
-
 import typer
 
 from pokefusion.configmanager import BotConfig, ConfigManager
-from pokefusion.db.migrations import MigrationService
 from pokefusion.log import setup_logging
 
 
@@ -17,7 +14,3 @@ class Context:
                 f"[{self.config.environment.upper()}] {action or 'This operation'} - continue?",
                 abort=True
             )
-
-    @cached_property
-    def migration_service(self) -> MigrationService:
-        return MigrationService(self.config.database)
