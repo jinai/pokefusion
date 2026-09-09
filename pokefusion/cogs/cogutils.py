@@ -236,14 +236,14 @@ async def confirm_prompt(
     )
 
     match reply:
-        case Reply.NoReply:
-            footer = f"{ctx.author} didn't reply."
+        case Reply.YES:
+            footer = f"{ctx.author} replied yes."
 
-        case Reply.No:
+        case Reply.NO:
             footer = f"{ctx.author} replied no."
 
-        case Reply.Yes:
-            footer = f"{ctx.author} replied yes."
+        case Reply.TIMEOUT:
+            footer = f"{ctx.author} didn't reply."
 
     if delete_prompt:
         await message.delete()

@@ -39,7 +39,7 @@ class Fusion(commands.Cog):
 
         reply = await unknown_prompt(ctx, head_guess, body_guess, details=POKEDEX_DETAILS)
 
-        if reply is Reply.Yes:
+        if reply is Reply.YES:
             # noinspection PyTypeChecker
             await ctx.invoke(self.fusion, head=head_guess, body=body_guess)
 
@@ -55,7 +55,7 @@ class Fusion(commands.Cog):
 
         reply = await unknown_prompt(ctx, head_guess, details=POKEDEX_DETAILS)
 
-        if reply is Reply.Yes:
+        if reply is Reply.YES:
             # noinspection PyTypeChecker
             await ctx.invoke(self.fusion_custom, head=head_guess)
 
@@ -92,7 +92,7 @@ class Fusion(commands.Cog):
 
         reply = await confirm_prompt(ctx, desc)
 
-        if reply is Reply.Yes:
+        if reply is Reply.YES:
             with database.atomic():
                 self.bot.totem_service.reroll_totem(user.id)
                 User.add_free_rerolls(user.id, -1)

@@ -26,7 +26,7 @@ class Misc(commands.Cog):
 
         reply = await unknown_prompt(ctx, sprite.lookup.guess)
 
-        if reply is Reply.Yes:
+        if reply is Reply.YES:
             # noinspection PyTypeChecker
             await ctx.invoke(self.shiny, species=sprite.lookup.guess)
 

@@ -13,9 +13,9 @@ from pokefusion.enums import Language
 
 
 class Reply(Enum):
-    NoReply = auto(),
-    Yes = auto(),
-    No = auto()
+    YES = auto()
+    NO = auto()
+    TIMEOUT = auto()
 
 
 class Context(commands.Context):
@@ -88,7 +88,7 @@ class Context(commands.Context):
             text = f"{text} ({'/'.join(options)})"
             prompt_message = await self.send(text)
 
-        reply = Reply.NoReply
+        reply = Reply.TIMEOUT
 
         def check(message: Message) -> bool:
             nonlocal reply
@@ -97,10 +97,10 @@ class Context(commands.Context):
                 return False
 
             if utils.yes(message.content):
-                reply = Reply.Yes
+                reply = Reply.YES
                 return True
             elif utils.no(message.content):
-                reply = Reply.No
+                reply = Reply.NO
                 return True
 
             return False

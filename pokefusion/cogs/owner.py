@@ -49,7 +49,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
 
         reply = await confirm_prompt(ctx, description)
 
-        if reply is Reply.Yes:
+        if reply is Reply.YES:
             self.bot.totem_service.reroll_totem(target.id)
 
     @commands.command(aliases=["rrg", "rr_global", "rerall"])
@@ -58,7 +58,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
 
         reply = await confirm_prompt(ctx, description)
 
-        if reply is Reply.Yes:
+        if reply is Reply.YES:
             self.bot.totem_service.reroll_all_totems()
 
     @commands.command(aliases=["give_fr"])
@@ -69,7 +69,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
 
         reply = await confirm_prompt(ctx, description)
 
-        if reply is Reply.Yes:
+        if reply is Reply.YES:
             if target is None:
                 User.add_free_rerolls_to_all(amount)
             else:
@@ -106,7 +106,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
         warning = "Send the previewed embed to **all** notification subscribers?"
         reply = await confirm_prompt(ctx, warning, color=ctx.bot.main_color)
 
-        if reply is Reply.Yes:
+        if reply is Reply.YES:
             if free_rerolls > 0:
                 User.add_free_rerolls_to_all(free_rerolls)
                 self.bot.totem_service.reroll_all_totems()
