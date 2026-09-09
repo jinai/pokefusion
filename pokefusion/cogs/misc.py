@@ -4,7 +4,7 @@ from discord.ext import commands
 from pokefusion import imagelib
 from pokefusion.bot.context import Context, Reply
 from pokefusion.bot.pokefusion import PokeFusion
-from .cogutils import unknown_prompt
+from pokefusion.cogs.cogutils import unknown_prompt
 
 
 class Misc(commands.Cog):

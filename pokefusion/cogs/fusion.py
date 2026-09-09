@@ -3,10 +3,10 @@ from discord.ext import commands
 
 from pokefusion.bot.context import Context, Reply
 from pokefusion.bot.pokefusion import PokeFusion
+from pokefusion.cogs.cogutils import confirm_prompt, fusion_embed, unknown_prompt
 from pokefusion.db.database import database
 from pokefusion.db.models import User
 from pokefusion.fusionapi import FusionClient, FusionResult
-from .cogutils import confirm_prompt, fusion_embed, unknown_prompt
 
 POKEDEX_DETAILS = (
     "[List of available Pokémon]"

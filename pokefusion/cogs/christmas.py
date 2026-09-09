@@ -8,8 +8,8 @@ from discord.ext.commands import CheckFailure, CommandError
 
 from pokefusion.bot.context import Context
 from pokefusion.bot.pokefusion import PokeFusion
+from pokefusion.cogs.cogutils import christmas_embed
 from pokefusion.db.models import User
-from .cogutils import christmas_embed
 
 
 def is_christmas_period() -> bool:

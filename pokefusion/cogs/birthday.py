@@ -8,9 +8,9 @@ from discord.ext.commands import CheckFailure, CommandError, NoPrivateMessage
 
 from pokefusion.bot.context import Context
 from pokefusion.bot.pokefusion import PokeFusion
+from pokefusion.cogs.cogutils import birthday_embed
 from pokefusion.configmanager import ConfigManager
 from pokefusion.db.models import User as DatabaseUser
-from .cogutils import birthday_embed
 
 logger = logging.getLogger(__name__)
 

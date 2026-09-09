@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 from discord.ext import commands, tasks
 
 from pokefusion.bot.pokefusion import PokeFusion
-from .cogutils import embed_factory
+from pokefusion.cogs.cogutils import embed_factory
 
 logger = logging.getLogger(__name__)
 

@@ -6,11 +6,11 @@ from typing import Self
 
 from fuzzywuzzy import fuzz, process
 
-from . import utils
-from .assetpaths import AssetPaths
-from .configmanager import ConfigManager
-from .enums import Language
-from .types import Dex
+from pokefusion import utils
+from pokefusion.assetpaths import AssetPaths
+from pokefusion.configmanager import ConfigManager
+from pokefusion.enums import Language
+from pokefusion.types import Dex
 
 temp = ConfigManager.read_json("custom_diff_added.json")
 CUSTOM_DIFF_ADDED: dict[int, list[int]] = {int(key): value for key, value in temp.items()}

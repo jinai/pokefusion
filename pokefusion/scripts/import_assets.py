@@ -16,10 +16,10 @@ from pokefusion.assetpaths import AssetPaths
 from pokefusion.configmanager import ConfigManager
 from pokefusion.fusionapi import FusionClient
 from pokefusion.imagelib import save_resized_image
+from pokefusion.scripts import spritesheets
+from pokefusion.scripts.git import run_git
+from pokefusion.scripts.utils import make_backup, regex_filter
 from pokefusion.types import StrPath
-from . import spritesheets
-from .git import run_git
-from .utils import make_backup, regex_filter
 
 logger = logging.getLogger(__name__)
 

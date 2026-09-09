@@ -6,7 +6,7 @@ from discord.utils import oauth_url
 
 from pokefusion.bot.context import Context
 from pokefusion.bot.pokefusion import PokeFusion
-from .cogutils import base_embed
+from pokefusion.cogs.cogutils import base_embed
 
 
 class Meta(commands.Cog):

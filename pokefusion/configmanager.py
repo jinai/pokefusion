@@ -8,9 +8,9 @@ from functools import cache
 from pathlib import Path
 from typing import Any, Self
 
-from .enums import Environment, Language
-from .types import Dex
-from .utils import TwoWayDict, normalize
+from pokefusion.enums import Environment, Language
+from pokefusion.types import Dex
+from pokefusion.utils import TwoWayDict, normalize
 
 type JsonDict = dict[str, Any]
 

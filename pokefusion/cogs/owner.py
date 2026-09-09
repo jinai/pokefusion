@@ -13,10 +13,10 @@ from pokefusion import utils
 from pokefusion.bot.context import Context, Reply
 from pokefusion.bot.converters import ModuleConverter
 from pokefusion.bot.pokefusion import PokeFusion
+from pokefusion.cogs.cogutils import confirm_prompt, embed_factory
+from pokefusion.cogs.scheduler import NOTIF_CHANNELS
 from pokefusion.db import models
 from pokefusion.db.models import Settings, User
-from .cogutils import confirm_prompt, embed_factory
-from .scheduler import NOTIF_CHANNELS
 
 logger = logging.getLogger(__name__)
 
