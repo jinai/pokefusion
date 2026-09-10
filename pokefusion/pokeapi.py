@@ -176,10 +176,7 @@ class PokeApiClient:
 
             descriptions.setdefault(lang, []).append(text)
 
-        return {
-            lang: tuple(values)
-            for lang, values in descriptions.items()
-        }
+        return {lang: tuple(values) for lang, values in descriptions.items()}
 
     @staticmethod
     def _parse_resource_id(url: str) -> int:

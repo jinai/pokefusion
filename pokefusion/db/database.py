@@ -20,8 +20,4 @@ def connect_database(config: DatabaseConfig) -> SqliteDatabase:
 def get_pending_migrations(database: Database) -> list[str]:
     runner = Runner(database, directory=str(MIGRATIONS_DIR), table_name=MIGRATIONS_TABLE)
 
-    return [
-        migration.name
-        for migration in runner.status()
-        if migration.path is not None and migration.applied is None
-    ]
+    return [migration.name for migration in runner.status() if migration.path is not None and migration.applied is None]

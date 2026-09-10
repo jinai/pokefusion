@@ -19,10 +19,7 @@ MAX_WORKERS = 1
 
 
 def process_dir(input_dir: StrPath, output_dir: StrPath):
-    spritesheets = [
-        Path(input_dir, sheet)
-        for sheet in next(os.walk(input_dir))[2]
-    ]
+    spritesheets = [Path(input_dir, sheet) for sheet in next(os.walk(input_dir))[2]]
 
     cores = cpu_count()
     desc = f"Splitting spritesheets (on {cores} cores)"
@@ -37,9 +34,9 @@ def split_spritesheet(path: StrPath, output_dir: StrPath):
             sheet = sheet.resize(
                 size=(
                     sheet.width * SPRITE_SCALE,
-                    sheet.height * SPRITE_SCALE
+                    sheet.height * SPRITE_SCALE,
                 ),
-                resample=Resampling.NEAREST
+                resample=Resampling.NEAREST,
             )
 
         boxes = [
@@ -57,7 +54,7 @@ def split_spritesheet(path: StrPath, output_dir: StrPath):
         sheet_output_dir = Path(output_dir, sheet_name)
         os.makedirs(sheet_output_dir, exist_ok=True)
 
-        for index, box in enumerate(boxes[1:FusionClient.MAX_ID + 1]):
+        for index, box in enumerate(boxes[1 : FusionClient.MAX_ID + 1]):
             output_file = sheet_output_dir / f"{sheet_name}.{index + 1}.png"
             sprite = sheet.crop(box)
             sprite.save(output_file)

@@ -98,7 +98,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
             title=title,
             description=description,
             color=ctx.bot.main_color,
-            thumbnail=ctx.me.display_avatar.url
+            thumbnail=ctx.me.display_avatar.url,
         )
 
         await ctx.send(embed=preview, files=files)
@@ -119,7 +119,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
                         title=title,
                         description=description,
                         color=ctx.bot.main_color,
-                        thumbnail=self.bot.user.display_avatar.url
+                        thumbnail=self.bot.user.display_avatar.url,
                     )
 
                     await channel.send(embed=embed, files=files)
@@ -133,7 +133,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
         try:
             await self.bot.load_extension(module)
         except commands.ExtensionError as e:
-            await ctx.send(f'{e.__class__.__name__}: {e}')
+            await ctx.send(f"{e.__class__.__name__}: {e}")
         else:
             await ctx.tick(True)
 
@@ -142,7 +142,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
         try:
             await self.bot.unload_extension(module)
         except commands.ExtensionError as e:
-            await ctx.send(f'{e.__class__.__name__}: {e}')
+            await ctx.send(f"{e.__class__.__name__}: {e}")
         else:
             await ctx.tick(True)
 
@@ -151,7 +151,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
         try:
             await self.bot.reload_extension(module)
         except commands.ExtensionError as e:
-            await ctx.send(f'{e.__class__.__name__}: {e}')
+            await ctx.send(f"{e.__class__.__name__}: {e}")
         else:
             await ctx.tick(True)
 
@@ -167,7 +167,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
             "author": ctx.author,
             "guild": ctx.guild,
             "message": ctx.message,
-            "_": self.last_eval
+            "_": self.last_eval,
         }
 
         env.update(globals())

@@ -8,7 +8,7 @@ from pokefusion.configmanager import LoggingColorConfig, LoggingConfig
 
 
 class TimezoneFormatter(logging.Formatter):
-    def __init__(self, fmt: str, datefmt: str, timezone: str | None, ) -> None:
+    def __init__(self, fmt: str, datefmt: str, timezone: str | None) -> None:
         super().__init__(fmt=fmt, datefmt=datefmt)
 
         if timezone is None:
@@ -20,7 +20,7 @@ class TimezoneFormatter(logging.Formatter):
         except ZoneInfoNotFoundError as error:
             raise ValueError(f"Unknown logging timezone: {timezone!r}") from error
 
-    def formatTime(self, record: LogRecord, datefmt: str | None = None, ) -> str:
+    def formatTime(self, record: LogRecord, datefmt: str | None = None) -> str:
         timestamp = datetime.fromtimestamp(record.created, tz=self.timezone)
 
         if datefmt is not None:
@@ -38,7 +38,7 @@ class ColorFormatter(TimezoneFormatter):
             logging.INFO: colors.info,
             logging.WARNING: colors.warning,
             logging.ERROR: colors.error,
-            logging.CRITICAL: colors.critical
+            logging.CRITICAL: colors.critical,
         }
 
     def format(self, record: LogRecord) -> str:
@@ -82,7 +82,7 @@ def setup_logging(config: LoggingConfig):
             fmt=config.console_format,
             datefmt=config.date_format,
             timezone=config.timezone,
-            colors=config.colors
+            colors=config.colors,
         )
     )
 

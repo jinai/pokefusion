@@ -8,8 +8,15 @@ import typer
 from pokefusion.cli.context import Context
 from pokefusion.scripts.clean_assets import clean_assets_folder, clean_output_folder
 from pokefusion.scripts.git import restore_deleted_files
-from pokefusion.scripts.import_assets import InvalidPackError, import_autogen_sprites, import_custom_sprites, \
-    import_egg_sprites, move_to_assets, resolve_pack, save_diff as _save_diff
+from pokefusion.scripts.import_assets import (
+    InvalidPackError,
+    import_autogen_sprites,
+    import_custom_sprites,
+    import_egg_sprites,
+    move_to_assets,
+    resolve_pack,
+    save_diff as _save_diff,
+)
 
 logger = logging.getLogger(__name__)
 

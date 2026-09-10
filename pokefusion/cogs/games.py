@@ -25,7 +25,7 @@ def normalize(string: str) -> str:
 def shuffle(word: str) -> str:
     characters = list(word)
     random.shuffle(characters)
-    return ''.join(characters)
+    return "".join(characters)
 
 
 def remove_forms(name: str) -> str:
@@ -38,7 +38,8 @@ def load_pokemon_names() -> dict[Language, list[str]]:
     dex = ConfigManager.read_json("pokedex.json")
     data = {
         lang: [normalize(value) for key, value in names.items() if int(key) < 899]
-        for lang, names in dex.items() if lang in Language
+        for lang, names in dex.items()
+        if lang in Language
     }
     return data
 
@@ -81,9 +82,12 @@ class Games(commands.Cog):
             if isinstance(answer, Sprite):
                 compare = lambda x, y: normalize(y.lookup.species) in x
             elif isinstance(answer, FusionResult):
+                # fmt: off
+                # TODO: Refactor this monstrosity
                 compare = lambda x, y: set([remove_forms(p) for p in x.split(" ")]).issuperset(set([p for p in
                                                                                                     f"{remove_forms(normalize(y.head.species))} {remove_forms(normalize(y.body.species))}".split(
                                                                                                         " ")]))
+                # fmt: on
             elif isinstance(answer, PokeApiResult):
                 compare = lambda x, y: normalize(y.get_name(ctx.lang)) in x
 
@@ -95,7 +99,8 @@ class Games(commands.Cog):
     @commands.group(invoke_without_command=True)
     async def guess(self, ctx: Context):
         await ctx.send(
-            "Available guessing games: Silhouette, Blur, Pixel, Grayscale, Edge, Box, Swirl, PixelBlur, Fusion, PixelFusion, FusionBox and Description")
+            "Available guessing games: Silhouette, Blur, Pixel, Grayscale, Edge, Box, Swirl, PixelBlur, Fusion, PixelFusion, FusionBox and Description"
+        )
 
     @guess.command(name="giveup", aliases=["ff"])
     async def guess_giveup(self, ctx: Context):
@@ -206,10 +211,10 @@ class Games(commands.Cog):
             hint_num = self.hints_counter[ctx.channel]
             answer = self.last_answers[ctx.channel]
             if isinstance(answer, Sprite):
-                message = f"Hint: `{answer.lookup.species[:hint_num + 1]}`"
+                message = f"Hint: `{answer.lookup.species[: hint_num + 1]}`"
             elif isinstance(answer, FusionResult):
                 head, body = answer.head, answer.body
-                message = f"Hint: `{head.species[:hint_num + 1]}    {body.species[:hint_num + 1]}`"
+                message = f"Hint: `{head.species[: hint_num + 1]}    {body.species[: hint_num + 1]}`"
             elif isinstance(answer, PokeApiResult):
                 types = answer.get_types(ctx.lang)
 

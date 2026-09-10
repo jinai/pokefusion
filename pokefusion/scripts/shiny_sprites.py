@@ -36,7 +36,7 @@ def rename_to_dexid(directory: Path):
         new.rename(dest / f"{POKEDEX[old.stem]}.png")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     remove_garbage(MAIN_DIR)
     remove_garbage(SHINY_DIR)
     rename_to_dexid(MAIN_DIR)

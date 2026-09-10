@@ -56,10 +56,7 @@ class Birthday(commands.Cog):
         if ctx.guild is None or not self.is_birthday(ctx.author):
             return
 
-        user_db, _ = DatabaseUser.get_or_create(
-            discord_id=ctx.author.id,
-            defaults={"name": ctx.author.name}
-        )
+        user_db, _ = DatabaseUser.get_or_create(discord_id=ctx.author.id, defaults={"name": ctx.author.name})
 
         if user_db.bday_prompt:
             return

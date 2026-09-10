@@ -22,12 +22,12 @@ class Context(commands.Context):
     SENSITIVE_MASK = "******"
     SENSITIVE_PATTERNS = [
         r"mfa\.[\w-]{20,}",
-        r"[\w-]{23,28}\.[\w-]{6,7}\.[\w-]{27,38}"
+        r"[\w-]{23,28}\.[\w-]{6,7}\.[\w-]{27,38}",
     ]
     MEDALS = {
         1: "\N{FIRST PLACE MEDAL}",
         2: "\N{SECOND PLACE MEDAL}",
-        3: "\N{THIRD PLACE MEDAL}"
+        3: "\N{THIRD PLACE MEDAL}",
     }
 
     def __init__(self, **kwargs):
@@ -70,13 +70,14 @@ class Context(commands.Context):
             await self.tick(True)
 
     async def prompt(
-            self, text: str | None = None,
-            *,
-            options: list[str] | None = None,
-            timeout: float = 15.0,
-            target_id: int | None = None,
-            delete_prompt: bool = False,
-            delete_reply: bool = False
+        self,
+        text: str | None = None,
+        *,
+        options: list[str] | None = None,
+        timeout: float = 15.0,
+        target_id: int | None = None,
+        delete_prompt: bool = False,
+        delete_reply: bool = False,
     ) -> Reply:
         target_id = target_id or self.author.id
         prompt_message = None
@@ -119,13 +120,13 @@ class Context(commands.Context):
         return reply
 
     async def safe_send(
-            self,
-            content: str,
-            *,
-            escape_mentions: bool = True,
-            hide_sensitive_data: bool = True,
-            filename: str = "message_too_long.txt",
-            **kwargs
+        self,
+        content: str,
+        *,
+        escape_mentions: bool = True,
+        hide_sensitive_data: bool = True,
+        filename: str = "message_too_long.txt",
+        **kwargs,
     ) -> Message:
         if escape_mentions:
             content = discord.utils.escape_mentions(content)

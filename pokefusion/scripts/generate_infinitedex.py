@@ -29,7 +29,7 @@ OVERRIDES = {
     "574": {"fr": "Tritosor-Est", "de": "Gastrodon-Ost"},
     "575": {"fr": "Sancoki-Ouest", "de": "Schalellos-West"},
     "576": {"fr": "Tritosor-Ouest", "de": "Gastrodon-West"},
-}
+}  # fmt: skip
 
 
 def build_reverse_english_index(pokedex: RawDex) -> dict[str, str]:
@@ -85,12 +85,9 @@ def generate_infinitedex() -> None:
         for infinitedex_id, name in unmatched:
             logger.warning(f"  - ID {infinitedex_id}: {name}")
 
-    ordered = {
-        lang: dict(sorted(infinitedex[lang].items(), key=lambda kv: int(kv[0])))
-        for lang in sorted(infinitedex)
-    }
+    ordered = {lang: dict(sorted(infinitedex[lang].items(), key=lambda kv: int(kv[0]))) for lang in sorted(infinitedex)}
 
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(ordered, f, ensure_ascii=False, indent=4)
 
-    logger.info(f"Wrote {len(ordered["en"])} entries in {len(ordered)} languages to {out_file}")
+    logger.info(f"Wrote {len(ordered['en'])} entries in {len(ordered)} languages to {out_file}")

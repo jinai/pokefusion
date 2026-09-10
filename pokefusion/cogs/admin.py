@@ -15,9 +15,9 @@ class Admin(commands.Cog):
         self.bot = bot
 
     async def cog_check(self, ctx: Context) -> bool:
-        return (await commands.check_any(commands.is_owner(),
-                                         commands.has_guild_permissions(manage_guild=True)).predicate(ctx) and
-                await commands.guild_only().predicate(ctx))
+        return await commands.check_any(
+            commands.is_owner(), commands.has_guild_permissions(manage_guild=True)
+        ).predicate(ctx) and await commands.guild_only().predicate(ctx)
 
     async def cog_command_error(self, ctx: Context, error: CommandError) -> None:
         if isinstance(error, BadArgument):

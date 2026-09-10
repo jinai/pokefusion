@@ -15,3 +15,12 @@ dependencies = [
     "tzdata>=2026.3",
     "unidecode>=1.4.0",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.6",
+]
+
+[tool.ruff]
+line-length = 120
+namespace-packages = ["pokefusion"]

@@ -35,9 +35,7 @@ def get_prefix(bot: PokeFusion, message: Message) -> Sequence[str]:
 
 
 class PokeFusion(commands.Bot):
-    CORE_EXTENSIONS: tuple[str, ...] = (
-        "pokefusion.cogs.events",
-    )
+    CORE_EXTENSIONS: tuple[str, ...] = ("pokefusion.cogs.events",)
 
     def __init__(self, config: BotConfig, *, intents: Intents):
         super().__init__(

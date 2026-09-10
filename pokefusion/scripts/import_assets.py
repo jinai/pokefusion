@@ -111,7 +111,8 @@ def import_autogen_sprites() -> None:
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(
-        f"Processed {sprite_count} autogen sprites (from {sheet_count} spritesheets) in {elapsed_time:.2f} seconds")
+        f"Processed {sprite_count} autogen sprites (from {sheet_count} spritesheets) in {elapsed_time:.2f} seconds"
+    )
 
 
 def import_custom_sprites(pack_path: Path) -> None:
@@ -146,7 +147,8 @@ def import_custom_sprites(pack_path: Path) -> None:
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(
-        f"Processed {sprite_count} custom sprites (discarded {file_count - sprite_count} sprites > MAX_ID) in {elapsed_time:.2f} seconds")
+        f"Processed {sprite_count} custom sprites (discarded {file_count - sprite_count} sprites > MAX_ID) in {elapsed_time:.2f} seconds"
+    )
 
 
 def import_egg_sprites(pack_path: Path) -> None:
@@ -174,7 +176,8 @@ def import_egg_sprites(pack_path: Path) -> None:
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(
-        f"Processed {egg_count} egg sprites (discarded {file_count - egg_count} egg sprites > MAX_ID) in {elapsed_time:.2f} seconds")
+        f"Processed {egg_count} egg sprites (discarded {file_count - egg_count} egg sprites > MAX_ID) in {elapsed_time:.2f} seconds"
+    )
 
 
 def save_diff() -> None:
@@ -235,7 +238,8 @@ def save_diff() -> None:
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(
-        f"Saved diffs for +{autogen_diff_added_count}/-{autogen_diff_removed_count} autogen fusions, +{custom_diff_added_count}/-{custom_diff_removed_count} custom fusions and +{len(eggs_diff_added)}/-{len(eggs_diff_removed)} eggs in {elapsed_time:.2f} seconds")
+        f"Saved diffs for +{autogen_diff_added_count}/-{autogen_diff_removed_count} autogen fusions, +{custom_diff_added_count}/-{custom_diff_removed_count} custom fusions and +{len(eggs_diff_added)}/-{len(eggs_diff_removed)} eggs in {elapsed_time:.2f} seconds"
+    )
 
 
 def move_to_assets():

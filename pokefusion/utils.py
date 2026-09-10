@@ -12,8 +12,10 @@ class TwoWayDict[K, V](dict[K, V]):
             super().__init__(**kwargs)
         else:
             super().__init__(seq, **kwargs)
-            for k, v in seq.items(): dict.__setitem__(self, v, k)
-        for k, v in kwargs.items(): dict.__setitem__(self, v, k)
+            for k, v in seq.items():
+                dict.__setitem__(self, v, k)
+        for k, v in kwargs.items():
+            dict.__setitem__(self, v, k)
 
     def __setitem__(self, key: K, value: V) -> None:
         if key in self:
@@ -51,9 +53,9 @@ def base64_to_file(data: str) -> io.BytesIO:
 
 
 def cleanup_code(content: str) -> str:
-    if content.startswith('```') and content.endswith('```'):
-        return '\n'.join(content.split('\n')[1:-1])
-    return content.strip('` \n')
+    if content.startswith("```") and content.endswith("```"):
+        return "\n".join(content.split("\n")[1:-1])
+    return content.strip("` \n")
 
 
 def replace_all(text: str, dic: dict[str, str]) -> str:

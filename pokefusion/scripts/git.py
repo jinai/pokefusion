@@ -20,7 +20,7 @@ def run_git(arguments: Sequence[str], *, cwd: StrPath | None = None) -> None:
         stderr=subprocess.STDOUT,
         cwd=cwd,
         text=True,
-        errors="replace"
+        errors="replace",
     )
 
     # noinspection not-iterable

@@ -71,11 +71,11 @@ def get_dominant_color(image: ImageIO, normalize: bool = False) -> RGB:
 
 
 def save_resized_image(
-        image: ImageIO,
-        output: ImageIO,
-        *,
-        scale: float,
-        resample: Image.Resampling = Image.Resampling.NEAREST,
+    image: ImageIO,
+    output: ImageIO,
+    *,
+    scale: float,
+    resample: Image.Resampling = Image.Resampling.NEAREST,
 ) -> None:
     with Image.open(image) as base:
         size = tuple(max(1, round(dimension * scale)) for dimension in base.size)
@@ -99,12 +99,12 @@ def pad_image(image: ImageIO) -> BytesIO:
 
 
 def merge_images(
-        image1: ImageIO,
-        image2: ImageIO,
-        orientation: Orientation = Orientation.HORIZONTAL,
-        pixel_gap: int = 2,
-        crop_bbox: bool = True,
-        alignment: Alignment = Alignment.BOTTOM,
+    image1: ImageIO,
+    image2: ImageIO,
+    orientation: Orientation = Orientation.HORIZONTAL,
+    pixel_gap: int = 2,
+    crop_bbox: bool = True,
+    alignment: Alignment = Alignment.BOTTOM,
 ) -> BytesIO:
     image1 = normalize_image(image1, crop_bbox=crop_bbox)
     image2 = normalize_image(image2, crop_bbox=crop_bbox)
@@ -149,8 +149,12 @@ def normalize_image(image: ImageIO, crop_bbox: bool = True) -> BytesIO:
     return buffer
 
 
-def apply_filter(image: ImageIO, normalize: bool = True, filter_type: FilterType = FilterType.SILHOUETTE,
-                 scale: int = 1) -> BytesIO:
+def apply_filter(
+    image: ImageIO,
+    normalize: bool = True,
+    filter_type: FilterType = FilterType.SILHOUETTE,
+    scale: int = 1,
+) -> BytesIO:
     if normalize:
         image = normalize_image(image, crop_bbox=True if filter_type is FilterType.SWIRL else False)
 
@@ -261,24 +265,22 @@ def _filter_swirl(image: Image.Image) -> BytesIO:
     return buffer
 
 
-
-
 def to_numpy(im: Image.Image):
     """https://uploadcare.com/blog/fast-import-of-pillow-images-to-numpy-opencv-arrays/"""
     im.load()
     # unpack data
-    e = Image._getencoder(im.mode, 'raw', im.mode)
+    e = Image._getencoder(im.mode, "raw", im.mode)
     e.setimage(im.im, (0, 0) + im.size)
 
     # NumPy buffer for the result
     shape, typestr = Image._conv_type_shape(im)
     data = np.empty(shape, dtype=np.dtype(typestr))
-    mem = data.data.cast('B', (data.data.nbytes,))
+    mem = data.data.cast("B", (data.data.nbytes,))
 
     bufsize, s, offset = 65536, 0, 0
     while not s:
         l, s, d = e.encode(bufsize)
-        mem[offset:offset + len(d)] = d
+        mem[offset : offset + len(d)] = d
         offset += len(d)
     if s < 0:
         raise RuntimeError("encoder error %d in tobytes" % s)

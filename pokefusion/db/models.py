@@ -40,13 +40,7 @@ class Settings(BaseModel):
 
     @classmethod
     def set_maintenance(cls, new_state: bool) -> int:
-        query = (
-            cls.update(
-                maintenance=new_state,
-                updated_at=datetime.now()
-            )
-            .where(cls.id == cls.SETTINGS_ID)
-        )
+        query = cls.update(maintenance=new_state, updated_at=datetime.now()).where(cls.id == cls.SETTINGS_ID)
 
         return query.execute()
 
@@ -79,16 +73,16 @@ class Server(BaseModel):
                 lang=language,
                 joined_at=now,
                 updated_at=now,
-                active=True
+                active=True,
             )
             .on_conflict(
                 conflict_target=[cls.discord_id],
                 update={
                     cls.active: True,
                     cls.name: incoming_name,
-                    cls.updated_at: now
+                    cls.updated_at: now,
                 },
-                where=needs_update
+                where=needs_update,
             )
             .as_rowcount()
         )
@@ -97,25 +91,13 @@ class Server(BaseModel):
 
     @classmethod
     def deactivate(cls, discord_id: int) -> int:
-        query = (
-            cls.update(
-                active=False,
-                updated_at=datetime.now()
-            )
-            .where(
-                (cls.discord_id == discord_id)
-                & cls.active
-            )
-        )
+        query = cls.update(active=False, updated_at=datetime.now()).where((cls.discord_id == discord_id) & cls.active)
 
         return query.execute()
 
     @classmethod
     def deactivate_missing(cls, current_discord_ids: tuple[int, ...]) -> int:
-        query = cls.update(
-            active=False,
-            updated_at=datetime.now()
-        )
+        query = cls.update(active=False, updated_at=datetime.now())
 
         if current_discord_ids:
             # noinspection argument-list
@@ -127,18 +109,17 @@ class Server(BaseModel):
 
     @classmethod
     def sync_all(
-            cls,
-            available_servers: Iterable[tuple[int, str]],
-            current_discord_ids: tuple[int, ...],
-            default_prefix: str,
-            default_language: Language
+        cls,
+        available_servers: Iterable[tuple[int, str]],
+        current_discord_ids: tuple[int, ...],
+        default_prefix: str,
+        default_language: Language,
     ) -> tuple[int, int]:
         db = cls._meta.database
 
         with db.atomic():
             upserted = sum(
-                cls.upsert(discord_id, name, default_prefix, default_language)
-                for discord_id, name in available_servers
+                cls.upsert(discord_id, name, default_prefix, default_language) for discord_id, name in available_servers
             )
 
             deactivated = cls.deactivate_missing(current_discord_ids)
@@ -159,22 +140,16 @@ class User(BaseModel):
 
     @classmethod
     def add_free_rerolls(cls, discord_id: int, amount: int) -> int:
-        query = (
-            cls.update(
-                free_rerolls=cls.free_rerolls + amount,
-                updated_at=datetime.now()
-            )
-            .where(cls.discord_id == discord_id)
-        )
+        query = cls.update(
+            free_rerolls=cls.free_rerolls + amount,
+            updated_at=datetime.now(),
+        ).where(cls.discord_id == discord_id)
 
         return query.execute()
 
     @classmethod
     def add_free_rerolls_to_all(cls, amount: int) -> int:
-        query = cls.update(
-            free_rerolls=cls.free_rerolls + amount,
-            updated_at=datetime.now()
-        )
+        query = cls.update(free_rerolls=cls.free_rerolls + amount, updated_at=datetime.now())
 
         return query.execute()
 

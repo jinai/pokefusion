@@ -35,16 +35,16 @@ def _prepare_media(media: EmbedMedia | None, files: list[File]) -> str | None:
 
 
 def embed_factory(
-        *,
-        fields: Sequence[EmbedField] = (),
-        image: EmbedMedia | None = None,
-        thumbnail: EmbedMedia | None = None,
-        footer_text: str | None = None,
-        footer_icon: EmbedMedia | None = None,
-        author_name: str | None = None,
-        author_url: str | None = None,
-        author_icon: EmbedMedia | None = None,
-        **embed_kwargs: Any
+    *,
+    fields: Sequence[EmbedField] = (),
+    image: EmbedMedia | None = None,
+    thumbnail: EmbedMedia | None = None,
+    footer_text: str | None = None,
+    footer_icon: EmbedMedia | None = None,
+    author_name: str | None = None,
+    author_url: str | None = None,
+    author_icon: EmbedMedia | None = None,
+    **embed_kwargs: Any,
 ) -> tuple[Embed, list[File]]:
     if footer_text is None and footer_icon is not None:
         raise ValueError("A footer icon requires footer text")
@@ -94,7 +94,7 @@ def fusion_embed(ctx: Context, result: FusionResult, **embed_kwargs: Any) -> tup
 
     fields = (
         EmbedField("Head", f"{head.species} #{head.dex_id}" + ("\n\n🆕" if result.is_new else "")),
-        EmbedField("Body", f"{body.species} #{body.dex_id}" + ("\n\n🆕" if result.swap().is_new else ""))
+        EmbedField("Body", f"{body.species} #{body.dex_id}" + ("\n\n🆕" if result.swap().is_new else "")),
     )
 
     filename_fusions = f"fusions_{str(head.dex_id).zfill(3)}_{str(body.dex_id).zfill(3)}.png"
@@ -105,23 +105,16 @@ def fusion_embed(ctx: Context, result: FusionResult, **embed_kwargs: Any) -> tup
     combined_eggs = imagelib.merge_images(result.egg_path, result.swap().egg_path, pixel_gap=5, crop_bbox=True)
     eggs = File(combined_eggs, filename_eggs)
 
-    embed, files = footer_embed(
-        ctx,
-        color=color,
-        fields=fields,
-        image=fusions,
-        thumbnail=eggs,
-        **embed_kwargs
-    )
+    embed, files = footer_embed(ctx, color=color, fields=fields, image=fusions, thumbnail=eggs, **embed_kwargs)
 
     return embed, files
 
 
 def guess_fusion_embed(
-        ctx: Context,
-        result: FusionResult,
-        filters: list[FilterType] | None = None,
-        title: str = "Guess the fusion!"
+    ctx: Context,
+    result: FusionResult,
+    filters: list[FilterType] | None = None,
+    title: str = "Guess the fusion!",
 ) -> tuple[Embed, list[File]]:
     color = Color.from_rgb(*imagelib.get_dominant_color(result.path))
     fields = (EmbedField("Head", "?"), EmbedField("Body", "?"))
@@ -140,17 +133,17 @@ def guess_fusion_embed(
         color=color,
         fields=fields,
         image=image,
-        footer_text="Type <Pokémon> <Pokémon>"
+        footer_text="Type <Pokémon> <Pokémon>",
     )
 
     return embed, files
 
 
 def guess_filter_embed(
-        ctx: Context,
-        filters: list[FilterType],
-        sprite: Sprite,
-        title: str = "Guess the Pokémon!"
+    ctx: Context,
+    filters: list[FilterType],
+    sprite: Sprite,
+    title: str = "Guess the Pokémon!",
 ) -> tuple[Embed, list[File]]:
     filtered = imagelib.apply_filter(sprite.path, filter_type=filters[0], scale=3)
 
@@ -159,12 +152,7 @@ def guess_filter_embed(
 
     image = File(filtered, "guess.png")
 
-    embed, files = base_embed(
-        ctx,
-        title=title,
-        image=image,
-        footer_text="Type <Pokémon>"
-    )
+    embed, files = base_embed(ctx, title=title, image=image, footer_text="Type <Pokémon>")
 
     return embed, files
 
@@ -179,7 +167,7 @@ def description_embed(ctx: Context, description: str, title: str = "Guess the Po
         description=description,
         color=color,
         thumbnail=thumbnail,
-        footer_text="Type <Pokémon>"
+        footer_text="Type <Pokémon>",
     )
 
     return embed, files
@@ -192,7 +180,7 @@ def birthday_embed(ctx: Context, color: Color) -> tuple[Embed, list[File]]:
         color=color,
         thumbnail=AssetPaths.MISC_DIR / "Substitute.png",
         description=f"Use `{ctx.clean_prefix}bday` for free rerolls during your birthday!",
-        footer_text=f"Happy birthday {ctx.author.display_name}!"
+        footer_text=f"Happy birthday {ctx.author.display_name}!",
     )
 
     return embed, files
@@ -205,21 +193,21 @@ def christmas_embed(ctx: Context, color: Color) -> tuple[Embed, list[File]]:
         color=color,
         thumbnail=AssetPaths.MISC_DIR / "ChristmasPresent.png",
         description=f"Use `{ctx.clean_prefix}kdo` for free rerolls until January 1!",
-        footer_text="Happy Holidays!"
+        footer_text="Happy Holidays!",
     )
 
     return embed, files
 
 
 async def confirm_prompt(
-        ctx: Context,
-        description: str,
-        *,
-        timeout: float = 10,
-        delete_prompt: bool = False,
-        delete_reply: bool = True,
-        color: Color | None = None,
-        **embed_kwargs: Any,
+    ctx: Context,
+    description: str,
+    *,
+    timeout: float = 10,
+    delete_prompt: bool = False,
+    delete_reply: bool = True,
+    color: Color | None = None,
+    **embed_kwargs: Any,
 ) -> Reply:
     embed, files = base_embed(
         ctx,
@@ -230,10 +218,7 @@ async def confirm_prompt(
     )
 
     message = await ctx.send(embed=embed, files=files)
-    reply = await ctx.prompt(
-        timeout=timeout,
-        delete_reply=delete_reply,
-    )
+    reply = await ctx.prompt(timeout=timeout, delete_reply=delete_reply)
 
     match reply:
         case Reply.YES:
@@ -270,7 +255,7 @@ async def unknown_prompt(ctx: Context, *arguments: str, details: str | None = No
         color=color,
         thumbnail=thumbnail,
         delete_prompt=delete,
-        delete_reply=delete
+        delete_reply=delete,
     )
 
     return reply

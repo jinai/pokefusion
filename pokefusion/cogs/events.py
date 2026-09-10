@@ -23,22 +23,16 @@ class Events(commands.Cog):
 
         current_discord_ids = tuple(guild.id for guild in self.bot.guilds)
 
-        available_servers = [
-            (guild.id, guild.name)
-            for guild in self.bot.guilds
-            if not guild.unavailable
-        ]
+        available_servers = [(guild.id, guild.name) for guild in self.bot.guilds if not guild.unavailable]
 
         upserted, deactivated = Server.sync_all(
             available_servers,
             current_discord_ids,
             self.bot.default_prefix,
-            self.bot.default_language
+            self.bot.default_language,
         )
 
-        logger.info(
-            f"Synced server records (upserted: {upserted}, deactivated: {deactivated})"
-        )
+        logger.info(f"Synced server records (upserted: {upserted}, deactivated: {deactivated})")
         logger.info(f"Bot is ready, authenticated as {self.bot.user} (ID: {self.bot.user.id})")
 
     @commands.Cog.listener()

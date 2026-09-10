@@ -28,10 +28,9 @@ class ConfigManager:
         raw = cls.read_json(filename)
 
         return {
-            lang: TwoWayDict({
-                key: normalize(value) for key, value in names.items()
-            })
-            for lang, names in raw.items() if lang in Language
+            lang: TwoWayDict({key: normalize(value) for key, value in names.items()})
+            for lang, names in raw.items()
+            if lang in Language
         }
 
     @classmethod
@@ -82,7 +81,7 @@ class BotConfig:
             logging=LoggingConfig.from_dict(cfg["logging"]),
             maintenance=cfg["maintenance"],
             block_dms=cfg["block_dms"],
-            main_color=cfg.get("main_color")
+            main_color=cfg.get("main_color"),
         )
 
 
@@ -95,7 +94,7 @@ class DatabaseConfig:
     def from_dict(cls, cfg: JsonDict) -> Self:
         return cls(
             path=Path(cfg["path"]).resolve(),
-            pragmas=cfg.get("pragmas", {})
+            pragmas=cfg.get("pragmas", {}),
         )
 
 
@@ -153,7 +152,7 @@ class LoggingRotationConfig:
             backup_count=cfg["backup_count"],
             delay=cfg["delay"],
             utc=cfg["utc"],
-            at_time=time.fromisoformat(str(at_time)) if at_time is not None else None
+            at_time=time.fromisoformat(str(at_time)) if at_time is not None else None,
         )
 
 
@@ -178,5 +177,5 @@ class LoggingColorConfig:
             critical=cfg["critical"],
             time=cfg["time"],
             name=cfg["name"],
-            reset=cfg["reset"]
+            reset=cfg["reset"],
         )

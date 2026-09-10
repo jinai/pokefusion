@@ -19,7 +19,7 @@ SPECIES_NAMES_URL = BASE_URL + "pokemon_species_names.csv"
 CHARACTER_REPLACEMENTS = {
     "♀": "F",
     "♂": "M",
-    "’": "'"
+    "’": "'",
 }
 
 
@@ -61,11 +61,10 @@ def generate_pokedex():
     pokedex = build_pokedex(species_names_rows, language_map)
 
     ordered = {
-        lang_key: dict(sorted(pokedex[lang_key].items(), key=lambda item: int(item[0])))
-        for lang_key in sorted(pokedex)
+        lang_key: dict(sorted(pokedex[lang_key].items(), key=lambda item: int(item[0]))) for lang_key in sorted(pokedex)
     }
 
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(ordered, f, ensure_ascii=False, indent=4)
 
-    logger.info(f"Wrote {len(ordered["en"])} entries in {len(ordered)} languages to {out_file}")
+    logger.info(f"Wrote {len(ordered['en'])} entries in {len(ordered)} languages to {out_file}")

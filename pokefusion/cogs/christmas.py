@@ -49,10 +49,7 @@ class Christmas(commands.Cog):
         if not is_christmas_period():
             return
 
-        user_db, _ = User.get_or_create(
-            discord_id=ctx.author.id,
-            defaults={"name": ctx.author.name}
-        )
+        user_db, _ = User.get_or_create(discord_id=ctx.author.id, defaults={"name": ctx.author.name})
 
         if user_db.xmas_prompt:
             return

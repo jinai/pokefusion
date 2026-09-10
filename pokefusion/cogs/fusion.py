@@ -9,9 +9,7 @@ from pokefusion.db.models import User
 from pokefusion.fusionapi import FusionClient, FusionResult
 
 POKEDEX_DETAILS = (
-    "[List of available Pokémon]"
-    "(https://infinitefusion.fandom.com/wiki/Pokédex) "
-    f"(up to #{FusionClient.MAX_ID})"
+    f"[List of available Pokémon](https://infinitefusion.fandom.com/wiki/Pokédex) (up to #{FusionClient.MAX_ID})"
 )
 
 
