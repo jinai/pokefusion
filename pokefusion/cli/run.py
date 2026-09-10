@@ -23,7 +23,7 @@ def run_bot() -> None:
             for migration in pending:
                 logger.warning(f"- [ ] {migration}")
 
-            logger.warning(f"Run 'uv run pwmigrate up' first.")
+            logger.warning("Run 'uv run pwmigrate up' first.")
             return
 
         intents = Intents.default()

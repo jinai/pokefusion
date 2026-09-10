@@ -15,6 +15,8 @@ from pokefusion.scripts.import_assets import (
     import_egg_sprites,
     move_to_assets,
     resolve_pack,
+)
+from pokefusion.scripts.import_assets import (
     save_diff as _save_diff,
 )
 

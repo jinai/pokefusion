@@ -51,10 +51,10 @@ def build_pokedex(species_names_rows, language_map):
 def generate_pokedex():
     out_file = ConfigManager.CONFIG_DIR / ConfigManager.POKEDEX_FILE
 
-    logger.info(f"Fetching languages")
+    logger.info("Fetching languages")
     languages_rows = fetch_csv(LANGUAGES_URL)
 
-    logger.info(f"Fetching species names")
+    logger.info("Fetching species names")
     species_names_rows = fetch_csv(SPECIES_NAMES_URL)
 
     language_map = build_language_map(languages_rows)

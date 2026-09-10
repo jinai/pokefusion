@@ -14,6 +14,6 @@ dex_app = typer.Typer(no_args_is_help=True)
 @dex_app.command()
 def build() -> None:
     Context()
-    logger.info(f"Building dex files")
+    logger.info("Building dex files")
     generate_pokedex()
     generate_infinitedex()

@@ -46,10 +46,9 @@ def resolve_pack(pack: Path) -> Path:
     pack = pack.resolve()
 
     if zipfile.is_zipfile(pack):
-        with zipfile.ZipFile(pack) as zf:
-            with contextlib.suppress(KeyError):
-                zf.getinfo("CustomBattlers/")
-                return pack
+        with zipfile.ZipFile(pack) as zf, contextlib.suppress(KeyError):
+            zf.getinfo("CustomBattlers/")
+            return pack
 
     raise InvalidPackError(f"Invalid pack: {pack!r}")
 

@@ -54,7 +54,7 @@ class Owner(commands.Cog, command_attrs=dict(hidden=True)):
 
     @commands.command(aliases=["rrg", "rr_global", "rerall"])
     async def reroll_global(self, ctx: Context):
-        description = f"Reroll **all** totems for **every** server?"
+        description = "Reroll **all** totems for **every** server?"
 
         reply = await confirm_prompt(ctx, description)
 

@@ -7,7 +7,7 @@ def normalize(s: str):
     return s.lower().replace("é", "e").translate({ord(x): "" for x in UNWANTED_CHARS})
 
 
-MAIN_DIR = Path("D:\Pokémon 5G Sprites")
+MAIN_DIR = Path(r"D:\Pokémon 5G Sprites")
 SHINY_DIR = MAIN_DIR / "shiny"
 PNG_PATTERN = "*.png"
 UNWANTED_CHARS = [" ", "-", ".", ":", "'", "(", ")"]

@@ -86,7 +86,7 @@ class Fusion(commands.Cog):
             await ctx.send("You don't have enough free rerolls.")
             return
 
-        desc = f"Reroll your totem?"
+        desc = "Reroll your totem?"
 
         reply = await confirm_prompt(ctx, desc)
 

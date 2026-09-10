@@ -13,7 +13,8 @@ from peewee import DatabaseError
 
 from pokefusion.bot.context import Context
 from pokefusion.configmanager import BotConfig
-from pokefusion.db.models import Server, Settings, User as DatabaseUser
+from pokefusion.db.models import Server, Settings
+from pokefusion.db.models import User as DatabaseUser
 from pokefusion.fusionapi import FusionClient, SpriteClient
 from pokefusion.imagelib import get_dominant_color
 from pokefusion.pokeapi import PokeApiClient
@@ -136,7 +137,7 @@ class PokeFusion(commands.Bot):
                 logger.warning(f"Invalid main color {self.config.main_color!r}, deriving it from the bot avatar")
 
         if self.user is None:
-            logger.error(f"Couldn't derive the main color: bot user is unavailable")
+            logger.error("Couldn't derive the main color: bot user is unavailable")
             return fallback_color
 
         try:

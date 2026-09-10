@@ -1,13 +1,13 @@
 import re
 import shutil
+from collections.abc import Generator, Iterable
 from datetime import datetime
 from pathlib import Path
-from typing import Generator, Iterable
 
 from pokefusion.types import StrPath
 
 
-def regex_filter(sequence: Iterable[str], pattern: re.Pattern[str]) -> Generator[str, None, None]:
+def regex_filter(sequence: Iterable[str], pattern: re.Pattern[str]) -> Generator[str]:
     for elem in sequence:
         if pattern.match(elem):
             yield elem
