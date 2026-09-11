@@ -24,7 +24,7 @@ class Admin(commands.Cog):
             await ctx.send(str(error))
 
     @commands.command()
-    async def prefix(self, ctx: Context, *, new_prefix: Annotated[str, PrefixConverter] = None) -> None:
+    async def prefix(self, ctx: Context, *, new_prefix: Annotated[str | None, PrefixConverter] = None) -> None:
         if new_prefix is None:
             prefix = Server.get(Server.discord_id == ctx.guild.id).prefix
             await ctx.send(f"Current prefix: `{prefix}`")

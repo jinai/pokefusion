@@ -16,7 +16,7 @@ class EnumField(CharField):
         return value.value
 
     def python_value(self, value):
-        value_type = type(list(self.choices)[0].value)
+        value_type = type(next(iter(self.choices)).value)
         return self.choices(value_type(value))
 
 

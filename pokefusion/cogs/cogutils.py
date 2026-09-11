@@ -249,7 +249,7 @@ async def unknown_prompt(ctx: Context, *arguments: str, details: str | None = No
     thumbnail = AssetPaths.MISC_DIR / "Unknown.png"
     color = Color.from_rgb(*imagelib.get_dominant_color(thumbnail, normalize=True))
 
-    reply = await confirm_prompt(
+    return await confirm_prompt(
         ctx,
         description,
         color=color,
@@ -258,4 +258,3 @@ async def unknown_prompt(ctx: Context, *arguments: str, details: str | None = No
         delete_reply=delete,
     )
 
-    return reply

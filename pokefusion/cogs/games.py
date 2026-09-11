@@ -36,12 +36,11 @@ def remove_forms(name: str) -> str:
 
 def load_pokemon_names() -> dict[Language, list[str]]:
     dex = ConfigManager.read_json("pokedex.json")
-    data = {
+    return {
         lang: [normalize(value) for key, value in names.items() if int(key) < 899]
         for lang, names in dex.items()
         if lang in Language
     }
-    return data
 
 
 class Games(commands.Cog):
@@ -83,10 +82,12 @@ class Games(commands.Cog):
                 compare = lambda x, y: normalize(y.lookup.species) in x
             elif isinstance(answer, FusionResult):
                 # fmt: off
+                # ruff: disable[C403]
                 # TODO: Refactor this monstrosity
                 compare = lambda x, y: set([remove_forms(p) for p in x.split(" ")]).issuperset(set([p for p in
                                                                                                     f"{remove_forms(normalize(y.head.species))} {remove_forms(normalize(y.body.species))}".split(
                                                                                                         " ")]))
+                # ruff: enable[C403]
                 # fmt: on
             elif isinstance(answer, PokeApiResult):
                 compare = lambda x, y: normalize(y.get_name(ctx.lang)) in x

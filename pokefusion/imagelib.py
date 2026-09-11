@@ -156,7 +156,7 @@ def apply_filter(
     scale: int = 1,
 ) -> BytesIO:
     if normalize:
-        image = normalize_image(image, crop_bbox=True if filter_type is FilterType.SWIRL else False)
+        image = normalize_image(image, crop_bbox=filter_type is FilterType.SWIRL)
 
     base = Image.open(image)
     if scale != 1:
@@ -164,20 +164,19 @@ def apply_filter(
 
     if filter_type is FilterType.SILHOUETTE:
         return _filter_silhouette(base)
-    elif filter_type is FilterType.GAUSSIAN_BLUR:
+    if filter_type is FilterType.GAUSSIAN_BLUR:
         return _filter_gaussian_blur(base)
-    elif filter_type is FilterType.PIXELATE:
+    if filter_type is FilterType.PIXELATE:
         return _filter_pixelate(base)
-    elif filter_type is FilterType.GRAYSCALE:
+    if filter_type is FilterType.GRAYSCALE:
         return _filter_grayscale(base)
-    elif filter_type is FilterType.EDGE:
+    if filter_type is FilterType.EDGE:
         return _filter_edge(base)
-    elif filter_type is FilterType.BOX:
+    if filter_type is FilterType.BOX:
         return _filter_box(base)
-    elif filter_type is FilterType.SWIRL:
+    if filter_type is FilterType.SWIRL:
         return _filter_swirl(base)
-    else:
-        return _filter_noop(base)
+    return _filter_noop(base)
 
 
 def _filter_noop(image: Image.Image) -> BytesIO:
@@ -279,7 +278,7 @@ def to_numpy(im: Image.Image):
 
     bufsize, s, offset = 65536, 0, 0
     while not s:
-        l, s, d = e.encode(bufsize)
+        _l, s, d = e.encode(bufsize)
         mem[offset : offset + len(d)] = d
         offset += len(d)
     if s < 0:

@@ -67,9 +67,8 @@ def replace_all(text: str, dic: dict[str, str]) -> str:
 def special_join(sequence: Sequence[Any], separator: str, last_separator: str) -> str:
     if len(sequence) == 0:
         return ""
-    elif len(sequence) == 1:
+    if len(sequence) == 1:
         return str(sequence[0])
-    elif len(sequence) == 2:
+    if len(sequence) == 2:
         return last_separator.join(sequence)
-    else:
-        return separator.join(sequence[:-1]) + last_separator + str(sequence[-1])
+    return separator.join(sequence[:-1]) + last_separator + str(sequence[-1])

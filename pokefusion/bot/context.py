@@ -2,6 +2,7 @@ import contextlib
 import io
 import re
 from enum import Enum, auto
+from types import MappingProxyType
 
 import discord
 from discord import HTTPException, Message
@@ -20,15 +21,17 @@ class Reply(Enum):
 
 class Context(commands.Context):
     SENSITIVE_MASK = "******"
-    SENSITIVE_PATTERNS = [
+    SENSITIVE_PATTERNS = (
         r"mfa\.[\w-]{20,}",
         r"[\w-]{23,28}\.[\w-]{6,7}\.[\w-]{27,38}",
-    ]
-    MEDALS = {
-        1: "\N{FIRST PLACE MEDAL}",
-        2: "\N{SECOND PLACE MEDAL}",
-        3: "\N{THIRD PLACE MEDAL}",
-    }
+    )
+    MEDALS = MappingProxyType(
+        {
+            1: "\N{FIRST PLACE MEDAL}",
+            2: "\N{SECOND PLACE MEDAL}",
+            3: "\N{THIRD PLACE MEDAL}",
+        }
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -100,7 +103,7 @@ class Context(commands.Context):
             if utils.yes(message.content):
                 reply = Reply.YES
                 return True
-            elif utils.no(message.content):
+            if utils.no(message.content):
                 reply = Reply.NO
                 return True
 
@@ -138,5 +141,4 @@ class Context(commands.Context):
         if len(content) > 2000:
             fp = io.BytesIO(content.encode())
             return await self.send(file=discord.File(fp, filename=filename), **kwargs)
-        else:
-            return await self.send(content)
+        return await self.send(content)

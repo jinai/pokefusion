@@ -24,3 +24,17 @@ dev = [
 [tool.ruff]
 line-length = 120
 namespace-packages = ["pokefusion"]
+
+[tool.ruff.lint]
+extend-select = [
+    "ARG",
+    "E501",
+    "G",
+    "LOG",
+    "PTH",
+    "RET",
+    "TID252",
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"

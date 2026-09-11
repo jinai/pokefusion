@@ -114,10 +114,11 @@ class LoggingConfig:
     @classmethod
     def from_dict(cls, cfg: JsonDict) -> Self:
         level_name = cfg["level"].upper()
-        level = getattr(logging, level_name)
 
-        if not isinstance(level, int):
-            raise ValueError(f"Invalid logging level: {level_name!r}")
+        try:
+            level = logging.getLevelNamesMapping()[level_name]
+        except KeyError:
+            raise ValueError(f"Invalid logging level: {level_name!r}") from None
 
         return cls(
             path=Path(cfg["path"]).resolve(),

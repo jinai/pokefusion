@@ -37,11 +37,7 @@ def restore_deleted_files() -> None:
     list_command = ["git", "ls-files", "--deleted", "-z"]
     logger.info(f"Running command: {shlex.join(list_command)}")
 
-    result = subprocess.run(
-        list_command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    result = subprocess.run(list_command, capture_output=True, check=False)
 
     for line in result.stderr.decode(errors="replace").splitlines():
         logger.error(f"[git] {line}")
@@ -68,6 +64,7 @@ def restore_deleted_files() -> None:
         input=result.stdout,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        check=False,
     )
 
     for line in result.stdout.decode(errors="replace").splitlines():

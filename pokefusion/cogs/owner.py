@@ -21,7 +21,7 @@ from pokefusion.db.models import Settings, User
 logger = logging.getLogger(__name__)
 
 
-class Owner(commands.Cog, command_attrs=dict(hidden=True)):
+class Owner(commands.Cog, command_attrs={"hidden": True}):
     def __init__(self, bot: PokeFusion) -> None:
         self.bot = bot
         self.last_eval = None

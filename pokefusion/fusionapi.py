@@ -51,8 +51,7 @@ class LookupResult:
     def __repr__(self) -> str:
         if self.succeeded:
             return f"<LookupResult dex_id={self.dex_id}, species={self.species}, lang={self.lang}>"
-        else:
-            return f"<LookupResult bad_query={self.bad_query}, guess={self.guess}, guess_score={self.guess_score} lang={self.lang}>"
+        return f"<LookupResult bad_query={self.bad_query}, guess={self.guess}, guess_score={self.guess_score} lang={self.lang}>"
 
 
 class FusionResult:
@@ -95,8 +94,7 @@ class FusionResult:
 
         if custom.is_file():
             return custom
-        else:
-            return autogen
+        return autogen
 
     @property
     def egg_path(self) -> Path | None:
@@ -108,8 +106,7 @@ class FusionResult:
 
         if path.is_file():
             return path
-        else:
-            return AssetPaths.DEFAULT_EGG_PATH
+        return AssetPaths.DEFAULT_EGG_PATH
 
     def __repr__(self) -> str:
         return f"<FusionResult head={self.head}, body={self.body}, head_query={self.head_query}, body_query={self.body_query}>"
@@ -136,21 +133,18 @@ class BaseClient:
         if query.isdigit():
             if query in self.pokedex[lang]:
                 return result.succeed(int(query), self.pokedex[lang][query])
-            else:
-                return result.fail(query)
+            return result.fail(query)
 
         # Example: client.lookup("?")
-        elif query in BaseClient.RANDOM_QUERIES:
+        if query in BaseClient.RANDOM_QUERIES:
             rand = self.get_random_id()
             return result.succeed(rand, self.pokedex[lang][str(rand)])
 
         # Example: client.lookup("mr. mime")
-        else:
-            query = utils.normalize(query)
-            if query in self.pokedex[lang]:
-                return result.succeed(int(self.pokedex[lang][query]), query)
-            else:
-                return result.fail(query)
+        query = utils.normalize(query)
+        if query in self.pokedex[lang]:
+            return result.succeed(int(self.pokedex[lang][query]), query)
+        return result.fail(query)
 
     def get_species(self, lang: Language | None = None) -> list[str]:
         lang = lang or self.default_language
@@ -227,8 +221,7 @@ class Sprite:
             return None
 
         filename = f"{self.lookup.dex_id}.png"
-        path = AssetPaths.SPRITES_BASE_DIR / filename
-        return path
+        return AssetPaths.SPRITES_BASE_DIR / filename
 
     @property
     def shiny_path(self) -> Path | None:
@@ -236,8 +229,7 @@ class Sprite:
             return None
 
         filename = f"{self.lookup.dex_id}.png"
-        path = AssetPaths.SPRITES_SHINY_DIR / filename
-        return path
+        return AssetPaths.SPRITES_SHINY_DIR / filename
 
     def __repr__(self) -> str:
         return f"<Sprite dex_id={self.lookup.dex_id}, species={self.lookup.species}>"
