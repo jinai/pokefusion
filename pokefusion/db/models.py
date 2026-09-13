@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import UTC, datetime
 
 from peewee import EXCLUDED, BooleanField, CharField, DateTimeField, IntegerField, Model
 
@@ -28,7 +28,7 @@ class BaseModel(Model):
 
 class Settings(BaseModel):
     maintenance = BooleanField(default=False)
-    updated_at = DateTimeField(default=datetime.now)
+    updated_at = DateTimeField(default=lambda: datetime.now(UTC))
     SETTINGS_ID = 1
 
     class Meta:
@@ -40,7 +40,7 @@ class Settings(BaseModel):
 
     @classmethod
     def set_maintenance(cls, new_state: bool) -> int:
-        query = cls.update(maintenance=new_state, updated_at=datetime.now()).where(cls.id == cls.SETTINGS_ID)
+        query = cls.update(maintenance=new_state, updated_at=datetime.now(UTC)).where(cls.id == cls.SETTINGS_ID)
 
         return query.execute()
 
@@ -50,8 +50,8 @@ class Server(BaseModel):
     name = CharField()
     prefix = CharField(max_length=2)
     lang = EnumField(choices=Language, max_length=2)
-    joined_at = DateTimeField(default=datetime.now)
-    updated_at = DateTimeField(default=datetime.now)
+    joined_at = DateTimeField(default=lambda: datetime.now(UTC))
+    updated_at = DateTimeField(default=lambda: datetime.now(UTC))
     active = BooleanField(default=True)
 
     class Meta:
@@ -59,7 +59,7 @@ class Server(BaseModel):
 
     @classmethod
     def upsert(cls, discord_id: int, name: str, prefix: str, language: Language) -> int:
-        now = datetime.now()
+        now = datetime.now(UTC)
         incoming_name = EXCLUDED.name
 
         # Only update if the server was inactive or if the name changed
@@ -91,13 +91,16 @@ class Server(BaseModel):
 
     @classmethod
     def deactivate(cls, discord_id: int) -> int:
-        query = cls.update(active=False, updated_at=datetime.now()).where((cls.discord_id == discord_id) & cls.active)
+        query = cls.update(
+            active=False,
+            updated_at=datetime.now(UTC),
+        ).where((cls.discord_id == discord_id) & cls.active)
 
         return query.execute()
 
     @classmethod
     def deactivate_missing(cls, current_discord_ids: tuple[int, ...]) -> int:
-        query = cls.update(active=False, updated_at=datetime.now())
+        query = cls.update(active=False, updated_at=datetime.now(UTC))
 
         if current_discord_ids:
             # noinspection argument-list
@@ -130,7 +133,7 @@ class Server(BaseModel):
 class User(BaseModel):
     discord_id = IntegerField(unique=True)
     name = CharField()
-    updated_at = DateTimeField(default=datetime.now)
+    updated_at = DateTimeField(default=lambda: datetime.now(UTC))
     xmas_prompt = BooleanField(default=False)
     bday_prompt = BooleanField(default=False)
     free_rerolls = IntegerField(default=3)
@@ -142,14 +145,14 @@ class User(BaseModel):
     def add_free_rerolls(cls, discord_id: int, amount: int) -> int:
         query = cls.update(
             free_rerolls=cls.free_rerolls + amount,
-            updated_at=datetime.now(),
+            updated_at=datetime.now(UTC),
         ).where(cls.discord_id == discord_id)
 
         return query.execute()
 
     @classmethod
     def add_free_rerolls_to_all(cls, amount: int) -> int:
-        query = cls.update(free_rerolls=cls.free_rerolls + amount, updated_at=datetime.now())
+        query = cls.update(free_rerolls=cls.free_rerolls + amount, updated_at=datetime.now(UTC))
 
         return query.execute()
 

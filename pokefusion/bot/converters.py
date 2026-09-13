@@ -6,7 +6,7 @@ from pokefusion.utils import special_join
 
 
 class PrefixConverter(Converter):
-    async def convert(self, ctx: Context, argument: str) -> str:
+    async def convert(self, ctx: Context, argument: str) -> str:  # noqa: ARG002
         size = len(argument)
         if size < 1 or size > 2:
             raise BadArgument("The prefix must be 1 or 2 characters long.")
@@ -16,7 +16,7 @@ class PrefixConverter(Converter):
 class LanguageConverter(Converter):
     LANGUAGES = special_join([f"`{lang}`" for lang in Language], ", ", " or ")
 
-    async def convert(self, ctx: Context, argument: str) -> Language:
+    async def convert(self, ctx: Context, argument: str) -> Language:  # noqa: ARG002
         if argument not in Language:
             raise BadArgument(f"The language must be one of {LanguageConverter.LANGUAGES}")
         return Language(argument)

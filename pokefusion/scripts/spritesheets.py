@@ -52,7 +52,7 @@ def split_spritesheet(path: StrPath, output_dir: StrPath):
 
         sheet_name = Path(path).stem
         sheet_output_dir = Path(output_dir, sheet_name)
-        os.makedirs(sheet_output_dir, exist_ok=True)
+        sheet_output_dir.mkdir(parents=True, exist_ok=True)
 
         for index, box in enumerate(boxes[1 : FusionClient.MAX_ID + 1]):
             output_file = sheet_output_dir / f"{sheet_name}.{index + 1}.png"

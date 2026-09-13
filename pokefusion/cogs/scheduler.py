@@ -36,10 +36,10 @@ class Scheduler(commands.Cog):
 
     @tasks.loop(time=RERALL_TIME)
     async def rerall_task(self) -> None:
-        logger.info(f"Running task '{self.rerall_task._name}'")
-
         if Day(datetime.now(TZ).weekday()) is not RERALL_DAY:
             return
+
+        logger.info("Running task: %s", self.rerall_task._name)
 
         self.bot.totem_service.reroll_all_totems()
 

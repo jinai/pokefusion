@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pokefusion.db.database import database
 from pokefusion.db.models import Totem
@@ -26,7 +26,7 @@ class TotemService:
 
     def reroll_totem(self, discord_id: int) -> FusionResult:
         fusion, head, body = self._generate_totem()
-        Totem.update(head=head, body=body, updated_at=datetime.now()).where(Totem.discord_id == discord_id).execute()
+        Totem.update(head=head, body=body, updated_at=datetime.now(UTC)).where(Totem.discord_id == discord_id).execute()
         return fusion
 
     def reroll_all_totems(self):

@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import date
+from datetime import UTC, date, datetime
 
 from discord import Color, Member, User
 from discord.ext import commands
@@ -23,7 +23,7 @@ class Birthday(commands.Cog):
 
     def cog_load(self) -> None:
         self.birthdays = ConfigManager.read_json("birthdays.json")
-        logger.info(f"Loaded {len(self.birthdays)} birthdays")
+        logger.info("Loaded %d birthdays", len(self.birthdays))
 
     async def cog_check(self, ctx: Context) -> bool:
         return await commands.guild_only().predicate(ctx) and self.is_birthday(ctx.author)
@@ -40,7 +40,7 @@ class Birthday(commands.Cog):
             return False
 
         bday = self.birthdays[key]
-        today = date.today()
+        today = datetime.now(UTC).date()  # TODO: custom time zone
         day, month = bday.split("/")
         bday = date(today.year, int(month), int(day))
 

@@ -3,7 +3,7 @@ import logging
 import textwrap
 import traceback
 from contextlib import redirect_stdout
-from typing import Annotated
+from typing import Annotated, Any
 
 from discord import Member
 from discord.ext import commands
@@ -156,8 +156,9 @@ class Owner(commands.Cog, command_attrs={"hidden": True}):
             await ctx.tick(True)
 
     @commands.command(aliases=["eval"])
+    @commands.is_owner()
     async def sudo(self, ctx: Context, *, body: str) -> None:
-        env = {
+        env: dict[str, Any] = {
             "self": self,
             "bot": self.bot,
             "models": models,
@@ -178,19 +179,19 @@ class Owner(commands.Cog, command_attrs={"hidden": True}):
         to_compile = f"async def _eval():\n{textwrap.indent(body, '  ')}"
 
         try:
-            exec(to_compile, env)
-        except Exception as e:
+            exec(to_compile, env)  # noqa: S102
+        except SyntaxError as e:
             await ctx.safe_send(f"```py\n{e.__class__.__name__}: {e}\n```")
             return
 
         func = env["_eval"]
-        # noinspection PyBroadException
+
         try:
             with redirect_stdout(stdout):
                 ret = await func()
         except Exception:
             value = stdout.getvalue()
-            logger.error(traceback.format_exc())
+            logger.exception("Evaluation failed")
             await ctx.safe_send(f"```py\n{value}{traceback.format_exc()}\n```")
         else:
             value = stdout.getvalue()

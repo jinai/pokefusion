@@ -48,11 +48,6 @@ class LookupResult:
             self.guess, self.guess_score = process.extractOne(bad_query, choices, score_cutoff=0, scorer=fuzz.ratio)
         return self
 
-    def __repr__(self) -> str:
-        if self.succeeded:
-            return f"<LookupResult dex_id={self.dex_id}, species={self.species}, lang={self.lang}>"
-        return f"<LookupResult bad_query={self.bad_query}, guess={self.guess}, guess_score={self.guess_score} lang={self.lang}>"
-
 
 class FusionResult:
     def __init__(self, head: LookupResult, body: LookupResult, head_query: str, body_query: str):
@@ -108,14 +103,11 @@ class FusionResult:
             return path
         return AssetPaths.DEFAULT_EGG_PATH
 
-    def __repr__(self) -> str:
-        return f"<FusionResult head={self.head}, body={self.body}, head_query={self.head_query}, body_query={self.body_query}>"
-
 
 class BaseClient:
-    RANDOM_QUERIES = {"?", "."}
-    MIN_ID = None
-    MAX_ID = None
+    RANDOM_QUERIES = frozenset({"?", "."})
+    MIN_ID: int
+    MAX_ID: int
 
     def __init__(self, pokedex: Dex, default_language: Language):
         self.pokedex = pokedex
@@ -186,9 +178,9 @@ class FusionClient(BaseClient):
         if head is not None and head in CUSTOM_FUSIONS:
             fusions = CUSTOM_FUSIONS[head]
         elif body is not None:
-            for key in CUSTOM_FUSIONS:
-                if body in CUSTOM_FUSIONS[key]:
-                    fusions.append(int(key))
+            for custom_head, custom_bodies in CUSTOM_FUSIONS.items():
+                if body in custom_bodies:
+                    fusions.append(int(custom_head))
         return fusions
 
 
@@ -230,6 +222,3 @@ class Sprite:
 
         filename = f"{self.lookup.dex_id}.png"
         return AssetPaths.SPRITES_SHINY_DIR / filename
-
-    def __repr__(self) -> str:
-        return f"<Sprite dex_id={self.lookup.dex_id}, species={self.lookup.species}>"

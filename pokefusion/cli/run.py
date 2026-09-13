@@ -21,7 +21,7 @@ def run_bot() -> None:
             logger.warning("Cannot start the bot because database migrations are pending:")
 
             for migration in pending:
-                logger.warning(f"- [ ] {migration}")
+                logger.warning("- [ ] %s", migration)
 
             logger.warning("Run 'uv run pwmigrate up' first.")
             return
@@ -35,7 +35,7 @@ def run_bot() -> None:
         discord.VoiceClient.warn_nacl = False
         discord.VoiceClient.warn_dave = False
 
-        logger.info(f"Starting bot (Environment: {ctx.config.environment.upper()})")
+        logger.info("Starting bot (Environment: %s)", ctx.config.environment.name)
 
         bot = PokeFusion(config=ctx.config, intents=intents)
         bot.run(ctx.config.token, log_handler=None)

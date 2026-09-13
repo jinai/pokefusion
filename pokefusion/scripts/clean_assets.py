@@ -37,7 +37,7 @@ def clean_output_folder() -> None:
     folder = Path("pokefusion", "scripts", "output")
 
     if folder.exists():
-        logger.info(f"Cleaning '{folder.resolve()}'")
+        logger.info("Cleaning '%s'", folder.resolve())
         fast_delete(folder)
 
 
@@ -49,5 +49,5 @@ def clean_assets_folder() -> None:
 
     for folder in folders:
         if folder.exists():
-            logger.info(f"Cleaning '{folder.resolve()}'")
+            logger.info("Cleaning '%s'", folder.resolve())
             fast_delete(folder)

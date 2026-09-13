@@ -81,13 +81,20 @@ def generate_infinitedex() -> None:
     infinitedex, unmatched = build_infinitedex(pokedex, infinitedex_en)
 
     if unmatched:
-        logger.warning(f"{len(unmatched)} entries couldn't be matched and were defaulted to English:")
+        logger.warning("%d entries couldn't be matched and were defaulted to English:", len(unmatched))
         for infinitedex_id, name in unmatched:
-            logger.warning(f"  - ID {infinitedex_id}: {name}")
+            logger.warning("  - ID %s: %s", infinitedex_id, name)
 
-    ordered = {lang: dict(sorted(infinitedex[lang].items(), key=lambda kv: int(kv[0]))) for lang in sorted(infinitedex)}
+    ordered = {
+        lang: dict(
+            sorted(
+                infinitedex[lang].items(),
+                key=lambda kv: int(kv[0]),
+            )
+        )
+        for lang in sorted(infinitedex)
+    }
 
-    with open(out_file, "w", encoding="utf-8") as f:
-        json.dump(ordered, f, ensure_ascii=False, indent=4)
+    out_file.write_text(json.dumps(ordered, ensure_ascii=False, indent=4), encoding="utf-8")
 
-    logger.info(f"Wrote {len(ordered['en'])} entries in {len(ordered)} languages to {out_file}")
+    logger.info("Wrote %d entries in %d languages to %s", len(ordered["en"]), len(ordered), out_file)

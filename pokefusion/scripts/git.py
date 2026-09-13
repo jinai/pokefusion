@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def run_git(arguments: Sequence[str], *, cwd: StrPath | None = None) -> None:
     command = ["git", *arguments]
 
-    logger.info(f"Running command: {shlex.join(command)}")
+    logger.info("Running command: %s", shlex.join(command))
 
     process = subprocess.Popen(
         command,
@@ -25,7 +25,7 @@ def run_git(arguments: Sequence[str], *, cwd: StrPath | None = None) -> None:
 
     # noinspection not-iterable
     for line in process.stdout:
-        logger.info(f"[git] {line.rstrip()}")
+        logger.info("[git] %s", line.rstrip("\r\n"))
 
     returncode = process.wait()
 
@@ -35,12 +35,12 @@ def run_git(arguments: Sequence[str], *, cwd: StrPath | None = None) -> None:
 
 def restore_deleted_files() -> None:
     list_command = ["git", "ls-files", "--deleted", "-z"]
-    logger.info(f"Running command: {shlex.join(list_command)}")
+    logger.info("Running command: %s", shlex.join(list_command))
 
     result = subprocess.run(list_command, capture_output=True, check=False)
 
     for line in result.stderr.decode(errors="replace").splitlines():
-        logger.error(f"[git] {line}")
+        logger.error("[git] %s", line)
 
     result.check_returncode()
 
@@ -49,7 +49,7 @@ def restore_deleted_files() -> None:
         return
 
     deleted_count = result.stdout.count(b"\0")
-    logger.info(f"Restoring {deleted_count} deleted files")
+    logger.info("Restoring %d deleted files", deleted_count)
 
     restore_command = [
         "git",
@@ -57,7 +57,7 @@ def restore_deleted_files() -> None:
         "--pathspec-from-file=-",
         "--pathspec-file-nul",
     ]
-    logger.info(f"Running command: {shlex.join(restore_command)}")
+    logger.info("Running command: %s", shlex.join(restore_command))
 
     result = subprocess.run(
         restore_command,
@@ -68,6 +68,6 @@ def restore_deleted_files() -> None:
     )
 
     for line in result.stdout.decode(errors="replace").splitlines():
-        logger.info(f"[git] {line}")
+        logger.info("[git] %s", line)
 
     result.check_returncode()

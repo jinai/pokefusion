@@ -7,6 +7,7 @@ from discord.utils import oauth_url
 from pokefusion.bot.context import Context
 from pokefusion.bot.pokefusion import PokeFusion
 from pokefusion.cogs.cogutils import base_embed
+from pokefusion.utils import format_duration
 
 
 class Meta(commands.Cog):
@@ -21,9 +22,7 @@ class Meta(commands.Cog):
 
     @commands.command()
     async def uptime(self, ctx: Context):
-        hours, rem = divmod(int(self.bot.uptime), 3600)
-        minutes, seconds = divmod(rem, 60)
-        await ctx.send(f"{str(hours).zfill(2)}h{str(minutes).zfill(2)}m{str(seconds).zfill(2)}s")
+        await ctx.send(format_duration(self.bot.uptime))
 
     @commands.command()
     async def invite(self, ctx):

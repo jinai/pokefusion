@@ -56,8 +56,8 @@ class Games(commands.Cog):
 
     def cog_load(self) -> None:
         self._pokemon_names = load_pokemon_names()
-        num_langs, num_entries = len(self._pokemon_names), len(self._pokemon_names[self.bot.default_language])
-        logger.info(f"Loaded {num_entries} Pokémon names in {num_langs} languages")
+        lang_count, entry_count = len(self._pokemon_names), len(self._pokemon_names[self.bot.default_language])
+        logger.info("Loaded %d Pokémon names in %d languages", entry_count, lang_count)
 
     @commands.Cog.listener()
     async def on_message(self, message: Message) -> None:
@@ -82,12 +82,12 @@ class Games(commands.Cog):
                 compare = lambda x, y: normalize(y.lookup.species) in x
             elif isinstance(answer, FusionResult):
                 # fmt: off
-                # ruff: disable[C403]
+                # ruff: disable[C403, E501]
                 # TODO: Refactor this monstrosity
                 compare = lambda x, y: set([remove_forms(p) for p in x.split(" ")]).issuperset(set([p for p in
                                                                                                     f"{remove_forms(normalize(y.head.species))} {remove_forms(normalize(y.body.species))}".split(
                                                                                                         " ")]))
-                # ruff: enable[C403]
+                # ruff: enable[C403, E501]
                 # fmt: on
             elif isinstance(answer, PokeApiResult):
                 compare = lambda x, y: normalize(y.get_name(ctx.lang)) in x
@@ -99,9 +99,21 @@ class Games(commands.Cog):
 
     @commands.group(invoke_without_command=True)
     async def guess(self, ctx: Context):
-        await ctx.send(
-            "Available guessing games: Silhouette, Blur, Pixel, Grayscale, Edge, Box, Swirl, PixelBlur, Fusion, PixelFusion, FusionBox and Description"
-        )
+        guessing_games = [
+            "Silhouette",
+            "Blur",
+            "Pixel",
+            "Grayscale",
+            "Edge",
+            "Box",
+            "Swirl",
+            "PixelBlur",
+            "Fusion",
+            "PixelFusion",
+            "FusionBox",
+            "Description",
+        ]
+        await ctx.send(f"Available guessing games: {utils.special_join(guessing_games, ', ', ' and ')}")
 
     @guess.command(name="giveup", aliases=["ff"])
     async def guess_giveup(self, ctx: Context):

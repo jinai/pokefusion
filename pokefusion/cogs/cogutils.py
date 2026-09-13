@@ -257,4 +257,3 @@ async def unknown_prompt(ctx: Context, *arguments: str, details: str | None = No
         delete_prompt=delete,
         delete_reply=delete,
     )
-

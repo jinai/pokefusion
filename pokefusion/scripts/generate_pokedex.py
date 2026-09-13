@@ -61,10 +61,15 @@ def generate_pokedex():
     pokedex = build_pokedex(species_names_rows, language_map)
 
     ordered = {
-        lang_key: dict(sorted(pokedex[lang_key].items(), key=lambda item: int(item[0]))) for lang_key in sorted(pokedex)
+        lang_key: dict(
+            sorted(
+                pokedex[lang_key].items(),
+                key=lambda item: int(item[0]),
+            )
+        )
+        for lang_key in sorted(pokedex)
     }
 
-    with open(out_file, "w", encoding="utf-8") as f:
-        json.dump(ordered, f, ensure_ascii=False, indent=4)
+    out_file.write_text(json.dumps(ordered, ensure_ascii=False, indent=4), encoding="utf-8")
 
-    logger.info(f"Wrote {len(ordered['en'])} entries in {len(ordered)} languages to {out_file}")
+    logger.info("Wrote %d entries in %d languages to %s", len(ordered["en"]), len(ordered), out_file)

@@ -16,7 +16,7 @@ type JsonDict = dict[str, Any]
 
 
 class ConfigManager:
-    CONFIG_DIR = Path("pokefusion", "config")
+    CONFIG_DIR = Path("pokefusion") / "config"
     CONFIG_FILE = "config.json"
     POKEDEX_FILE = "pokedex.json"
     INFINITEDEX_FILE = "infinitedex.json"
@@ -44,8 +44,7 @@ class ConfigManager:
     @classmethod
     @cache
     def read_json(cls, filename: str) -> JsonDict:
-        with open(cls.CONFIG_DIR / filename, "r", encoding="utf-8") as f:
-            return json.load(f)
+        return json.loads((cls.CONFIG_DIR / filename).read_text(encoding="utf-8"))
 
     @classmethod
     def get_bot_config(cls) -> BotConfig:

@@ -1,6 +1,6 @@
 import asyncio
 from calendar import Day
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from discord import Color
 from discord.ext import commands
@@ -15,7 +15,7 @@ from pokefusion.db.models import User
 def is_christmas_period() -> bool:
     # Check if today is between the Thursday before
     # Christmas week and January 1st
-    today = date.today()
+    today = datetime.now(UTC).date()  # TODO: custom time zone
 
     christmas = date(today.year, 12, 25)
     days_back = christmas.weekday() + 7 - Day.THURSDAY
@@ -31,7 +31,7 @@ class Christmas(commands.Cog):
         self.bot = bot
         self.bot.after_invoke(self.christmas_event)
 
-    async def cog_check(self, ctx: Context) -> bool:
+    async def cog_check(self, ctx: Context) -> bool:  # noqa: ARG002
         return is_christmas_period()
 
     async def cog_command_error(self, ctx: Context, error: CommandError) -> None:

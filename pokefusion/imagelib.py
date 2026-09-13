@@ -282,5 +282,5 @@ def to_numpy(im: Image.Image):
         mem[offset : offset + len(d)] = d
         offset += len(d)
     if s < 0:
-        raise RuntimeError("encoder error %d in tobytes" % s)
+        raise RuntimeError(f"encoder error {s} in tobytes")
     return data

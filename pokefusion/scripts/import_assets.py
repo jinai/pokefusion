@@ -94,12 +94,13 @@ def import_autogen_sprites() -> None:
         sheet_count = len(next(os.walk(input_dir))[2])
 
         elapsed_time = time.perf_counter() - start_time
-        logger.info(f"Downloaded {sheet_count} autogen spritesheets in {elapsed_time:.2f} seconds")
+        logger.info("Downloaded %d autogen spritesheets in %.2f seconds", sheet_count, elapsed_time)
 
         if sheet_count > FusionClient.MAX_ID:
             logger.warning(
-                f"Found more than {FusionClient.MAX_ID} autogen spritesheets! "
-                "Check if new autogen sprites were released, and adapt MAX_ID accordingly"
+                "Found more than %d autogen spritesheets! "
+                "Check if new autogen sprites were released, and adapt MAX_ID accordingly",
+                FusionClient.MAX_ID,
             )
 
         start_time = time.perf_counter()
@@ -110,7 +111,10 @@ def import_autogen_sprites() -> None:
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(
-        f"Processed {sprite_count} autogen sprites (from {sheet_count} spritesheets) in {elapsed_time:.2f} seconds"
+        "Processed %d autogen sprites (from %d spritesheets) in %.2f seconds",
+        sprite_count,
+        sheet_count,
+        elapsed_time,
     )
 
 
@@ -146,7 +150,10 @@ def import_custom_sprites(pack_path: Path) -> None:
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(
-        f"Processed {sprite_count} custom sprites (discarded {file_count - sprite_count} sprites > MAX_ID) in {elapsed_time:.2f} seconds"
+        "Processed %d custom sprites (discarded %d sprites > MAX_ID) in %.2f seconds",
+        sprite_count,
+        file_count - sprite_count,
+        elapsed_time,
     )
 
 
@@ -170,74 +177,52 @@ def import_egg_sprites(pack_path: Path) -> None:
                 continue
 
             egg_count += 1
-            with open(output_dir / f"{dex_id}.png", "wb") as egg_file:
-                egg_file.write(zipf.read(filename))
+            (output_dir / f"{dex_id}.png").write_bytes(zipf.read(filename))
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(
-        f"Processed {egg_count} egg sprites (discarded {file_count - egg_count} egg sprites > MAX_ID) in {elapsed_time:.2f} seconds"
+        "Processed %d egg sprites (discarded %d egg sprites > MAX_ID) in %.2f seconds",
+        egg_count,
+        file_count - egg_count,
+        elapsed_time,
     )
 
 
 def save_diff() -> None:
     start_time = time.perf_counter()
 
-    autogen_folder_new = OUTPUT_DIR / "fusions" / "autogen"
-    custom_folder_new = OUTPUT_DIR / "fusions" / "custom"
-    eggs_folder_new = OUTPUT_DIR / "eggs"
+    autogen_old = _get_fusions(AssetPaths.FUSIONS_AUTOGEN_DIR)
+    autogen_new = _get_fusions(OUTPUT_DIR / "fusions" / "autogen")
+    custom_old = _get_fusions(AssetPaths.FUSIONS_CUSTOM_DIR)
+    custom_new = _get_fusions(OUTPUT_DIR / "fusions" / "custom")
+    eggs_old = _get_eggs(AssetPaths.EGGS_DIR)
+    eggs_new = _get_eggs(OUTPUT_DIR / "eggs")
 
-    custom_fusions_output = OUTPUT_DIR / "custom_fusions.json"
-    autogen_diff_added_output = OUTPUT_DIR / "autogen_diff_added.json"
-    autogen_diff_removed_output = OUTPUT_DIR / "autogen_diff_removed.json"
-    custom_diff_added_output = OUTPUT_DIR / "custom_diff_added.json"
-    custom_diff_removed_output = OUTPUT_DIR / "custom_diff_removed.json"
-    eggs_diff_added_output = OUTPUT_DIR / "eggs_diff_added.json"
-    eggs_diff_removed_output = OUTPUT_DIR / "eggs_diff_removed.json"
+    autogen_diff_added = _get_fusions_diff(autogen_old, autogen_new)
+    autogen_diff_removed = _get_fusions_diff(autogen_new, autogen_old)
+    custom_diff_added = _get_fusions_diff(custom_old, custom_new)
+    custom_diff_removed = _get_fusions_diff(custom_new, custom_old)
+    eggs_diff_added = _get_eggs_diff(eggs_old, eggs_new)
+    eggs_diff_removed = _get_eggs_diff(eggs_new, eggs_old)
 
-    autogen_old = get_fusions(AssetPaths.FUSIONS_AUTOGEN_DIR)
-    autogen_new = get_fusions(autogen_folder_new)
-    custom_old = get_fusions(AssetPaths.FUSIONS_CUSTOM_DIR)
-    custom_new = get_fusions(custom_folder_new)
-    eggs_old = get_eggs(AssetPaths.EGGS_DIR)
-    eggs_new = get_eggs(eggs_folder_new)
-    autogen_diff_added = get_fusions_diff(autogen_old, autogen_new)
-    autogen_diff_removed = get_fusions_diff(autogen_new, autogen_old)
-    custom_diff_added = get_fusions_diff(custom_old, custom_new)
-    custom_diff_removed = get_fusions_diff(custom_new, custom_old)
-    eggs_diff_added = get_eggs_diff(eggs_old, eggs_new)
-    eggs_diff_removed = get_eggs_diff(eggs_new, eggs_old)
-
-    autogen_diff_added_count = 0
-    autogen_diff_removed_count = 0
-    custom_diff_added_count = 0
-    custom_diff_removed_count = 0
-    for head in autogen_diff_added:
-        autogen_diff_added_count += len(autogen_diff_added[head])
-    for head in autogen_diff_removed:
-        autogen_diff_removed_count += len(autogen_diff_removed[head])
-    for head in custom_diff_added:
-        custom_diff_added_count += len(custom_diff_added[head])
-    for head in custom_diff_removed:
-        custom_diff_removed_count += len(custom_diff_removed[head])
-
-    with open(custom_fusions_output, "w", encoding="utf-8") as f:
-        json.dump(custom_new, f)
-    with open(autogen_diff_added_output, "w", encoding="utf-8") as f:
-        json.dump(autogen_diff_added, f)
-    with open(autogen_diff_removed_output, "w", encoding="utf-8") as f:
-        json.dump(autogen_diff_removed, f)
-    with open(custom_diff_added_output, "w", encoding="utf-8") as f:
-        json.dump(custom_diff_added, f)
-    with open(custom_diff_removed_output, "w", encoding="utf-8") as f:
-        json.dump(custom_diff_removed, f)
-    with open(eggs_diff_added_output, "w", encoding="utf-8") as f:
-        json.dump(eggs_diff_added, f)
-    with open(eggs_diff_removed_output, "w", encoding="utf-8") as f:
-        json.dump(eggs_diff_removed, f)
+    (OUTPUT_DIR / "custom_fusions.json").write_text(json.dumps(custom_new), encoding="utf-8")
+    (OUTPUT_DIR / "autogen_diff_added.json").write_text(json.dumps(autogen_diff_added), encoding="utf-8")
+    (OUTPUT_DIR / "autogen_diff_removed.json").write_text(json.dumps(autogen_diff_removed), encoding="utf-8")
+    (OUTPUT_DIR / "custom_diff_added.json").write_text(json.dumps(custom_diff_added), encoding="utf-8")
+    (OUTPUT_DIR / "custom_diff_removed.json").write_text(json.dumps(custom_diff_removed), encoding="utf-8")
+    (OUTPUT_DIR / "eggs_diff_added.json").write_text(json.dumps(eggs_diff_added), encoding="utf-8")
+    (OUTPUT_DIR / "eggs_diff_removed.json").write_text(json.dumps(eggs_diff_removed), encoding="utf-8")
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(
-        f"Saved diffs for +{autogen_diff_added_count}/-{autogen_diff_removed_count} autogen fusions, +{custom_diff_added_count}/-{custom_diff_removed_count} custom fusions and +{len(eggs_diff_added)}/-{len(eggs_diff_removed)} eggs in {elapsed_time:.2f} seconds"
+        "Saved diffs for +%d/-%d autogen fusions, +%d/-%d custom fusions, and +%d/-%d eggs in %.2f seconds",
+        sum(map(len, autogen_diff_added.values())),
+        sum(map(len, autogen_diff_removed.values())),
+        sum(map(len, custom_diff_added.values())),
+        sum(map(len, custom_diff_removed.values())),
+        len(eggs_diff_added),
+        len(eggs_diff_removed),
+        elapsed_time,
     )
 
 
@@ -281,10 +266,10 @@ def move_to_assets():
         shutil.move(custom_diff_added_output, custom_diff_added_assets)
 
     elapsed_time = time.perf_counter() - start_time
-    logger.info(f"Moved files to assets folder in {elapsed_time:.2f} seconds")
+    logger.info("Moved files to assets folder in %.2f seconds", elapsed_time)
 
 
-def get_fusions(folder: StrPath) -> dict[int, list[int]]:
+def _get_fusions(folder: StrPath) -> dict[int, list[int]]:
     fusions = defaultdict(list)
 
     for root, directories, filenames in os.walk(folder):
@@ -295,21 +280,23 @@ def get_fusions(folder: StrPath) -> dict[int, list[int]]:
     return {key: sorted(val) for key, val in sorted(fusions.items(), key=lambda item: item[0])}
 
 
-def get_fusions_diff(old: dict[int, list[int]], new: dict[int, list[int]]) -> dict[int, list[int]]:
+def _get_fusions_diff(old: dict[int, list[int]], new: dict[int, list[int]]) -> dict[int, list[int]]:
     diff = defaultdict(list)
 
-    for head in new:
-        if head in old:
-            for body in new[head]:
-                if body not in old[head]:
-                    diff[head].append(body)
-        else:
-            diff[head] = new[head][:]
+    for head, new_bodies in new.items():
+        if head not in old:
+            diff[head] = new_bodies[:]
+            continue
+
+        old_bodies = old[head]
+        for body in new_bodies:
+            if body not in old_bodies:
+                diff[head].append(body)
 
     return diff
 
 
-def get_eggs(folder: StrPath) -> list[int]:
+def _get_eggs(folder: StrPath) -> list[int]:
     eggs = []
 
     for root, directories, filenames in os.walk(folder):
@@ -320,7 +307,7 @@ def get_eggs(folder: StrPath) -> list[int]:
     return sorted(eggs)
 
 
-def get_eggs_diff(old: list[int], new: list[int]) -> list[int]:
+def _get_eggs_diff(old: list[int], new: list[int]) -> list[int]:
     i = j = 0
     diff = []
 

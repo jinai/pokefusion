@@ -72,3 +72,22 @@ def special_join(sequence: Sequence[Any], separator: str, last_separator: str) -
     if len(sequence) == 2:
         return last_separator.join(sequence)
     return separator.join(sequence[:-1]) + last_separator + str(sequence[-1])
+
+
+def format_duration(seconds: float) -> str:
+    days, remainder = divmod(int(seconds), 86_400)
+    hours, remainder = divmod(remainder, 3_600)
+    minutes, seconds = divmod(remainder, 60)
+
+    parts = []
+
+    if days:
+        parts.append(f"{days}d")
+    if hours or days:
+        parts.append(f"{hours}h")
+    if minutes or hours or days:
+        parts.append(f"{minutes}m")
+
+    parts.append(f"{seconds}s")
+
+    return " ".join(parts)

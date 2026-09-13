@@ -68,7 +68,7 @@ def import_all(pack: PackPath) -> None:
     restore_deleted_files()
 
     elapsed_time = time.perf_counter() - start_time
-    logger.info(f"Total runtime is {elapsed_time:.2f} seconds")
+    logger.info("Total runtime is %.2f seconds", elapsed_time)
     logger.info("Don't forget to update fusionapi.PREVIOUS_MAX_ID if necessary")
 
 
@@ -80,13 +80,13 @@ def import_autogen() -> None:
 
 @import_app.command("custom")
 def import_custom(pack: PackPath) -> None:
-    logger.info(f"Importing custom sprites from '{pack}'")
+    logger.info("Importing custom sprites from '%s'", pack)
     import_custom_sprites(pack)
 
 
 @import_app.command("eggs")
 def import_eggs(pack: PackPath) -> None:
-    logger.info(f"Importing eggs from '{pack}'")
+    logger.info("Importing eggs from '%s'", pack)
     import_egg_sprites(pack)
 
 
@@ -104,7 +104,7 @@ def cleanup_output() -> None:
     clean_output_folder()
 
     elapsed_time = time.perf_counter() - start_time
-    logger.info(f"Cleaned up output folder in {elapsed_time:.2f} seconds")
+    logger.info("Cleaned up output folder in %.2f seconds", elapsed_time)
 
 
 @cleanup_app.command("assets")
@@ -115,4 +115,4 @@ def cleanup_assets() -> None:
     clean_assets_folder()
 
     elapsed_time = time.perf_counter() - start_time
-    logger.info(f"Cleaned up assets folder in {elapsed_time:.2f} seconds")
+    logger.info("Cleaned up assets folder in %.2f seconds", elapsed_time)

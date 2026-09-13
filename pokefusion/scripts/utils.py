@@ -1,7 +1,7 @@
 import re
 import shutil
 from collections.abc import Generator, Iterable
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from pokefusion.types import StrPath
@@ -16,7 +16,7 @@ def regex_filter(sequence: Iterable[str], pattern: re.Pattern[str]) -> Generator
 def make_backup(path: StrPath):
     src = Path(path)
     counter = 1
-    date_suffix = datetime.now().strftime("_%Y%m%d")
+    date_suffix = datetime.now(UTC).strftime("_%Y%m%d")
     backup_name = f"{src.stem}{date_suffix}_{counter:02d}{src.suffix}"
     backup_path = src.parent / backup_name
     while backup_path.exists():

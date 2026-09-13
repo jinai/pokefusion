@@ -32,8 +32,8 @@ class Events(commands.Cog):
             self.bot.default_language,
         )
 
-        logger.info(f"Synced server records (upserted: {upserted}, deactivated: {deactivated})")
-        logger.info(f"Bot is ready, authenticated as {self.bot.user} (ID: {self.bot.user.id})")
+        logger.info("Synced server records (upserted: %d, deactivated: %d)", upserted, deactivated)
+        logger.info("Bot is ready, authenticated as %s (ID: %d)", self.bot.user, self.bot.user.id)
 
     @commands.Cog.listener()
     async def on_guild_available(self, guild: Guild) -> None:
@@ -43,17 +43,17 @@ class Events(commands.Cog):
         upserted = Server.upsert(guild.id, guild.name, self.bot.default_prefix, self.bot.default_language)
 
         if upserted:
-            logger.info(f"Upserted available server {guild.name} (Guild ID: {guild.id})")
+            logger.info("Upserted available server %r (Guild ID: %d)", guild.name, guild.id)
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: Guild) -> None:
         Server.upsert(guild.id, guild.name, self.bot.default_prefix, self.bot.default_language)
-        logger.info(f"Joined '{guild.name}' (Guild ID: {guild.id})")
+        logger.info("Joined guild: %s (Guild ID: %d)", guild.name, guild.id)
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: Guild) -> None:
         Server.deactivate(guild.id)
-        logger.info(f"Left '{guild.name}' (Guild ID: {guild.id})")
+        logger.info("Left guild: %s (Guild ID: %d)", guild.name, guild.id)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: Context, error: CommandError):

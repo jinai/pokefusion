@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Awaitable, Callable, Sequence
-from datetime import datetime
 from io import BytesIO
 from typing import Any
 
@@ -53,8 +53,8 @@ class PokeFusion(commands.Bot):
         self.block_dms = config.block_dms
 
         # Runtime state
-        self.main_color: Color = Color.light_grey()
-        self.boot_time: datetime = datetime.now()
+        self.main_color = Color.light_grey()
+        self._start_time = time.monotonic()
 
         # Clients and services
         self.fusion_client = FusionClient(self.default_language)
@@ -124,8 +124,7 @@ class PokeFusion(commands.Bot):
 
     @property
     def uptime(self) -> float:
-        delta = datetime.now() - self.boot_time
-        return delta.total_seconds()
+        return time.monotonic() - self._start_time
 
     async def _resolve_main_color(self) -> Color:
         fallback_color = self.main_color
@@ -134,7 +133,7 @@ class PokeFusion(commands.Bot):
             try:
                 return Color.from_str(configured_color)
             except ValueError:
-                logger.warning(f"Invalid main color {self.config.main_color!r}, deriving it from the bot avatar")
+                logger.warning("Invalid main color %r, deriving it from the bot avatar", self.config.main_color)
 
         if self.user is None:
             logger.error("Couldn't derive the main color: bot user is unavailable")
@@ -146,7 +145,7 @@ class PokeFusion(commands.Bot):
             rgb = get_dominant_color(BytesIO(avatar_data), normalize=True)
             return Color.from_rgb(*rgb)
         except (HTTPException, OSError) as e:
-            logger.error(f"Couldn't derive the main color from the bot avatar: {e}")
+            logger.error("Couldn't derive the main color from the bot avatar: %s", e)
             return fallback_color
 
     async def get_context(self, origin: Message | Interaction, /, *, cls=Context) -> Context:
@@ -156,22 +155,22 @@ class PokeFusion(commands.Bot):
         await self.pokeapi_client.start()
 
         self.main_color = await self._resolve_main_color()
-        logger.info(f"Set main color to: {self.main_color}")
+        logger.info("Set main color: %s", self.main_color)
 
         for extension in self.CORE_EXTENSIONS:
-            logger.info(f"Loading core extension '{extension}'")
+            logger.info("Loading core extension: %s", extension)
             await self.load_extension(extension)
 
         for extension in self.config.extensions:
             if extension in self.CORE_EXTENSIONS:
                 continue
 
-            logger.info(f"Loading extension '{extension}'")
+            logger.info("Loading extension: %s", extension)
             await self.load_extension(extension)
 
     @staticmethod
     async def log_command(ctx: Context) -> None:
-        logger.info(f"{ctx.message.content} in #{ctx.channel} ({ctx.guild}) by {ctx.author}")
+        logger.info("%s in #%s (%s) by %s", ctx.message.content, ctx.channel, ctx.guild, ctx.author)
 
     @staticmethod
     async def create_user(ctx: Context) -> None:
