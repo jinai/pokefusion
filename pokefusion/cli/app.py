@@ -9,6 +9,3 @@ app = typer.Typer(no_args_is_help=True)
 app.command("run")(run_bot)
 app.add_typer(dex_app, name="dex")
 app.add_typer(tools_app, name="tools")
-
-if __name__ == "__main__":
-    app()

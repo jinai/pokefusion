@@ -16,10 +16,22 @@ dependencies = [
     "unidecode>=1.4.0",
 ]
 
+[project.scripts]
+pokefusion = "pokefusion.cli.app:app"
+
 [dependency-groups]
 dev = [
     "ruff>=0.16.6",
 ]
+
+[build-system]
+requires = ["uv_build>=0.12.13,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "pokefusion"
+module-root = ""
+namespace = true
 
 [tool.ruff]
 line-length = 120
