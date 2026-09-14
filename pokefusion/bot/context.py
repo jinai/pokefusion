@@ -3,6 +3,7 @@ import io
 import re
 from enum import Enum, auto
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 import discord
 from discord import HTTPException, Message
@@ -12,6 +13,9 @@ from pokefusion import utils
 from pokefusion.db.models import Server
 from pokefusion.enums import Language
 
+if TYPE_CHECKING:
+    from pokefusion.bot.pokefusion import PokeFusion
+
 
 class Reply(Enum):
     YES = auto()
@@ -19,7 +23,7 @@ class Reply(Enum):
     TIMEOUT = auto()
 
 
-class Context(commands.Context):
+class Context(commands.Context["PokeFusion"]):
     SENSITIVE_MASK = "******"
     SENSITIVE_PATTERNS = (
         r"mfa\.[\w-]{20,}",
@@ -32,9 +36,6 @@ class Context(commands.Context):
             3: "\N{THIRD PLACE MEDAL}",
         }
     )
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
     @property
     def canonical_command(self) -> str:

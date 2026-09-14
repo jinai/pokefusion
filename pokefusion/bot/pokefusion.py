@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import time
 from collections.abc import Awaitable, Callable, Sequence
@@ -36,7 +34,8 @@ def get_prefix(bot: PokeFusion, message: Message) -> Sequence[str]:
 
 
 class PokeFusion(commands.Bot):
-    CORE_EXTENSIONS: tuple[str, ...] = ("pokefusion.cogs.events",)
+    COGS_PACKAGE = "pokefusion.cogs"
+    CORE_EXTENSIONS: tuple[str, ...] = (f"{COGS_PACKAGE}.events",)
 
     def __init__(self, config: BotConfig, *, intents: Intents):
         super().__init__(

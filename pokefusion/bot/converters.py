@@ -24,6 +24,7 @@ class LanguageConverter(Converter):
 
 class ModuleConverter(Converter):
     async def convert(self, ctx: Context, argument: str) -> str:
-        if not argument.startswith(ctx.bot.COGS_MODULE_PREFIX):
-            return ctx.bot.COGS_MODULE_PREFIX + "." + argument
-        return argument
+        if argument.startswith(f"{ctx.bot.COGS_PACKAGE}."):
+            return argument
+
+        return f"{ctx.bot.COGS_PACKAGE}.{argument}"
