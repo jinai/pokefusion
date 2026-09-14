@@ -48,7 +48,7 @@ class Settings(BaseModel):
 class Server(BaseModel):
     discord_id = IntegerField(unique=True)
     name = CharField()
-    prefix = CharField(max_length=2)
+    prefix = CharField(max_length=3)
     lang = EnumField(choices=Language, max_length=2)
     joined_at = DateTimeField(default=lambda: datetime.now(UTC))
     updated_at = DateTimeField(default=lambda: datetime.now(UTC))
