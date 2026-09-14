@@ -2,22 +2,10 @@ from collections.abc import Iterable
 from datetime import UTC, datetime
 
 from peewee import EXCLUDED, BooleanField, CharField, DateTimeField, IntegerField, Model
+from playhouse.fields import EnumField
 
 from pokefusion.db.database import database
 from pokefusion.enums import Language
-
-
-class EnumField(CharField):
-    def __init__(self, choices, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.choices = choices
-
-    def db_value(self, value):
-        return value.value
-
-    def python_value(self, value):
-        value_type = type(next(iter(self.choices)).value)
-        return self.choices(value_type(value))
 
 
 class BaseModel(Model):
@@ -49,7 +37,7 @@ class Server(BaseModel):
     discord_id = IntegerField(unique=True)
     name = CharField()
     prefix = CharField(max_length=3)
-    lang = EnumField(choices=Language, max_length=2)
+    lang = EnumField(Language)
     joined_at = DateTimeField(default=lambda: datetime.now(UTC))
     updated_at = DateTimeField(default=lambda: datetime.now(UTC))
     active = BooleanField(default=True)
