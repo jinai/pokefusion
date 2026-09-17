@@ -22,12 +22,12 @@ from pokefusion.scripts.import_assets import (
 
 logger = logging.getLogger(__name__)
 
-tools_app = typer.Typer(no_args_is_help=True)
+assets_app = typer.Typer(no_args_is_help=True)
 import_app = typer.Typer(no_args_is_help=True)
 cleanup_app = typer.Typer(no_args_is_help=True)
 
-tools_app.add_typer(import_app, name="import")
-tools_app.add_typer(cleanup_app, name="cleanup")
+assets_app.add_typer(import_app, name="import")
+assets_app.add_typer(cleanup_app, name="cleanup")
 
 
 def validate_pack(pack: Path) -> Path:
@@ -40,12 +40,12 @@ def validate_pack(pack: Path) -> Path:
 PackPath = Annotated[Path, typer.Argument(callback=validate_pack)]
 
 
-@tools_app.callback()
+@assets_app.callback()
 def tools_callback() -> None:
     Context()
 
 
-@tools_app.command("save_diff")
+@assets_app.command("save_diff")
 def save_diff() -> None:
     logger.info("Saving diff")
     _save_diff()
