@@ -113,7 +113,7 @@ class Games(commands.Cog):
             "FusionBox",
             "Description",
         ]
-        await ctx.send(f"Available guessing games: {utils.special_join(guessing_games, ', ', ' and ')}")
+        await ctx.send(f"Available guessing games: {utils.join_with_last(guessing_games, ', ', ' and ')}")
 
     @guess.command(name="giveup", aliases=["ff"])
     async def guess_giveup(self, ctx: Context):
@@ -274,7 +274,7 @@ class Games(commands.Cog):
     @commands.group(invoke_without_command=True)
     async def shuffle(self, ctx: Context):
         if self.last_shuffles[ctx.channel]:
-            words = utils.special_join([f"**{word[0]}**" for word in self.last_shuffles[ctx.channel]], ", ", " et ")
+            words = utils.join_with_last([f"**{word[0]}**" for word in self.last_shuffles[ctx.channel]], ", ", " and ")
             await ctx.send(f"Pokémon names to find: {words}")
         else:
             await ctx.send(f"No Pokémon name to find, use `{ctx.clean_prefix}shuffle new` to get one")

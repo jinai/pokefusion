@@ -2,7 +2,7 @@ from discord.ext.commands import BadArgument, Converter
 
 from pokefusion.bot.context import Context
 from pokefusion.enums import Language
-from pokefusion.utils import special_join
+from pokefusion.utils import join_with_last
 
 
 class PrefixConverter(Converter):
@@ -17,7 +17,7 @@ class PrefixConverter(Converter):
 
 
 class LanguageConverter(Converter):
-    _AVAILABLE_LANGUAGES = special_join([f"`{lang}`" for lang in Language], ", ", " or ")
+    _AVAILABLE_LANGUAGES = join_with_last([f"`{lang}`" for lang in Language], ", ", " or ")
 
     async def convert(self, ctx: Context, argument: str) -> Language:  # noqa: ARG002
         if argument not in Language:

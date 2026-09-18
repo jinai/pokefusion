@@ -1,7 +1,6 @@
 import base64
 import io
-from collections.abc import Callable, Mapping, Sequence
-from typing import Any
+from collections.abc import Callable, Iterable, Mapping
 
 import unidecode
 
@@ -64,14 +63,15 @@ def replace_all(text: str, dic: dict[str, str]) -> str:
     return text
 
 
-def special_join(sequence: Sequence[Any], separator: str, last_separator: str) -> str:
-    if len(sequence) == 0:
+def join_with_last(values: Iterable[object], separator: str, last_separator: str) -> str:
+    items = list(map(str, values))
+
+    if not items:
         return ""
-    if len(sequence) == 1:
-        return str(sequence[0])
-    if len(sequence) == 2:
-        return last_separator.join(sequence)
-    return separator.join(sequence[:-1]) + last_separator + str(sequence[-1])
+    if len(items) == 1:
+        return items[0]
+
+    return separator.join(items[:-1]) + last_separator + items[-1]
 
 
 def format_duration(seconds: float) -> str:
