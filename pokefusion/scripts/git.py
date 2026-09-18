@@ -44,12 +44,13 @@ def restore_deleted_files() -> None:
 
     result.check_returncode()
 
-    if not result.stdout:
-        logger.info("No deleted files to restore")
+    deleted_paths = result.stdout
+
+    if not deleted_paths:
+        logger.info("No deleted tracked files to restore")
         return
 
-    deleted_count = result.stdout.count(b"\0")
-    logger.info("Restoring %d deleted files", deleted_count)
+    deleted_count = deleted_paths.count(b"\0")
 
     restore_command = [
         "git",
@@ -61,7 +62,7 @@ def restore_deleted_files() -> None:
 
     result = subprocess.run(
         restore_command,
-        input=result.stdout,
+        input=deleted_paths,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         check=False,
@@ -71,3 +72,5 @@ def restore_deleted_files() -> None:
         logger.info("[git] %s", line)
 
     result.check_returncode()
+
+    logger.info("Restored %d deleted tracked files", deleted_count)

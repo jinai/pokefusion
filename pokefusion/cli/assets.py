@@ -1,33 +1,30 @@
 import logging
-import time
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
 from pokefusion.cli.context import Context
-from pokefusion.scripts.clean_assets import clean_assets_folder, clean_output_folder
-from pokefusion.scripts.git import restore_deleted_files
-from pokefusion.scripts.import_assets import (
+from pokefusion.scripts.assets import (
     InvalidPackError,
-    import_autogen_sprites,
-    import_custom_sprites,
-    import_egg_sprites,
-    move_to_assets,
+    apply_staged_assets,
+    clean_staging_assets,
+    generate_asset_metadata,
     resolve_pack,
-)
-from pokefusion.scripts.import_assets import (
-    save_diff as _save_diff,
+    stage_autogen_sprites,
+    stage_custom_sprites,
+    stage_egg_sprites,
+    update_assets,
 )
 
 logger = logging.getLogger(__name__)
 
 assets_app = typer.Typer(no_args_is_help=True)
-import_app = typer.Typer(no_args_is_help=True)
-cleanup_app = typer.Typer(no_args_is_help=True)
+stage_app = typer.Typer(no_args_is_help=True)
+clean_app = typer.Typer(no_args_is_help=True)
 
-assets_app.add_typer(import_app, name="import")
-assets_app.add_typer(cleanup_app, name="cleanup")
+assets_app.add_typer(stage_app, name="stage")
+assets_app.add_typer(clean_app, name="clean")
 
 
 def validate_pack(pack: Path) -> Path:
@@ -41,78 +38,40 @@ PackPath = Annotated[Path, typer.Argument(callback=validate_pack)]
 
 
 @assets_app.callback()
-def tools_callback() -> None:
+def assets_callback() -> None:
     Context()
 
 
-@assets_app.command("save_diff")
-def save_diff() -> None:
-    logger.info("Saving diff")
-    _save_diff()
+@assets_app.command()
+def update(pack: PackPath) -> None:
+    update_assets(pack)
 
 
-@import_app.command("all")
-def import_all(pack: PackPath) -> None:
-    logger.info("Importing all assets")
-    start_time = time.perf_counter()
-
-    cleanup_output()
-    import_autogen()
-    import_custom(pack)
-    import_eggs(pack)
-    save_diff()
-    cleanup_assets()
-    import_to_assets()
-
-    logger.info("Restoring tracked files deleted during cleanup")
-    restore_deleted_files()
-
-    elapsed_time = time.perf_counter() - start_time
-    logger.info("Total runtime is %.2f seconds", elapsed_time)
-    logger.info("Don't forget to update fusionapi.PREVIOUS_MAX_ID if necessary")
+@stage_app.command("autogen")
+def stage_autogen() -> None:
+    stage_autogen_sprites()
 
 
-@import_app.command("autogen")
-def import_autogen() -> None:
-    logger.info("Importing autogen sprites from GitHub")
-    import_autogen_sprites()
+@stage_app.command("custom")
+def stage_custom(pack: PackPath) -> None:
+    stage_custom_sprites(pack)
 
 
-@import_app.command("custom")
-def import_custom(pack: PackPath) -> None:
-    logger.info("Importing custom sprites from '%s'", pack)
-    import_custom_sprites(pack)
+@stage_app.command("eggs")
+def stage_eggs(pack: PackPath) -> None:
+    stage_egg_sprites(pack)
 
 
-@import_app.command("eggs")
-def import_eggs(pack: PackPath) -> None:
-    logger.info("Importing eggs from '%s'", pack)
-    import_egg_sprites(pack)
+@assets_app.command()
+def metadata() -> None:
+    generate_asset_metadata()
 
 
-@import_app.command("to_assets")
-def import_to_assets() -> None:
-    logger.info("Moving files to assets folder")
-    move_to_assets()
+@assets_app.command()
+def apply() -> None:
+    apply_staged_assets()
 
 
-@cleanup_app.command("output")
+@clean_app.command("staging")
 def cleanup_output() -> None:
-    logger.info("Cleaning up output folder")
-    start_time = time.perf_counter()
-
-    clean_output_folder()
-
-    elapsed_time = time.perf_counter() - start_time
-    logger.info("Cleaned up output folder in %.2f seconds", elapsed_time)
-
-
-@cleanup_app.command("assets")
-def cleanup_assets() -> None:
-    logger.info("Cleaning up assets folder")
-    start_time = time.perf_counter()
-
-    clean_assets_folder()
-
-    elapsed_time = time.perf_counter() - start_time
-    logger.info("Cleaned up assets folder in %.2f seconds", elapsed_time)
+    clean_staging_assets()
