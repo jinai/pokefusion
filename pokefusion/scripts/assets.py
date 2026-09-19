@@ -5,7 +5,6 @@ import platform
 import re
 import shutil
 import subprocess
-import tempfile
 import time
 import zipfile
 from collections import defaultdict
@@ -17,20 +16,28 @@ from pokefusion.assetpaths import AssetPaths
 from pokefusion.configmanager import ConfigManager
 from pokefusion.fusionapi import FusionClient
 from pokefusion.imagelib import save_resized_image
-from pokefusion.scripts import spritesheets
 from pokefusion.scripts.git import restore_deleted_files, run_git
+from pokefusion.scripts.spritesheets import split_spritesheets
 from pokefusion.scripts.utils import make_backup, regex_filter
 from pokefusion.types import StrPath
 
 logger = logging.getLogger(__name__)
 
 ZIP_FUSION_PATTERN = re.compile(r"CustomBattlers/\d+\.\d+\.png")
-ZIP_EGG_PATTERN = re.compile(r"Other/Eggs/(?!000)\d+\.png")
+ZIP_EGG_PATTERN = re.compile(r"Other/Eggs/\d*[1-9]\d*\.png")
 SPRITE_PATTERN = re.compile(r"\d+\.\d+\.png")
-EGG_PATTERN = re.compile(r"\d+\.png")
+EGG_PATTERN = re.compile(r"\d*[1-9]\d*\.png")
+
+AUTOGEN_REPOSITORY_URL = "https://github.com/infinitefusion/infinitefusion-e18.git"
+AUTOGEN_REPOSITORY_BRANCH = "develop-6.6"
+AUTOGEN_SPRITESHEETS_RELATIVE_DIR = Path("Graphics", "Battlers", "spritesheets_autogen")
 
 PACKS_DIR = Path("pokefusion", "scripts", "input")
 STAGING_DIR = Path("pokefusion", "scripts", "output")
+CACHE_DIR = Path("cache")
+
+AUTOGEN_REPOSITORY_DIR = CACHE_DIR / "infinitefusion-e18"
+AUTOGEN_SPRITESHEETS_DIR = AUTOGEN_REPOSITORY_DIR / AUTOGEN_SPRITESHEETS_RELATIVE_DIR
 
 STAGING_FUSIONS_DIR = STAGING_DIR / "fusions"
 STAGING_AUTOGEN_DIR = STAGING_FUSIONS_DIR / "autogen"
@@ -45,6 +52,9 @@ STAGING_CUSTOM_DIFF_ADDED_PATH = STAGING_DIR / "custom_diff_added.json"
 STAGING_CUSTOM_DIFF_REMOVED_PATH = STAGING_DIR / "custom_diff_removed.json"
 STAGING_EGGS_DIFF_ADDED_PATH = STAGING_DIR / "eggs_diff_added.json"
 STAGING_EGGS_DIFF_REMOVED_PATH = STAGING_DIR / "eggs_diff_removed.json"
+
+CUSTOM_FUSIONS_CONFIG_PATH = ConfigManager.CONFIG_DIR / STAGING_CUSTOM_FUSIONS_PATH.name
+CUSTOM_DIFF_ADDED_CONFIG_PATH = ConfigManager.CONFIG_DIR / STAGING_CUSTOM_DIFF_ADDED_PATH.name
 
 STAGING_SPRITE_DIRS = (
     STAGING_AUTOGEN_DIR,
@@ -62,8 +72,10 @@ STAGING_METADATA_PATHS = (
     STAGING_EGGS_DIFF_REMOVED_PATH,
 )
 
-CUSTOM_FUSIONS_CONFIG_PATH = ConfigManager.CONFIG_DIR / STAGING_CUSTOM_FUSIONS_PATH.name
-CUSTOM_DIFF_ADDED_CONFIG_PATH = ConfigManager.CONFIG_DIR / STAGING_CUSTOM_DIFF_ADDED_PATH.name
+APPLIED_METADATA_PATHS = {
+    STAGING_CUSTOM_FUSIONS_PATH: CUSTOM_FUSIONS_CONFIG_PATH,
+    STAGING_CUSTOM_DIFF_ADDED_PATH: CUSTOM_DIFF_ADDED_CONFIG_PATH,
+}
 
 
 class InvalidPackError(ValueError):
@@ -119,67 +131,39 @@ def stage_assets(pack_path: Path) -> None:
 
 def stage_autogen_sprites() -> None:
     logger.info("Staging autogen sprites from the Infinite Fusion repository")
-    start_time = time.perf_counter()
+    stage_start_time = time.perf_counter()
 
     _prepare_staging_directory(STAGING_AUTOGEN_DIR)
+    _prepare_autogen_repository()
 
-    spritesheets_path = Path("Graphics", "Battlers", "spritesheets_autogen")
+    sheet_count = sum(1 for _ in AUTOGEN_SPRITESHEETS_DIR.glob("*.png"))
 
-    with tempfile.TemporaryDirectory(prefix="pokefusion_") as tempdir:
-        commands = [
-            [
-                "clone",
-                "-n",
-                "--depth=1",
-                "--filter=tree:0",
-                "-b",
-                "develop-6.6",
-                "--single-branch",
-                "https://github.com/infinitefusion/infinitefusion-e18.git",
-                tempdir,
-            ],
-            [
-                "-C",
-                tempdir,
-                "sparse-checkout",
-                "set",
-                "--no-cone",
-                f"/{spritesheets_path.as_posix()}",
-            ],
-            [
-                "-C",
-                tempdir,
-                "checkout",
-            ],
-        ]
+    if sheet_count == 0:
+        raise RuntimeError(f"No autogen spritesheets found in '{AUTOGEN_SPRITESHEETS_DIR.resolve()}'")
 
-        for arguments in commands:
-            run_git(arguments)
+    if sheet_count > FusionClient.MAX_ID:
+        logger.warning(
+            "Found more than %d autogen spritesheets! "
+            "Check if new autogen sprites were released, and update FusionClient.MAX_ID accordingly",
+            FusionClient.MAX_ID,
+        )
 
-        input_dir = Path(tempdir) / spritesheets_path
-        sheet_count = len(next(os.walk(input_dir))[2])
+    logger.info("Splitting %d autogen spritesheets", sheet_count)
+    split_start_time = time.perf_counter()
 
-        elapsed_time = time.perf_counter() - start_time
-        logger.info("Downloaded %d autogen spritesheets in %.2f seconds", sheet_count, elapsed_time)
+    split_spritesheets(AUTOGEN_SPRITESHEETS_DIR, STAGING_AUTOGEN_DIR)
 
-        if sheet_count > FusionClient.MAX_ID:
-            logger.warning(
-                "Found more than %d autogen spritesheets! "
-                "Check if new autogen sprites were released, and update FusionClient.MAX_ID accordingly",
-                FusionClient.MAX_ID,
-            )
-
-        start_time = time.perf_counter()
-        spritesheets.process_dir(input_dir, STAGING_AUTOGEN_DIR)
+    split_elapsed_time = time.perf_counter() - split_start_time
+    logger.info("Split %d autogen spritesheets in %.2f seconds", sheet_count, split_elapsed_time)
 
     sprite_count = sum(len(filenames) for _, _, filenames in os.walk(STAGING_AUTOGEN_DIR))
 
-    elapsed_time = time.perf_counter() - start_time
+    stage_elapsed_time = time.perf_counter() - stage_start_time
     logger.info(
         "Staged %d autogen sprites from %d spritesheets in %.2f seconds",
         sprite_count,
         sheet_count,
-        elapsed_time,
+        stage_elapsed_time,
     )
 
 
@@ -190,14 +174,13 @@ def stage_custom_sprites(pack_path: Path) -> None:
     _prepare_staging_directory(STAGING_CUSTOM_DIR)
 
     sprite_count = 0
-    file_count = 0
-    existing_directories = set()
+    created_directories = set()
 
     with zipfile.ZipFile(pack_path, "r") as archive:
+        filenames = list(regex_filter(archive.namelist(), ZIP_FUSION_PATTERN))
         desc = "Staging custom sprites from ZIP file"
 
-        for filename in regex_filter(tqdm(archive.namelist(), desc=desc), ZIP_FUSION_PATTERN):
-            file_count += 1
+        for filename in tqdm(filenames, desc=desc):
             head, body = map(int, Path(filename).stem.split(".", 1))
 
             if head > FusionClient.MAX_ID or body > FusionClient.MAX_ID:
@@ -206,9 +189,9 @@ def stage_custom_sprites(pack_path: Path) -> None:
             sprite_count += 1
             sprite_output_dir = STAGING_CUSTOM_DIR / str(head)
 
-            if head not in existing_directories:
+            if head not in created_directories:
                 sprite_output_dir.mkdir(parents=True, exist_ok=True)
-                existing_directories.add(head)
+                created_directories.add(head)
 
             sprite_output_path = sprite_output_dir / f"{head}.{body}.png"
             with archive.open(filename) as sprite_file:
@@ -216,9 +199,9 @@ def stage_custom_sprites(pack_path: Path) -> None:
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(
-        "Staged %d custom sprites (discarded %d sprites > MAX_ID) in %.2f seconds",
+        "Staged %d custom sprites (discarded %d above MAX_ID) in %.2f seconds",
         sprite_count,
-        file_count - sprite_count,
+        len(filenames) - sprite_count,
         elapsed_time,
     )
 
@@ -235,16 +218,15 @@ def stage_egg_sprites(pack_path: Path) -> None:
     AssetPaths.DEFAULT_EGG_PATH.copy(STAGING_DEFAULT_EGG_PATH)
 
     egg_count = 0
-    file_count = 0
 
     with zipfile.ZipFile(pack_path, "r") as archive:
+        filenames = list(regex_filter(archive.namelist(), ZIP_EGG_PATTERN))
         desc = "Staging egg sprites from ZIP file"
 
-        for filename in regex_filter(tqdm(archive.namelist(), desc=desc), ZIP_EGG_PATTERN):
-            file_count += 1
+        for filename in tqdm(filenames, desc=desc):
             dex_id = int(Path(filename).stem)
 
-            if dex_id < 1 or dex_id > FusionClient.MAX_ID:
+            if dex_id > FusionClient.MAX_ID:
                 continue
 
             egg_count += 1
@@ -252,9 +234,9 @@ def stage_egg_sprites(pack_path: Path) -> None:
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(
-        "Staged %d egg sprites (discarded %d egg sprites > MAX_ID) in %.2f seconds",
+        "Staged %d egg sprites (discarded %d above MAX_ID) in %.2f seconds",
         egg_count,
-        file_count - egg_count,
+        len(filenames) - egg_count,
         elapsed_time,
     )
 
@@ -307,15 +289,13 @@ def generate_asset_metadata() -> None:
 
 def apply_staged_assets() -> None:
     logger.info("Applying staged assets")
-    start_time = time.perf_counter()
+    apply_start_time = time.perf_counter()
 
     _validate_staged_assets()
 
-    if CUSTOM_FUSIONS_CONFIG_PATH.exists():
-        make_backup(CUSTOM_FUSIONS_CONFIG_PATH)
-
-    if CUSTOM_DIFF_ADDED_CONFIG_PATH.exists():
-        make_backup(CUSTOM_DIFF_ADDED_CONFIG_PATH)
+    for current_path in APPLIED_METADATA_PATHS.values():
+        if current_path.exists():
+            make_backup(current_path)
 
     try:
         _clean_current_assets()
@@ -329,17 +309,16 @@ def apply_staged_assets() -> None:
         STAGING_CUSTOM_DIR.move(AssetPaths.FUSIONS_CUSTOM_DIR)
         STAGING_EGGS_DIR.move(AssetPaths.EGGS_DIR)
 
-        STAGING_CUSTOM_FUSIONS_PATH.move(CUSTOM_FUSIONS_CONFIG_PATH)
-        STAGING_CUSTOM_DIFF_ADDED_PATH.move(CUSTOM_DIFF_ADDED_CONFIG_PATH)
+        for staged_path, current_path in APPLIED_METADATA_PATHS.items():
+            staged_path.move(current_path)
 
         move_elapsed_time = time.perf_counter() - move_start_time
         logger.info("Moved staged assets into place in %.2f seconds", move_elapsed_time)
     finally:
-        logger.info("Restoring tracked files deleted during cleanup")
         restore_deleted_files()
 
-    elapsed_time = time.perf_counter() - start_time
-    logger.info("Applied staged assets in %.2f seconds", elapsed_time)
+    apply_elapsed_time = time.perf_counter() - apply_start_time
+    logger.info("Applied staged assets in %.2f seconds", apply_elapsed_time)
 
 
 def clean_staging_assets() -> None:
@@ -347,7 +326,7 @@ def clean_staging_assets() -> None:
         logger.info("Asset staging directory is already clean")
         return
 
-    logger.info("Cleaning '%s'", STAGING_DIR.resolve())
+    logger.info("Cleaning staging assets: '%s'", STAGING_DIR.resolve())
     start_time = time.perf_counter()
 
     _fast_delete(STAGING_DIR)
@@ -356,8 +335,21 @@ def clean_staging_assets() -> None:
     logger.info("Cleaned staging assets in %.2f seconds", elapsed_time)
 
 
+def clean_asset_cache() -> None:
+    if not CACHE_DIR.exists():
+        logger.info("Asset cache is already clean")
+        return
+
+    logger.info("Cleaning asset cache directory: '%s'", CACHE_DIR.resolve())
+    start_time = time.perf_counter()
+
+    _fast_delete(CACHE_DIR)
+
+    elapsed_time = time.perf_counter() - start_time
+    logger.info("Cleaned asset cache in %.2f seconds", elapsed_time)
+
+
 def _clean_current_assets() -> None:
-    logger.info("Cleaning current assets")
     start_time = time.perf_counter()
 
     directories = (
@@ -367,7 +359,7 @@ def _clean_current_assets() -> None:
 
     for directory in directories:
         if directory.exists():
-            logger.info("Cleaning '%s'", directory.resolve())
+            logger.info("Cleaning current asset directory: '%s'", directory.resolve())
             _fast_delete(directory)
 
     elapsed_time = time.perf_counter() - start_time
@@ -378,9 +370,71 @@ def _prepare_staging_directory(path: Path) -> None:
     _invalidate_asset_metadata()
 
     if path.exists():
+        logger.info("Cleaning existing staging directory: '%s'", path.resolve())
+        clean_start_time = time.perf_counter()
+
         _fast_delete(path)
 
+        clean_elapsed_time = time.perf_counter() - clean_start_time
+        logger.info("Cleaned existing staging directory in %.2f seconds", clean_elapsed_time)
+
     path.mkdir(parents=True)
+
+
+def _prepare_autogen_repository() -> None:
+    repository_dir = AUTOGEN_REPOSITORY_DIR.resolve()
+    git_dir = repository_dir / ".git"
+
+    if repository_dir.exists() and not git_dir.is_dir():
+        raise RuntimeError(f"Invalid autogen repository cache: '{repository_dir}'")
+
+    start_time = time.perf_counter()
+
+    if git_dir.is_dir():
+        logger.info("Updating cached Infinite Fusion repository")
+
+        commands = [
+            ["-C", str(repository_dir), "fetch", "--depth=1", "--no-tags", "origin", AUTOGEN_REPOSITORY_BRANCH],
+            ["-C", str(repository_dir), "reset", "--hard", "FETCH_HEAD"],
+        ]
+        operation = "Updated"
+    else:
+        logger.info("Cloning Infinite Fusion repository into cache")
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+        commands = [
+            [
+                "clone",
+                "-n",
+                "--depth=1",
+                "--filter=tree:0",
+                "--no-tags",
+                "-b",
+                AUTOGEN_REPOSITORY_BRANCH,
+                "--single-branch",
+                AUTOGEN_REPOSITORY_URL,
+                str(repository_dir),
+            ],
+            [
+                "-C",
+                str(repository_dir),
+                "sparse-checkout",
+                "set",
+                "--no-cone",
+                f"/{AUTOGEN_SPRITESHEETS_RELATIVE_DIR.as_posix()}",
+            ],
+            ["-C", str(repository_dir), "checkout"],
+        ]
+        operation = "Initialized"
+
+    for arguments in commands:
+        run_git(arguments)
+
+    if not AUTOGEN_SPRITESHEETS_DIR.is_dir():
+        raise RuntimeError(f"Autogen spritesheets directory not found: '{AUTOGEN_SPRITESHEETS_DIR.resolve()}'")
+
+    elapsed_time = time.perf_counter() - start_time
+    logger.info("%s Infinite Fusion repository cache in %.2f seconds", operation, elapsed_time)
 
 
 def _invalidate_asset_metadata() -> None:
@@ -391,33 +445,33 @@ def _invalidate_asset_metadata() -> None:
 def _validate_staged_assets() -> None:
     _validate_staged_sprites()
 
-    missing_paths = [path for path in STAGING_METADATA_PATHS if not path.is_file()]
+    missing_paths = [staged_path for staged_path in APPLIED_METADATA_PATHS if not staged_path.exists()]
 
     if missing_paths:
         formatted_paths = "\n".join(f"  - {path}" for path in missing_paths)
-        raise IncompleteStagingError(
-            f"Asset staging is incomplete, the following metadata files are missing:\n{formatted_paths}"
-        )
+        raise IncompleteStagingError(f"The following metadata files are missing:\n{formatted_paths}")
 
 
 def _validate_staged_sprites() -> None:
-    invalid_directories = []
+    sprite_patterns = (
+        (STAGING_AUTOGEN_DIR, SPRITE_PATTERN),
+        (STAGING_CUSTOM_DIR, SPRITE_PATTERN),
+        (STAGING_EGGS_DIR, EGG_PATTERN),
+    )
 
-    if not STAGING_AUTOGEN_DIR.is_dir() or not _get_fusions(STAGING_AUTOGEN_DIR):
-        invalid_directories.append(STAGING_AUTOGEN_DIR)
-
-    if not STAGING_CUSTOM_DIR.is_dir() or not _get_fusions(STAGING_CUSTOM_DIR):
-        invalid_directories.append(STAGING_CUSTOM_DIR)
-
-    if not STAGING_EGGS_DIR.is_dir() or not _get_eggs(STAGING_EGGS_DIR):
-        invalid_directories.append(STAGING_EGGS_DIR)
+    invalid_directories = [
+        directory for directory, pattern in sprite_patterns if not _contains_sprite(directory, pattern)
+    ]
 
     if invalid_directories:
         formatted_directories = "\n".join(f"  - {directory}" for directory in invalid_directories)
-        raise IncompleteStagingError(
-            "Asset staging is incomplete, the following sprite directories are missing or empty:\n"
-            f"{formatted_directories}"
-        )
+        raise IncompleteStagingError(f"The following sprite directories are missing or empty:\n{formatted_directories}")
+
+
+def _contains_sprite(directory: Path, pattern: re.Pattern[str]) -> bool:
+    return directory.is_dir() and any(
+        path.is_file() and pattern.fullmatch(path.name) for path in directory.rglob("*.png")
+    )
 
 
 def _get_fusions(directory: StrPath) -> dict[int, list[int]]:
@@ -452,10 +506,7 @@ def _get_eggs(directory: StrPath) -> list[int]:
 
     for _, _, filenames in os.walk(directory):
         for filename in regex_filter(filenames, EGG_PATTERN):
-            dex_id = int(Path(filename).stem)
-
-            if dex_id != 0:
-                eggs.append(dex_id)
+            eggs.append(int(Path(filename).stem))
 
     return sorted(eggs)
 

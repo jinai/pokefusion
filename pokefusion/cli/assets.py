@@ -8,6 +8,7 @@ from pokefusion.cli.context import Context
 from pokefusion.scripts.assets import (
     InvalidPackError,
     apply_staged_assets,
+    clean_asset_cache,
     clean_staging_assets,
     generate_asset_metadata,
     resolve_pack,
@@ -73,5 +74,10 @@ def apply() -> None:
 
 
 @clean_app.command("staging")
-def cleanup_output() -> None:
+def clean_output() -> None:
     clean_staging_assets()
+
+
+@clean_app.command("cache")
+def clean_cache() -> None:
+    clean_asset_cache()

@@ -1,4 +1,3 @@
-import os
 from functools import partial
 from multiprocessing import Pool, cpu_count
 from pathlib import Path
@@ -15,21 +14,25 @@ SPRITESHEET_COLUMNS = 10
 SPRITE_WIDTH = 96
 SPRITE_HEIGHT = 96
 SPRITE_SCALE = 2
-MAX_WORKERS = 1
 
 
-def process_dir(input_dir: StrPath, output_dir: StrPath):
-    spritesheets = [Path(input_dir, sheet) for sheet in next(os.walk(input_dir))[2]]
+def split_spritesheets(input_dir: StrPath, output_dir: StrPath) -> None:
+    spritesheet_paths = sorted(Path(input_dir).glob("*.png"))
+    worker_count = cpu_count()
 
-    cores = cpu_count()
-    desc = f"Splitting spritesheets (on {cores} cores)"
-    with Pool(cores) as pool:
-        func = partial(split_spritesheet, output_dir=output_dir)
-        list(tqdm(pool.imap_unordered(func, spritesheets), total=len(spritesheets), desc=desc))  # force iter
+    worker_label = "worker" if worker_count == 1 else "workers"
+    desc = f"Splitting spritesheets ({worker_count} {worker_label})"
+    split = partial(_split_spritesheet, output_dir=output_dir)
+
+    with Pool(worker_count) as pool:
+        results = pool.imap_unordered(split, spritesheet_paths)
+
+        for _ in tqdm(results, total=len(spritesheet_paths), desc=desc):
+            pass
 
 
-def split_spritesheet(path: StrPath, output_dir: StrPath):
-    with Image.open(path) as sheet:
+def _split_spritesheet(spritesheet_path: StrPath, output_dir: StrPath) -> None:
+    with Image.open(spritesheet_path) as sheet:
         if SPRITE_SCALE > 1:
             sheet = sheet.resize(
                 size=(
@@ -39,22 +42,24 @@ def split_spritesheet(path: StrPath, output_dir: StrPath):
                 resample=Resampling.NEAREST,
             )
 
-        boxes = [
-            (
-                col * SPRITE_WIDTH * SPRITE_SCALE,
-                row * SPRITE_HEIGHT * SPRITE_SCALE,
-                (col + 1) * SPRITE_WIDTH * SPRITE_SCALE,
-                (row + 1) * SPRITE_HEIGHT * SPRITE_SCALE,
-            )
-            for row in range(SPRITESHEET_ROWS)
-            for col in range(SPRITESHEET_COLUMNS)
-        ]
-
-        sheet_name = Path(path).stem
-        sheet_output_dir = Path(output_dir, sheet_name)
+        sheet_name = Path(spritesheet_path).stem
+        sheet_output_dir = Path(output_dir) / sheet_name
         sheet_output_dir.mkdir(parents=True, exist_ok=True)
 
-        for index, box in enumerate(boxes[1 : FusionClient.MAX_ID + 1]):
-            output_file = sheet_output_dir / f"{sheet_name}.{index + 1}.png"
+        sprite_width = SPRITE_WIDTH * SPRITE_SCALE
+        sprite_height = SPRITE_HEIGHT * SPRITE_SCALE
+        sheet_capacity = SPRITESHEET_ROWS * SPRITESHEET_COLUMNS - 1
+        max_sprite_id = min(FusionClient.MAX_ID, sheet_capacity)
+
+        for sprite_id in range(1, max_sprite_id + 1):
+            row, column = divmod(sprite_id, SPRITESHEET_COLUMNS)
+            box = (
+                column * sprite_width,
+                row * sprite_height,
+                (column + 1) * sprite_width,
+                (row + 1) * sprite_height,
+            )
+
+            output_path = sheet_output_dir / f"{sheet_name}.{sprite_id}.png"
             sprite = sheet.crop(box)
-            sprite.save(output_file)
+            sprite.save(output_path)

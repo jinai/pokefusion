@@ -34,6 +34,8 @@ def run_git(arguments: Sequence[str], *, cwd: StrPath | None = None) -> None:
 
 
 def restore_deleted_files() -> None:
+    logger.info("Restoring deleted files")
+
     list_command = ["git", "ls-files", "--deleted", "-z"]
     logger.info("Running command: %s", shlex.join(list_command))
 
@@ -47,7 +49,7 @@ def restore_deleted_files() -> None:
     deleted_paths = result.stdout
 
     if not deleted_paths:
-        logger.info("No deleted tracked files to restore")
+        logger.info("No deleted files to restore")
         return
 
     deleted_count = deleted_paths.count(b"\0")
@@ -73,4 +75,4 @@ def restore_deleted_files() -> None:
 
     result.check_returncode()
 
-    logger.info("Restored %d deleted tracked files", deleted_count)
+    logger.info("Restored %d deleted files", deleted_count)
