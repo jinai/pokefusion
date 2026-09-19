@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Self
 
 from pokefusion.enums import Environment, Language
-from pokefusion.types import Dex
+from pokefusion.types import Dex, FusionMapping
 from pokefusion.utils import TwoWayDict, normalize
 
 type JsonDict = dict[str, Any]
@@ -15,10 +15,44 @@ type JsonDict = dict[str, Any]
 
 class ConfigManager:
     CONFIG_DIR = Path("pokefusion") / "config"
+
     CONFIG_FILE = "config.json"
     POKEDEX_FILE = "pokedex.json"
     INFINITEDEX_FILE = "infinitedex.json"
     INFINITEDEX_BASE_FILE = "infinitedex_en.json"
+
+    CUSTOM_FUSIONS_FILE = "custom_fusions.json"
+    AUTOGEN_DIFF_ADDED_FILE = "autogen_diff_added.json"
+    CUSTOM_DIFF_ADDED_FILE = "custom_diff_added.json"
+
+    @classmethod
+    def get_bot_config(cls) -> BotConfig:
+        return BotConfig.from_dict(cls.read_json(cls.CONFIG_FILE))
+
+    @classmethod
+    def get_lookup_pokedex(cls) -> Dex:
+        return cls._load_lookup_dex(cls.POKEDEX_FILE)
+
+    @classmethod
+    def get_lookup_infinitedex(cls) -> Dex:
+        return cls._load_lookup_dex(cls.INFINITEDEX_FILE)
+
+    @classmethod
+    def get_custom_fusions(cls) -> FusionMapping:
+        return cls._load_fusion_mapping(cls.CUSTOM_FUSIONS_FILE)
+
+    @classmethod
+    def get_autogen_diff_added(cls) -> FusionMapping:
+        return cls._load_fusion_mapping(cls.AUTOGEN_DIFF_ADDED_FILE)
+
+    @classmethod
+    def get_custom_diff_added(cls) -> FusionMapping:
+        return cls._load_fusion_mapping(cls.CUSTOM_DIFF_ADDED_FILE)
+
+    @classmethod
+    @cache
+    def read_json(cls, filename: str) -> JsonDict:
+        return json.loads((cls.CONFIG_DIR / filename).read_text(encoding="utf-8"))
 
     @classmethod
     @cache
@@ -32,21 +66,10 @@ class ConfigManager:
         }
 
     @classmethod
-    def get_lookup_pokedex(cls) -> Dex:
-        return cls._load_lookup_dex(cls.POKEDEX_FILE)
-
-    @classmethod
-    def get_lookup_infinitedex(cls) -> Dex:
-        return cls._load_lookup_dex(cls.INFINITEDEX_FILE)
-
-    @classmethod
     @cache
-    def read_json(cls, filename: str) -> JsonDict:
-        return json.loads((cls.CONFIG_DIR / filename).read_text(encoding="utf-8"))
-
-    @classmethod
-    def get_bot_config(cls) -> BotConfig:
-        return BotConfig.from_dict(cls.read_json(cls.CONFIG_FILE))
+    def _load_fusion_mapping(cls, filename: str) -> FusionMapping:
+        raw = cls.read_json(filename)
+        return {int(head): bodies for head, bodies in raw.items()}
 
 
 @dataclass(frozen=True, slots=True)

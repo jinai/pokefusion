@@ -10,10 +10,9 @@ from pokefusion.configmanager import ConfigManager
 from pokefusion.enums import Language
 from pokefusion.types import Dex
 
-temp = ConfigManager.read_json("custom_diff_added.json")
-CUSTOM_DIFF_ADDED: dict[int, list[int]] = {int(key): value for key, value in temp.items()}
-temp = ConfigManager.read_json("custom_fusions.json")
-CUSTOM_FUSIONS: dict[int, list[int]] = {int(key): value for key, value in temp.items()}
+CUSTOM_FUSIONS = ConfigManager.get_custom_fusions()
+AUTOGEN_DIFF_ADDED = ConfigManager.get_autogen_diff_added()
+CUSTOM_DIFF_ADDED = ConfigManager.get_custom_diff_added()
 
 
 class LookupResult:
@@ -41,9 +40,11 @@ class LookupResult:
 
     def fail(self, bad_query: str) -> Self:
         self.bad_query = bad_query
+
         if not bad_query.isdigit():
             choices = self.client.get_species(self.lang)
             self.guess, self.guess_score = process.extractOne(bad_query, choices, score_cutoff=0, scorer=fuzz.ratio)
+
         return self
 
 
@@ -67,8 +68,13 @@ class FusionResult:
 
     @property
     def is_new(self) -> bool:
-        new_autogen = self.head.dex_id > FusionClient.PREVIOUS_MAX_ID or self.body.dex_id > FusionClient.PREVIOUS_MAX_ID
-        return new_autogen or self.body.dex_id in CUSTOM_DIFF_ADDED.get(self.head.dex_id, [])
+        if self.head.dex_id is None or self.body.dex_id is None:
+            return False
+
+        new_autogen = self.body.dex_id in AUTOGEN_DIFF_ADDED.get(self.head.dex_id, [])
+        new_custom = self.body.dex_id in CUSTOM_DIFF_ADDED.get(self.head.dex_id, [])
+
+        return new_autogen or new_custom
 
     @property
     def is_custom(self) -> bool:
@@ -87,6 +93,7 @@ class FusionResult:
 
         if custom.is_file():
             return custom
+
         return autogen
 
     @property
@@ -99,6 +106,7 @@ class FusionResult:
 
         if path.is_file():
             return path
+
         return AssetPaths.DEFAULT_EGG_PATH
 
 
@@ -132,8 +140,10 @@ class BaseClient:
 
         # Example: client.lookup("mr. mime")
         query = utils.normalize(query)
+
         if query in self.pokedex[lang]:
             return result.succeed(int(self.pokedex[lang][query]), query)
+
         return result.fail(query)
 
     def get_species(self, lang: Language | None = None) -> list[str]:
@@ -144,7 +154,6 @@ class BaseClient:
 class FusionClient(BaseClient):
     MIN_ID = 1
     MAX_ID = 576
-    PREVIOUS_MAX_ID = 576  # TODO: update when adding sprites
 
     def __init__(self, default_language: Language):
         super().__init__(ConfigManager.get_lookup_infinitedex(), default_language)
@@ -162,23 +171,27 @@ class FusionClient(BaseClient):
             body = str(random.choice(FusionClient.get_custom_fusions(head=head_result.dex_id)))
 
         body_result = self.lookup(body, lang)
+
         return FusionResult(head_result, body_result, head, body)
 
     def totem(self, seed: int | None = None, lang: Language | None = None) -> FusionResult:
         rand = random.Random(seed)
         head = rand.randint(FusionClient.MIN_ID, FusionClient.MAX_ID)
         body = rand.choice(FusionClient.get_custom_fusions(head=head))  # Only custom fusions for Totems
+
         return self.fusion(head=str(head), body=str(body), lang=lang)
 
     @staticmethod
     def get_custom_fusions(head: int | None = None, body: int | None = None) -> list[int]:
         fusions: list[int] = []
+
         if head is not None and head in CUSTOM_FUSIONS:
             fusions = CUSTOM_FUSIONS[head]
         elif body is not None:
             for custom_head, custom_bodies in CUSTOM_FUSIONS.items():
                 if body in custom_bodies:
                     fusions.append(int(custom_head))
+
         return fusions
 
 
@@ -211,6 +224,7 @@ class Sprite:
             return None
 
         filename = f"{self.lookup.dex_id}.png"
+
         return AssetPaths.SPRITES_BASE_DIR / filename
 
     @property
@@ -219,4 +233,5 @@ class Sprite:
             return None
 
         filename = f"{self.lookup.dex_id}.png"
+
         return AssetPaths.SPRITES_SHINY_DIR / filename

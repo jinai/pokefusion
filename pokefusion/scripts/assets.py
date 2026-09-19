@@ -19,7 +19,7 @@ from pokefusion.imagelib import save_resized_image
 from pokefusion.scripts.git import restore_deleted_files, run_git
 from pokefusion.scripts.spritesheets import split_spritesheets
 from pokefusion.scripts.utils import make_backup, regex_filter
-from pokefusion.types import StrPath
+from pokefusion.types import FusionMapping, StrPath
 
 logger = logging.getLogger(__name__)
 
@@ -45,15 +45,16 @@ STAGING_CUSTOM_DIR = STAGING_FUSIONS_DIR / "custom"
 STAGING_EGGS_DIR = STAGING_DIR / "eggs"
 STAGING_DEFAULT_EGG_PATH = STAGING_EGGS_DIR / AssetPaths.DEFAULT_EGG_PATH.name
 
-STAGING_CUSTOM_FUSIONS_PATH = STAGING_DIR / "custom_fusions.json"
-STAGING_AUTOGEN_DIFF_ADDED_PATH = STAGING_DIR / "autogen_diff_added.json"
+STAGING_CUSTOM_FUSIONS_PATH = STAGING_DIR / ConfigManager.CUSTOM_FUSIONS_FILE
+STAGING_AUTOGEN_DIFF_ADDED_PATH = STAGING_DIR / ConfigManager.AUTOGEN_DIFF_ADDED_FILE
 STAGING_AUTOGEN_DIFF_REMOVED_PATH = STAGING_DIR / "autogen_diff_removed.json"
-STAGING_CUSTOM_DIFF_ADDED_PATH = STAGING_DIR / "custom_diff_added.json"
+STAGING_CUSTOM_DIFF_ADDED_PATH = STAGING_DIR / ConfigManager.CUSTOM_DIFF_ADDED_FILE
 STAGING_CUSTOM_DIFF_REMOVED_PATH = STAGING_DIR / "custom_diff_removed.json"
 STAGING_EGGS_DIFF_ADDED_PATH = STAGING_DIR / "eggs_diff_added.json"
 STAGING_EGGS_DIFF_REMOVED_PATH = STAGING_DIR / "eggs_diff_removed.json"
 
 CUSTOM_FUSIONS_CONFIG_PATH = ConfigManager.CONFIG_DIR / STAGING_CUSTOM_FUSIONS_PATH.name
+AUTOGEN_DIFF_ADDED_CONFIG_PATH = ConfigManager.CONFIG_DIR / STAGING_AUTOGEN_DIFF_ADDED_PATH.name
 CUSTOM_DIFF_ADDED_CONFIG_PATH = ConfigManager.CONFIG_DIR / STAGING_CUSTOM_DIFF_ADDED_PATH.name
 
 STAGING_SPRITE_DIRS = (
@@ -74,6 +75,7 @@ STAGING_METADATA_PATHS = (
 
 APPLIED_METADATA_PATHS = {
     STAGING_CUSTOM_FUSIONS_PATH: CUSTOM_FUSIONS_CONFIG_PATH,
+    STAGING_AUTOGEN_DIFF_ADDED_PATH: AUTOGEN_DIFF_ADDED_CONFIG_PATH,
     STAGING_CUSTOM_DIFF_ADDED_PATH: CUSTOM_DIFF_ADDED_CONFIG_PATH,
 }
 
@@ -112,7 +114,6 @@ def update_assets(pack_path: Path) -> None:
 
     elapsed_time = time.perf_counter() - start_time
     logger.info("Updated assets in %.2f seconds", elapsed_time)
-    logger.info("Remember to update FusionClient.PREVIOUS_MAX_ID if necessary")
 
 
 def stage_assets(pack_path: Path) -> None:
@@ -474,7 +475,7 @@ def _contains_sprite(directory: Path, pattern: re.Pattern[str]) -> bool:
     )
 
 
-def _get_fusions(directory: StrPath) -> dict[int, list[int]]:
+def _get_fusions(directory: StrPath) -> FusionMapping:
     fusions = defaultdict(list)
 
     for _, _, filenames in os.walk(directory):
@@ -485,7 +486,7 @@ def _get_fusions(directory: StrPath) -> dict[int, list[int]]:
     return {key: sorted(val) for key, val in sorted(fusions.items(), key=lambda item: item[0])}
 
 
-def _get_fusions_diff(old: dict[int, list[int]], new: dict[int, list[int]]) -> dict[int, list[int]]:
+def _get_fusions_diff(old: FusionMapping, new: FusionMapping) -> FusionMapping:
     diff = defaultdict(list)
 
     for head, new_bodies in new.items():
