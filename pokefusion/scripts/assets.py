@@ -8,6 +8,7 @@ import subprocess
 import time
 import zipfile
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import cache, partial
 from multiprocessing import Pool
 from pathlib import Path
@@ -34,6 +35,7 @@ DEFAULT_CUSTOM_SPRITE_WORKERS = 8
 CUSTOM_SPRITE_CHUNKSIZE = 64
 CUSTOM_SPRITE_SCALE = 2 / 3
 CUSTOM_SPRITE_COMPRESSION_LEVEL = 3
+ASSET_CLEANUP_WORKERS = 8
 
 AUTOGEN_REPOSITORY_URL = "https://github.com/infinitefusion/infinitefusion-e18.git"
 AUTOGEN_REPOSITORY_BRANCH = "develop-6.6"
@@ -278,9 +280,8 @@ def stage_egg_sprites(pack_path: Path) -> None:
 
     with zipfile.ZipFile(pack_path, "r") as archive:
         filenames = list(regex_filter(archive.namelist(), ZIP_EGG_PATTERN))
-        desc = "Extracting egg sprites from pack"
 
-        for filename in tqdm(filenames, desc=desc):
+        for filename in tqdm(filenames, desc="Extracting egg sprites from pack"):
             dex_id = int(Path(filename).stem)
 
             if dex_id > FusionClient.MAX_ID:
@@ -364,9 +365,9 @@ def apply_staged_assets() -> None:
 
         AssetPaths.FUSIONS_DIR.mkdir(parents=True, exist_ok=True)
 
-        STAGING_AUTOGEN_DIR.move(AssetPaths.FUSIONS_AUTOGEN_DIR)
-        STAGING_CUSTOM_DIR.move(AssetPaths.FUSIONS_CUSTOM_DIR)
-        STAGING_EGGS_DIR.move(AssetPaths.EGGS_DIR)
+        _move_staged_directory(STAGING_AUTOGEN_DIR, AssetPaths.FUSIONS_AUTOGEN_DIR)
+        _move_staged_directory(STAGING_CUSTOM_DIR, AssetPaths.FUSIONS_CUSTOM_DIR)
+        _move_staged_directory(STAGING_EGGS_DIR, AssetPaths.EGGS_DIR)
 
         for staged_path, current_path in APPLIED_METADATA_PATHS.items():
             staged_path.move(current_path)
@@ -411,6 +412,25 @@ def clean_asset_cache() -> None:
 def _clean_current_assets() -> None:
     start_time = time.perf_counter()
 
+    if platform.system() == "Windows":
+        fusion_directories = []
+
+        for root in (AssetPaths.FUSIONS_AUTOGEN_DIR, AssetPaths.FUSIONS_CUSTOM_DIR):
+            if root.is_dir():
+                for child in root.iterdir():
+                    if child.is_dir() and not child.is_symlink():
+                        fusion_directories.append(child)
+
+        if fusion_directories:
+            logger.info("Cleaning %d fusion sprite directories", len(fusion_directories))
+            desc = f"Cleaning fusion sprite directories ({ASSET_CLEANUP_WORKERS} workers)"
+
+            with ThreadPoolExecutor(max_workers=ASSET_CLEANUP_WORKERS) as executor:
+                futures = [executor.submit(_fast_delete, directory) for directory in fusion_directories]
+
+                for future in tqdm(as_completed(futures), total=len(futures), desc=desc):
+                    future.result()
+
     directories = (
         AssetPaths.EGGS_DIR,
         AssetPaths.FUSIONS_DIR,
@@ -423,6 +443,30 @@ def _clean_current_assets() -> None:
 
     elapsed_time = time.perf_counter() - start_time
     logger.info("Cleaned current assets in %.2f seconds", elapsed_time)
+
+
+def _move_staged_directory(source: Path, destination: Path) -> None:
+    retry_deadline = time.monotonic() + 5
+    retries = 0
+
+    while True:
+        try:
+            source.move(destination)
+            if retries:
+                retry_label = "retry" if retries == 1 else "retries"
+                logger.info("Moved '%s' after %d %s", source, retries, retry_label)
+            return
+        except PermissionError as error:
+            if (
+                platform.system() != "Windows"
+                or error.winerror != 5
+                or destination.exists()
+                or time.monotonic() >= retry_deadline
+            ):
+                raise
+
+            retries += 1
+            time.sleep(0.1)
 
 
 def _prepare_staging_directory(path: Path) -> None:
