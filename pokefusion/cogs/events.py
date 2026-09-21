@@ -33,7 +33,7 @@ class Events(commands.Cog):
         )
 
         logger.info("Synced server records (upserted: %d, deactivated: %d)", upserted, deactivated)
-        logger.info("Bot is ready, authenticated as %s (ID: %d)", self.bot.user, self.bot.user.id)
+        logger.info("Bot is ready: authenticated as %s (ID: %d)", self.bot.user, self.bot.user.id)
 
     @commands.Cog.listener()
     async def on_guild_available(self, guild: Guild) -> None:

@@ -31,11 +31,9 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-name = "pokefusion"
 module-root = ""
-namespace = true
 
 [tool.ruff]
 line-length = 120
-namespace-packages = ["pokefusion"]
 
 [tool.ruff.lint]
 extend-select = [
