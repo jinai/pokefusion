@@ -76,11 +76,12 @@ def save_resized_image(
     *,
     scale: float,
     resample: Image.Resampling = Image.Resampling.NEAREST,
+    compress_level: int = -1,
 ) -> None:
     with Image.open(image) as base:
         size = tuple(max(1, round(dimension * scale)) for dimension in base.size)
         resized = base.resize(size, resample=resample)
-        resized.save(output, "PNG")
+        resized.save(output, "PNG", compress_level=compress_level)
 
 
 def pad_image(image: ImageIO) -> BytesIO:

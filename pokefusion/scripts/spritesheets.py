@@ -1,5 +1,6 @@
+import os
 from functools import partial
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 from pathlib import Path
 
 from PIL import Image
@@ -18,7 +19,7 @@ SPRITE_SCALE = 2
 
 def split_spritesheets(input_dir: StrPath, output_dir: StrPath) -> None:
     spritesheet_paths = sorted(Path(input_dir).glob("*.png"))
-    worker_count = cpu_count()
+    worker_count = min(os.process_cpu_count() or 1, len(spritesheet_paths))
 
     worker_label = "worker" if worker_count == 1 else "workers"
     desc = f"Splitting spritesheets ({worker_count} {worker_label})"

@@ -36,6 +36,7 @@ def validate_pack(pack: Path) -> Path:
 
 
 PackPath = Annotated[Path, typer.Argument(callback=validate_pack)]
+CustomWorkers = Annotated[int | None, typer.Option(min=1, help="Number of custom sprite workers.")]
 
 
 @assets_app.callback()
@@ -44,8 +45,8 @@ def assets_callback() -> None:
 
 
 @assets_app.command()
-def update(pack: PackPath) -> None:
-    update_assets(pack)
+def update(pack: PackPath, custom_workers: CustomWorkers = None) -> None:
+    update_assets(pack, custom_workers=custom_workers)
 
 
 @stage_app.command("autogen")
@@ -54,8 +55,8 @@ def stage_autogen() -> None:
 
 
 @stage_app.command("custom")
-def stage_custom(pack: PackPath) -> None:
-    stage_custom_sprites(pack)
+def stage_custom(pack: PackPath, workers: CustomWorkers = None) -> None:
+    stage_custom_sprites(pack, workers=workers)
 
 
 @stage_app.command("eggs")

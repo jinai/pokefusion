@@ -8,6 +8,8 @@ import subprocess
 import time
 import zipfile
 from collections import defaultdict
+from functools import cache, partial
+from multiprocessing import Pool
 from pathlib import Path
 
 from tqdm import tqdm
@@ -27,6 +29,11 @@ ZIP_FUSION_PATTERN = re.compile(r"CustomBattlers/\d+\.\d+\.png")
 ZIP_EGG_PATTERN = re.compile(r"Other/Eggs/\d*[1-9]\d*\.png")
 SPRITE_PATTERN = re.compile(r"\d+\.\d+\.png")
 EGG_PATTERN = re.compile(r"\d*[1-9]\d*\.png")
+
+DEFAULT_CUSTOM_SPRITE_WORKERS = 8
+CUSTOM_SPRITE_CHUNKSIZE = 64
+CUSTOM_SPRITE_SCALE = 2 / 3
+CUSTOM_SPRITE_COMPRESSION_LEVEL = 3
 
 AUTOGEN_REPOSITORY_URL = "https://github.com/infinitefusion/infinitefusion-e18.git"
 AUTOGEN_REPOSITORY_BRANCH = "develop-6.6"
@@ -105,24 +112,24 @@ def resolve_pack(pack: Path) -> Path:
     raise InvalidPackError(f"Invalid pack: {pack!r}")
 
 
-def update_assets(pack_path: Path) -> None:
+def update_assets(pack_path: Path, *, custom_workers: int | None = None) -> None:
     logger.info("Updating assets")
     start_time = time.perf_counter()
 
-    stage_assets(pack_path)
+    stage_assets(pack_path, custom_workers=custom_workers)
     apply_staged_assets()
 
     elapsed_time = time.perf_counter() - start_time
     logger.info("Updated assets in %.2f seconds", elapsed_time)
 
 
-def stage_assets(pack_path: Path) -> None:
+def stage_assets(pack_path: Path, *, custom_workers: int | None = None) -> None:
     logger.info("Staging assets")
     start_time = time.perf_counter()
 
     clean_staging_assets()
     stage_autogen_sprites()
-    stage_custom_sprites(pack_path)
+    stage_custom_sprites(pack_path, workers=custom_workers)
     stage_egg_sprites(pack_path)
     generate_asset_metadata()
 
@@ -168,43 +175,92 @@ def stage_autogen_sprites() -> None:
     )
 
 
-def stage_custom_sprites(pack_path: Path) -> None:
+def stage_custom_sprites(pack_path: Path, *, workers: int | None = None) -> None:
     logger.info("Staging custom sprites from '%s'", pack_path)
-    start_time = time.perf_counter()
+    staging_start_time = time.perf_counter()
 
     _prepare_staging_directory(STAGING_CUSTOM_DIR)
 
-    sprite_count = 0
-    created_directories = set()
+    processing_start_time = time.perf_counter()
 
     with zipfile.ZipFile(pack_path, "r") as archive:
         filenames = list(regex_filter(archive.namelist(), ZIP_FUSION_PATTERN))
-        desc = "Staging custom sprites from ZIP file"
 
-        for filename in tqdm(filenames, desc=desc):
-            head, body = map(int, Path(filename).stem.split(".", 1))
+    tasks = []
+    heads = set()
 
-            if head > FusionClient.MAX_ID or body > FusionClient.MAX_ID:
-                continue
+    for filename in filenames:
+        head, body = map(int, Path(filename).stem.split(".", 1))
 
-            sprite_count += 1
-            sprite_output_dir = STAGING_CUSTOM_DIR / str(head)
+        if head > FusionClient.MAX_ID or body > FusionClient.MAX_ID:
+            continue
 
-            if head not in created_directories:
-                sprite_output_dir.mkdir(parents=True, exist_ok=True)
-                created_directories.add(head)
+        tasks.append((filename, head, body))
+        heads.add(head)
 
-            sprite_output_path = sprite_output_dir / f"{head}.{body}.png"
-            with archive.open(filename) as sprite_file:
-                save_resized_image(sprite_file, sprite_output_path, scale=2 / 3)
+    for head in heads:
+        (STAGING_CUSTOM_DIR / str(head)).mkdir(parents=True)
 
-    elapsed_time = time.perf_counter() - start_time
-    logger.info(
-        "Staged %d custom sprites (discarded %d above MAX_ID) in %.2f seconds",
-        sprite_count,
-        len(filenames) - sprite_count,
-        elapsed_time,
-    )
+    staged_count = len(tasks)
+    discarded_count = len(filenames) - staged_count
+
+    if staged_count:
+        worker_count = min(
+            workers if workers is not None else DEFAULT_CUSTOM_SPRITE_WORKERS,
+            os.process_cpu_count() or 1,
+            staged_count,
+        )
+
+        if worker_count > DEFAULT_CUSTOM_SPRITE_WORKERS:
+            logger.warning(
+                "Using %d custom sprite workers (default: up to %d); higher counts may exhaust available memory",
+                worker_count,
+                DEFAULT_CUSTOM_SPRITE_WORKERS,
+            )
+
+        worker_label = "worker" if worker_count == 1 else "workers"
+        desc = f"Processing custom sprites from pack ({worker_count} {worker_label})"
+
+        with Pool(worker_count) as pool:
+            results = pool.imap_unordered(
+                partial(_stage_custom_sprite, pack_path=pack_path),
+                tasks,
+                chunksize=CUSTOM_SPRITE_CHUNKSIZE,
+            )
+
+            for _ in tqdm(results, total=staged_count, desc=desc):
+                pass
+
+    processing_elapsed_time = time.perf_counter() - processing_start_time
+    logger.info("Processed custom sprites from pack in %.2f seconds", processing_elapsed_time)
+
+    if discarded_count:
+        logger.warning(
+            "Discarded %d custom sprites whose head or body ID exceeds MAX_ID (%d)",
+            discarded_count,
+            FusionClient.MAX_ID,
+        )
+
+    staging_elapsed_time = time.perf_counter() - staging_start_time
+    logger.info("Staged %d custom sprites in %.2f seconds", staged_count, staging_elapsed_time)
+
+
+@cache
+def _open_custom_archive(pack_path: Path) -> zipfile.ZipFile:
+    return zipfile.ZipFile(pack_path, "r")
+
+
+def _stage_custom_sprite(task: tuple[str, int, int], *, pack_path: Path) -> None:
+    filename, head, body = task
+    output_path = STAGING_CUSTOM_DIR / str(head) / f"{head}.{body}.png"
+
+    with _open_custom_archive(pack_path).open(filename) as sprite_file:
+        save_resized_image(
+            sprite_file,
+            output_path,
+            scale=CUSTOM_SPRITE_SCALE,
+            compress_level=CUSTOM_SPRITE_COMPRESSION_LEVEL,
+        )
 
 
 def stage_egg_sprites(pack_path: Path) -> None:
@@ -222,7 +278,7 @@ def stage_egg_sprites(pack_path: Path) -> None:
 
     with zipfile.ZipFile(pack_path, "r") as archive:
         filenames = list(regex_filter(archive.namelist(), ZIP_EGG_PATTERN))
-        desc = "Staging egg sprites from ZIP file"
+        desc = "Extracting egg sprites from pack"
 
         for filename in tqdm(filenames, desc=desc):
             dex_id = int(Path(filename).stem)
@@ -233,13 +289,15 @@ def stage_egg_sprites(pack_path: Path) -> None:
             egg_count += 1
             (STAGING_EGGS_DIR / f"{dex_id}.png").write_bytes(archive.read(filename))
 
+    if discarded_count := len(filenames) - egg_count:
+        logger.warning(
+            "Discarded %d egg sprites whose ID exceeds MAX_ID (%d)",
+            discarded_count,
+            FusionClient.MAX_ID,
+        )
+
     elapsed_time = time.perf_counter() - start_time
-    logger.info(
-        "Staged %d egg sprites (discarded %d above MAX_ID) in %.2f seconds",
-        egg_count,
-        len(filenames) - egg_count,
-        elapsed_time,
-    )
+    logger.info("Staged %d egg sprites in %.2f seconds", egg_count, elapsed_time)
 
 
 def generate_asset_metadata() -> None:
