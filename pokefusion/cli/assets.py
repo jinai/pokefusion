@@ -5,18 +5,11 @@ from typing import Annotated
 import typer
 
 from pokefusion.cli.context import Context
-from pokefusion.scripts.assets import (
-    InvalidPackError,
-    apply_staged_assets,
-    clean_asset_cache,
-    clean_staging_assets,
-    generate_asset_metadata,
-    resolve_pack,
-    stage_autogen_sprites,
-    stage_custom_sprites,
-    stage_egg_sprites,
-    update_assets,
-)
+from pokefusion.scripts.assets.autogen import clean_asset_cache, stage_autogen_sprites
+from pokefusion.scripts.assets.pack import InvalidPackError, resolve_pack, stage_custom_sprites, stage_egg_sprites
+from pokefusion.scripts.assets.staging import generate_asset_metadata
+from pokefusion.scripts.assets.update import apply_staged_assets, update_assets
+from pokefusion.scripts.assets.workspace import clean_staging_assets
 
 logger = logging.getLogger(__name__)
 
