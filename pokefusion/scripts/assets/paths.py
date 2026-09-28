@@ -3,9 +3,9 @@ from pathlib import Path
 from pokefusion.assetpaths import AssetPaths
 from pokefusion.configmanager import ConfigManager
 
-PACKS_DIR = Path("pokefusion", "scripts", "input")
-STAGING_DIR = Path("pokefusion", "scripts", "output")
 CACHE_DIR = Path("cache")
+PACKS_DIR = Path("packs")
+STAGING_DIR = Path("staging")
 
 AUTOGEN_REPOSITORY_DIR = CACHE_DIR / "infinitefusion-e18"
 AUTOGEN_SPRITESHEETS_RELATIVE_DIR = Path("Graphics", "Battlers", "spritesheets_autogen")
