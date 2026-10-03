@@ -81,9 +81,9 @@ class Owner(commands.Cog, command_attrs={"hidden": True}):
         description = (
             "The latest sprite pack was imported:\n"
             "```asciidoc\n"
-            "Sprite pack :: 128_July_2026\n"
-            "Timestamp   :: 2026-09-05 15:00:00\n"
-            "Changes     :: +2501/-171 custom fusions\n"
+            "Sprite pack :: 129_August_2026\n"
+            "Timestamp   :: 2026-10-01 03:50:00\n"
+            "Changes     :: +2621/-4 custom fusions\n"
             "```\n"
         )
 
