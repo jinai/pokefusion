@@ -43,9 +43,9 @@ class Meta(commands.Cog):
             ctx,
             description=(
                 "```asciidoc\n"
-                "Sprite pack :: 129_August_2026\n"
-                "Timestamp   :: 2026-10-01 03:50:00\n"
-                "Changes     :: +2621/-4 custom fusions\n"
+                "Sprite pack :: 130_September_2026\n"
+                "Updated on  :: 2026-11-23 00:15:00\n"
+                "Changes     :: +1858/-5 custom fusions\n"
                 "```"
             ),
         )
