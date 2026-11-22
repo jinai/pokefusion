@@ -1,4 +1,7 @@
 import logging
+import platform
+import struct
+import sys
 
 import discord
 from discord import Intents
@@ -12,6 +15,12 @@ logger = logging.getLogger(__name__)
 
 def run_bot() -> None:
     ctx = Context()
+
+    logger.info("Python: %s %s", platform.python_implementation(), sys.version.replace("\n", " "))
+    logger.info("Executable: %s", sys.executable)
+    logger.info("Architecture: %s-bit", struct.calcsize("P") * 8)
+    logger.info("Platform: %s", platform.platform())
+
     database = connect_database(ctx.config.database)
 
     try:
