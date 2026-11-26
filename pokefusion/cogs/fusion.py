@@ -99,14 +99,14 @@ class Fusion(commands.Cog):
             await ctx.invoke(self.totem)
 
     @commands.command()
-    async def fru(self, ctx: Context, user: Member | None = None):
-        user = user or ctx.author
-        user_db = User.get_or_create(discord_id=ctx.author.id, defaults={"name": ctx.author.name})[0]
+    async def fru(self, ctx: Context, target: Member | None = None):
+        target = target or ctx.author
+        user_db = User.get_or_create(discord_id=target.id, defaults={"name": target.name})[0]
 
-        if ctx.author.id == user.id:
+        if ctx.author.id == target.id:
             msg = f"You have {user_db.free_rerolls} free reroll(s). Type `{ctx.clean_prefix}fr` to use it."
         else:
-            msg = f"{user.display_name} has {user_db.free_rerolls} free rerolls."
+            msg = f"{target.display_name} has {user_db.free_rerolls} free rerolls."
 
         await ctx.send(msg)
 
